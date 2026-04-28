@@ -1,0 +1,47 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}Progressive Elementary School{% endblock %}
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+{% block content %}
+
+<section class="hero">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            Welcome to<br>
+            <span class="pastel blue">CraftyKids!</span>
+        </h1>
+        <p class="hero-sub">Learn, play, and create with fun Do-It-Yourself projects designed just for you!</p>
+        <a href="{% url 'explore_subjects' %}" class="btn-primary">&#9654; Start Learning!</a>
+        <div class="hero-dot"></div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block footer %}
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <div class="footer-logo">CraftyKids</div>
+            <p>Learning through creative and hands-on DIY activities for elementary students.</p>
+        </div>
+        <div class="footer-links">
+            <h4>Explore</h4>
+            <a href="{% url 'about' %}">About Us</a>
+            <a href="{% url 'support_us' %}">Support Us</a>
+            <a href="{% url 'faqs' %}">FAQs</a>
+        </div>
+        <div class="footer-links">
+            <h4>Developed For</h4>
+            <strong>Progressive Elementary School</strong>
+            <p>Empowering young minds with creativity and structured learning.</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>&copy; 2026 CraftyKids. All rights reserved.</span>
+        <span>Made with <span class="footer-heart">&#10084;</span> for kids</span>
+    </div>
+</footer>
+{% endblock %}

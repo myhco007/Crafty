@@ -1,0 +1,99 @@
+.info-hero {
+    padding: 72px 24px 32px;
+    background: var(--green-light);
+    border-bottom: 2px solid var(--green-mid);
+}
+
+.info-hero-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.info-kicker {
+    font-weight: 900;
+    color: #ff8a3d;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+}
+
+.info-page-title {
+    font-family: "Fredoka One", cursive;
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    color: var(--green-dark);
+    margin-bottom: 12px;
+}
+
+.info-page-sub {
+    max-width: 720px;
+    margin: 0 auto;
+    color: var(--gray);
+    font-size: 1.05rem;
+    line-height: 1.7;
+}
+
+.info-section {
+    max-width: 960px;
+    margin: 40px auto 60px;
+    padding: 0 24px;
+}
+
+.info-card,
+.info-contact-box,
+.faq-item {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 2px solid var(--green-mid);
+}
+
+.info-card {
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.info-icon {
+    font-size: 2rem;
+    min-width: 48px;
+    text-align: center;
+}
+
+.info-card h3,
+.info-contact-box h3,
+.faq-item h3 {
+    font-family: "Fredoka One", cursive;
+    font-size: 1.15rem;
+    color: var(--green-dark);
+    margin-bottom: 8px;
+}
+
+.info-card p,
+.info-contact-box p,
+.faq-item p {
+    color: var(--gray);
+    line-height: 1.7;
+}
+
+.info-contact-box,
+.faq-item {
+    padding: 28px 32px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 640px) {
+    .info-hero {
+        padding: 56px 16px 24px;
+    }
+
+    .info-section {
+        padding: 0 16px;
+    }
+
+    .info-card {
+        flex-direction: column;
+    }
+}

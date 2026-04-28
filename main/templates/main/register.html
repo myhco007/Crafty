@@ -1,0 +1,110 @@
+{% extends 'main/base.html' %}
+{% block title %}- Register{% endblock %}
+{% load static %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/register.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <!-- Decorative background blobs -->
+    <div class="blob blob-pink"></div>
+    <div class="blob blob-green"></div>
+    <div class="blob blob-blue"></div>
+
+    <!-- Main Auth Container -->
+    <div class="auth-box" style="background-image: url('{% static 'images/progressive-image.jpg' %}');">
+        
+        <!-- Left Side: Welcome Text -->
+        <div class="auth-box-left">
+            <div class="auth-welcome-text">
+                <h1>Welcome!</h1>
+                <p>Create your account to get started with Progressive Elementary School.</p>
+            </div>
+        </div>
+
+        <!-- Right Side: Registration Card -->
+        <div class="auth-box-right">
+            <div class="auth-card">
+                <div class="auth-logo">
+                    <div class="auth-logo-text">Crafty Kids</div>
+                    <p class="auth-card-welcome">Welcome to your creative space!</p>
+                </div>
+
+                <h2 class="auth-card-title">Register</h2>
+
+                {% if messages %}
+                    <ul class="messages">
+                        {% for message in messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <!-- Register Form -->
+                <form method="POST" action="{% url 'register' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" name="full_name" placeholder="" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" name="email" placeholder="" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" name="username" placeholder="" autocomplete="off" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Password</label>
+                            <div class="password-field-wrapper">
+                                <input type="password" name="password1" id="password1" placeholder="••••••••" required>
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password1', this)">
+                                    <!-- Initially Eye-Off (Slashed) because password is hidden -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Confirm</label>
+                            <div class="password-field-wrapper">
+                                <input type="password" name="password2" id="password2" placeholder="••••••••" required>
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password2', this)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-auth">Register</button>
+                </form>
+
+                <div class="auth-back">
+                    <a href="{% url 'home' %}">← Back to Home Page</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePasswordVisibility(fieldId, button) {
+    const passwordInput = document.getElementById(fieldId);
+    if (!passwordInput) return;
+    
+    if (passwordInput.type === 'password') {
+        // Show password, switch to Eye icon
+        passwordInput.type = 'text';
+        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+    } else {
+        // Hide password, switch to Eye-Off (Slashed) icon
+        passwordInput.type = 'password';
+        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+    }
+}
+</script>
+{% endblock %}

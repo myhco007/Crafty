@@ -1,0 +1,175 @@
+/* HERO SECTION */
+.hero {
+    text-align: center;
+    padding: 0 24px 72px;
+    background:
+        linear-gradient(rgba(250, 243, 228, 0.700), rgba(215, 226, 218, 0.700)),
+        url("../images/progressive-image.jpg") 60% 48%/cover no-repeat;
+    position: relative;
+    min-height: 620px;
+}
+/*welcome to craftykids adjustment */
+
+.hero-content {
+    position: absolute;
+    top: 80%;
+    left: 45%;
+    transform: translate(-50%, -50%);
+    width: min(100%, 760px);
+    padding: 40px 28px;
+    text-align: center;
+}
+
+/* TITLE */
+.hero-title {
+    font-family: "Fredoka One", cursive;
+    font-size: 5rem;
+    color: var(--green-dark);
+    line-height: 1.2;
+    margin-bottom: 16px;
+    text-shadow: 0 3px 12px rgba(15, 14, 14, 0.55);
+}
+
+.hero-title .blue {
+    color: #0a8ee6;
+}
+
+/* SUBTEXT */
+.hero-sub {
+    font-size: 1.1rem;
+    color: #203228;
+    max-width: 480px;
+    margin: 0 auto 32px;
+    font-weight: 800;
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.55);
+}
+
+/* BUTTON */
+.btn-primary {
+    background: var(--green);
+    color: var(--white);
+    padding: 14px 36px;
+    border-radius: 32px;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 1.1rem;
+    display: inline-block;
+    transition: transform 0.2s, background 0.2s;
+    box-shadow: 0 4px 16px rgba(46, 204, 113, 0.35);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    background: var(--green-dark);
+}
+
+/* DOT */
+.hero-dot {
+    width: 14px;
+    height: 14px;
+    background: var(--teal);
+    border-radius: 50%;
+    margin: 24px auto 0;
+}
+
+/* SUBJECT SECTION */
+.subjects-section {
+    padding: 60px 24px;
+    text-align: center;
+    background: var(--white);
+}
+
+.subjects-section h2 {
+    font-family: "Fredoka One", cursive;
+    font-size: 2rem;
+    color: var(--dark);
+    margin-bottom: 8px;
+}
+
+.section-sub {
+    color: var(--gray);
+    margin-bottom: 36px;
+    font-size: 1rem;
+}
+
+/* CARDS */
+.cards-row {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.subject-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px 24px;
+    width: 220px;
+    text-align: center;
+    transition: transform 0.2s;
+    border: 2px solid var(--green-mid);
+}
+
+.subject-card:hover {
+    transform: translateY(-4px);
+}
+
+.subject-card h3 {
+    font-family: "Fredoka One", cursive;
+    font-size: 1.2rem;
+    margin: 12px 0 8px;
+    color: var(--dark);
+}
+
+.subject-card p {
+    font-size: 0.9rem;
+    color: var(--gray);
+}
+
+/* ICONS */
+.card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    margin: 0 auto;
+}
+
+.blue-bg {
+    background: #e0f7fa;
+}
+
+.pink-bg {
+    background: #fce4ec;
+}
+
+.green-bg {
+    background: var(--green-mid);
+}
+
+/* MOBILE FIX */
+@media (max-width: 640px) {
+    .hero {
+        min-height: 500px;
+        padding: 0 16px 48px;
+        background-position: 58% 20%;
+    }
+
+    .hero-content {
+        top: 67%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 20px;
+    }
+
+    .hero-title {
+        font-size: 2.4rem;
+    }
+
+}

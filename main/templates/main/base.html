@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Progressive Elementary School{% endblock %}</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}">
+    <link rel="shortcut icon" href="{% static 'images/favicon.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block page_css %}{% endblock %}
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-inner">
+            <a href="{% url 'home' %}" class="nav-logo">CraftyKids</a>
+            <div class="nav-links">
+                <a href="{% url 'home' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
+                <a href="{% url 'about' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About</a>
+                <a href="{% url 'announcement_list' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'announcement_list' %}active{% endif %}">Announcement</a>
+                {% if user.is_staff %}
+                <a href="{% url 'dashboard' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+                {% endif %}
+            </div>
+            <div class="nav-right">
+                <a href="{% url 'notifications' %}" class="nav-notif" style="position: relative; display: inline-flex; align-items: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                        style="vertical-align: middle;">
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                        <path d="M4 2C2.8 3.7 2 5.7 2 8" />
+                        <path d="M22 8c0-2.3-.8-4.3-2-6" />
+                    </svg>
+                    {% if has_unread_notifications %}
+                    <span style="position: absolute; top: -2px; right: -6px; background-color: #ff3b30; color: white; font-size: 0.65rem; font-weight: 800; border-radius: 10px; border: 2px solid var(--white); padding: 0 4px; min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; line-height: 1;">
+                        {% if unread_notifications_count > 99 %}99+{% else %}{{ unread_notifications_count }}{% endif %}
+                    </span>
+                    {% endif %}
+                </a>
+                {% if user.is_authenticated %}
+                <span style="font-weight:800; color:var(--green);">{{ user.first_name }}</span>
+                <a href="{% url 'logout' %}" class="btn-register">Logout</a>
+                {% else %}
+                <a href="{% url 'login' %}" class="btn-login">Login</a>
+                <a href="{% url 'register' %}" class="btn-register">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    {% block content %}{% endblock %}
+    {% block footer %}{% endblock %}
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

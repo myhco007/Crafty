@@ -1,0 +1,183 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/flipbook_detail.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="flipbook-viewer-page">
+    <div class="viewer-header">
+        <div>
+            <p class="viewer-kicker">{{ flipbook.category }}</p>
+            <h1 class="viewer-title">{{ flipbook.title }}</h1>
+            <p class="viewer-sub"> "Open the digital flipbook below and read it like a mini storybook."</p>
+        </div>
+        <div class="viewer-actions">
+            <a href="{% url 'flipbook_list' %}?category={{ flipbook.category.name|urlencode }}"
+                class="viewer-link secondary">Back to Flipbooks</a>
+            {% if flipbook.pdf_file %}
+            <a href="{{ flipbook.pdf_file.url }}" target="_blank" rel="noopener" class="viewer-link primary">Open PDF in
+                New Tab</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if flipbook.heyzine_url or flipbook.pdf_file %}
+
+    <div class="viewer-frame-wrap"
+        style="box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; margin-top: 20px; background: #fff;">
+
+        {% if flipbook.heyzine_url %}
+        <iframe allowfullscreen="allowfullscreen" scrolling="no" class="viewer-frame" src="{{ flipbook.heyzine_url }}"
+            title="{{ flipbook.title }}" style="border: none; width: 100%; height: 600px;"></iframe>
+        {% else %}
+        <!-- Animated 3D Flipbook Viewer -->
+        <div id="pdf-flipbook-container" style="padding: 20px; position: relative;">
+
+            <div id="loading-book" style="text-align: center; padding: 60px 20px; color: var(--gray);">
+                <div style="font-size: 3rem; margin-bottom: 15px;">⏳</div>
+                <h2 style="font-family: 'Fredoka One', cursive;">Generating your Flipbook...</h2>
+                <p>Please wait while we prepare the animated pages.</p>
+            </div>
+
+            <div id="book-nav"
+                style="display:none; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px;">
+                <button id="btn-prev" class="viewer-link secondary"
+                    style="cursor: pointer; padding: 8px 16px; border:none; border-radius: 20px; background:var(--yellow); color:var(--dark); font-weight:bold; font-family:'Fredoka One', cursive; box-shadow: 0 4px 0 #e6c229;">⬅
+                    Flip Back</button>
+                <span style="font-family: 'Fredoka One', cursive; color: var(--dark); font-size: 1.1rem;">
+                    Interactive Book
+                </span>
+                <button id="btn-next" class="viewer-link secondary"
+                    style="cursor: pointer; padding: 8px 16px; border:none; border-radius: 20px; background:var(--green); color:var(--white); font-weight:bold; font-family:'Fredoka One', cursive; box-shadow: 0 4px 0 var(--green-dark);">Flip
+                    Forward ➡</button>
+            </div>
+
+            <div id="book-wrapper"
+                style="display:none; justify-content: center; background: #fdfdfd; border-radius: 8px; padding: 30px; box-shadow: inset 0 0 15px rgba(0,0,0,0.05);">
+                <div id="book" style="touch-action: none;">
+                    <!-- Pages will be generated here dynamically -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Include PDF.js and StPageFlip -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+        <script src="https://unpkg.com/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+        <script>
+            // Load PDF.js worker
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+            const url = '{{ flipbook.pdf_file.url }}';
+            const bookContainer = document.getElementById('book');
+            const loadingBook = document.getElementById('loading-book');
+            const bookWrapper = document.getElementById('book-wrapper');
+            const bookNav = document.getElementById('book-nav');
+
+            async function initFlipbook() {
+                try {
+                    const pdf = await pdfjsLib.getDocument(url).promise;
+                    const numPages = pdf.numPages;
+
+                    // Determine base scale from Page 1 to fit height essentially instantly
+                    const page1 = await pdf.getPage(1);
+                    const v1 = page1.getViewport({ scale: 1 });
+
+                    const isMobile = window.innerWidth <= 768;
+                    const targetHeight = isMobile ? 350 : 550;
+                    const scale = targetHeight / v1.height;
+                    const targetWidth = v1.width * scale;
+
+                    const canvases = {};
+
+                    // Instantly create the structure and canvases
+                    for (let i = 1; i <= numPages; i++) {
+                        const pageDiv = document.createElement('div');
+                        pageDiv.className = 'my-page';
+                        pageDiv.style.backgroundColor = 'white';
+                        pageDiv.style.overflow = 'hidden';
+                        pageDiv.style.boxShadow = (i % 2 === 0)
+                            ? 'inset -7px 0 30px -7px rgba(0,0,0,0.1)'
+                            : 'inset 7px 0 30px -7px rgba(0,0,0,0.1)';
+
+                        const canvas = document.createElement('canvas');
+                        canvas.height = targetHeight;
+                        canvas.width = targetWidth;
+                        canvas.style.width = '100%';
+                        canvas.style.height = '100%';
+
+                        pageDiv.appendChild(canvas);
+                        bookContainer.appendChild(pageDiv);
+
+                        canvases[i] = canvas;
+                    }
+
+                    // Init StPageFlip immediately
+                    const pageFlip = new St.PageFlip(bookContainer, {
+                        width: targetWidth,
+                        height: targetHeight,
+                        size: "fixed",
+                        showCover: true,
+                        drawShadow: true,
+                        maxShadowOpacity: 0.5,
+                        usePortrait: true,
+                        mobileScrollSupport: false
+                    });
+
+                    // Show UI instantly
+                    loadingBook.style.display = 'none';
+                    bookWrapper.style.display = 'flex';
+                    bookNav.style.display = 'flex';
+
+                    pageFlip.loadFromHTML(document.querySelectorAll('.my-page'));
+
+                    // Bind buttons
+                    document.getElementById('btn-prev').addEventListener('click', () => {
+                        pageFlip.flipPrev();
+                    });
+                    document.getElementById('btn-next').addEventListener('click', () => {
+                        pageFlip.flipNext();
+                    });
+
+                    // Background rendering loop (non-blocking)
+                    async function renderPagesInBackground() {
+                        for (let i = 1; i <= numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const viewport = page.getViewport({ scale: scale });
+                            const ctx = canvases[i].getContext('2d');
+                            await page.render({
+                                canvasContext: ctx,
+                                viewport: viewport
+                            }).promise;
+                        }
+                    }
+
+                    // Start rendering the pages in the background
+                    renderPagesInBackground();
+
+                } catch (err) {
+                    console.error('Failed to load flipbook:', err);
+                    loadingBook.innerHTML = "<p style='color:red;'>Failed to load book animation. Make sure the PDF is supported.</p>";
+                }
+            }
+
+            initFlipbook();
+        </script>
+        {% endif %}
+
+    </div>
+
+    <p class="viewer-help" style="margin-top: 15px;">
+        If the book does not appear inside the page, use
+        <a href="{{ flipbook.pdf_file.url }}" target="_blank" rel="noopener">Open PDF in New Tab</a>.
+    </p>
+
+    {% else %}
+    <div class="viewer-empty">
+        <p>This flipbook does not have a PDF file or Heyzine link yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

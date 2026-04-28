@@ -1,0 +1,258 @@
+/* Consistent with login.css structure */
+
+.auth-page {
+    min-height: calc(100vh - 80px); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    background: #f0fff4; 
+    position: relative;
+    overflow: hidden;
+}
+
+/* Main Box: Same rectangle as login */
+.auth-box {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    width: 100%;
+    max-width: 1000px;
+    min-height: 620px; /* Slightly taller for more fields */
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    animation: slideUpFade 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(40px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.auth-box::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1;
+}
+
+/* Left Content: Welcome text */
+.auth-box-left {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 60px;
+    color: #fff;
+}
+
+.auth-welcome-text h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 3.5rem;
+    margin-bottom: 12px;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+    line-height: 1;
+}
+
+.auth-welcome-text p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+    max-width: 350px;
+}
+
+/* Right Content: The Frosted Card */
+.auth-box-right {
+    position: relative;
+    z-index: 2;
+    padding: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    background: rgba(230, 235, 230, 0.9);
+    backdrop-filter: blur(10px);
+    width: 420px;
+    padding: 35px 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.auth-logo-text {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    color: #27ae60;
+    margin-bottom: 2px;
+}
+
+.auth-card-welcome {
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.auth-card-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    color: #27ae60;
+    margin-bottom: 25px;
+    position: relative;
+    display: inline-block;
+    width: auto;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.auth-card-title::after {
+    content: '';
+    display: block;
+    width: 60%;
+    height: 4px;
+    background: #2ecc71;
+    margin: 8px auto 0;
+    border-radius: 10px;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 12px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #444;
+    margin-bottom: 4px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 10px;
+    background: #f0fdf4; /* Match the light green background in image */
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: 0.2s;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.form-group input:focus {
+    background: #fff;
+    box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.2);
+}
+
+/* Password Visibility Toggle */
+.password-field-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-field-wrapper input {
+    padding-right: 45px; /* Space for the icon */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    z-index: 5;
+}
+
+.toggle-password:hover {
+    color: #27ae60;
+}
+
+.toggle-password svg {
+    width: 20px;
+    height: 20px;
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+/* Green Register Button */
+.btn-auth {
+    width: 100%;
+    padding: 14px;
+    background: #2ecc71; /* Match the green button in image */
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    margin-top: 15px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    transition: 0.2s;
+}
+
+.btn-auth:hover {
+    transform: translateY(-2px);
+    background: #27ae60;
+}
+
+.auth-back {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.auth-back a {
+    color: #666;
+    font-size: 0.75rem;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* Responsiveness */
+@media (max-width: 900px) {
+    .auth-box {
+        flex-direction: column;
+        max-width: 500px;
+        min-height: auto;
+    }
+    .auth-box-left {
+        padding: 40px;
+        text-align: center;
+        justify-content: center;
+    }
+    .auth-welcome-text h1 {
+        font-size: 2.22rem;
+    }
+    .auth-box-right {
+        padding: 20px;
+    }
+    .auth-card {
+        width: 100%;
+    }
+}

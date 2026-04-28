@@ -1,0 +1,47 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}- {{ title }}{% endblock %}
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/upload_form.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="upload-section">
+    <div class="upload-header">
+        <h1 class="upload-title">{{ title }}</h1>
+        <p class="upload-sub">Share a cool animated DIY video with the kids!</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        {% for field in form %}
+            <div class="custom-form-group">
+                {{ field.label_tag }}
+                
+                {% if field.field.widget.input_type == 'file' %}
+                    <div class="custom-file-upload">
+                        <div class="file-icon">&#127909;</div> <!-- Video icon -->
+                        {{ field }}
+                    </div>
+                {% else %}
+                    {{ field }}
+                {% endif %}
+                
+                {% if field.help_text %}
+                    <span class="helptext">{{ field.help_text }}</span>
+                {% endif %}
+                {% for error in field.errors %}
+                    <ul class="errorlist"><li>{{ error }}</li></ul>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        <div class="form-actions">
+            <a href="{% url 'dashboard' %}" class="btn-cancel">Cancel</a>
+            <button type="submit" class="btn-upload-submit">Save Video</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

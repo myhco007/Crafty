@@ -1,0 +1,482 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}- Dashboard{% endblock %}
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="db-wrap">
+
+    <!-- SIDEBAR -->
+    <div class="db-sidebar">
+        <div class="db-sidebar-logo">CraftyKids</div>
+        <div class="db-sidebar-section">Main</div>
+        <a href="#section-overview" data-section="overview" class="db-sidebar-item {% if not section or section == 'overview' %}active{% endif %}" onclick="showSection('overview'); return false;">Dashboard</a>
+        <a href="#section-announcements" data-section="announcements" class="db-sidebar-item" onclick="showSection('announcements'); return false;">Announcement</a>
+        <div class="db-sidebar-section">Content</div>
+        <a href="#section-videos" data-section="videos" class="db-sidebar-item" onclick="showSection('videos'); return false;">Videos</a>
+        <a href="#section-flipbooks" data-section="flipbooks" class="db-sidebar-item" onclick="showSection('flipbooks'); return false;">Flipbooks</a>
+        <div class="db-sidebar-section">Manage</div>
+        <a href="#section-users" data-section="users" class="db-sidebar-item" onclick="showSection('users'); return false;">Registered Users</a>
+        <a href="#section-categories" data-section="categories" class="db-sidebar-item" onclick="showSection('categories'); return false;">Categories</a>
+        <a href="#section-audit" data-section="audit" class="db-sidebar-item" onclick="showSection('audit'); return false;">Audit Log</a>
+        <a href="#section-archive" data-section="archive" class="db-sidebar-item" onclick="showSection('archive'); return false;">Archive</a>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="db-main">
+
+        <!-- Messages -->
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <!-- OVERVIEW SECTION -->
+        <div id="section-overview" class="db-section">
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Admin Dashboard</div>
+                    <h1 class="db-title">Welcome back, {{ request.user.username }}!</h1>
+                    <p class="db-sub">Here's what's happening on CraftyKids today.</p>
+                </div>
+                <div class="db-top-btns">
+                    <a href="#section-videos" onclick="showSection('videos'); return false;" class="db-btn teal">+ Add Video</a>
+                    <a href="#section-flipbooks" onclick="showSection('flipbooks'); return false;" class="db-btn green">+ Add Flipbook</a>
+                </div>
+            </div>
+            <div class="metro-container">
+                <div class="metro-grid">
+                    <a class="metro-tile bg-green tile-tall" href="#section-flipbooks" onclick="showSection('flipbooks'); return false;">
+                        <div class="metro-icon">&#128214;</div>
+                        <div class="metro-text">Flipbooks<br><small style="font-size:0.75rem; font-weight: normal;">{{ total_flipbooks }} items</small></div>
+                    </a>
+                    <a class="metro-tile bg-teal tile-wide" href="#section-videos" onclick="showSection('videos'); return false;">
+                        <div class="metro-icon">&#9654;</div>
+                        <div class="metro-text">Videos<br><small style="font-size:0.75rem; font-weight: normal;">{{ total_videos }} items</small></div>
+                    </a>
+                    <a class="metro-tile bg-pink" href="#section-announcements" onclick="showSection('announcements'); return false;">
+                        <div class="metro-icon">&#128227;</div>
+                        <div class="metro-text">Announcements</div>
+                    </a>
+                    <a class="metro-tile bg-blue" href="#section-users" onclick="showSection('users'); return false;">
+                        <div class="metro-icon">&#128101;</div>
+                        <div class="metro-text">Registered Users<br><small style="font-size:0.75rem; font-weight: normal;">{{ total_users }} users</small></div>
+                    </a>
+                    <a class="metro-tile bg-yellow" href="#section-categories" onclick="showSection('categories'); return false;">
+                        <div class="metro-icon">&#128218;</div>
+                        <div class="metro-text">Categories</div>
+                    </a>
+                    <a class="metro-tile bg-purple" href="#section-audit" onclick="showSection('audit'); return false;">
+                        <div class="metro-icon">&#128269;</div>
+                        <div class="metro-text">Audit Log</div>
+                    </a>
+                    <a class="metro-tile bg-red tile-wide" href="#section-archive" onclick="showSection('archive'); return false;">
+                        <div class="metro-icon">&#128465;</div>
+                        <div class="metro-text">Archive</div>
+                    </a>
+                </div>
+                <div class="metro-calendar">
+                    <div class="cal-header">April 2026</div>
+                    <div class="cal-grid">
+                        <div class="cal-day-name">Sun</div>
+                        <div class="cal-day-name">Mon</div>
+                        <div class="cal-day-name">Tue</div>
+                        <div class="cal-day-name">Wed</div>
+                        <div class="cal-day-name">Thu</div>
+                        <div class="cal-day-name">Fri</div>
+                        <div class="cal-day-name">Sat</div>
+                        
+                        <div class="cal-day" style="color: #ccc;">29</div>
+                        <div class="cal-day" style="color: #ccc;">30</div>
+                        <div class="cal-day" style="color: #ccc;">31</div>
+                        <div class="cal-day">1</div>
+                        <div class="cal-day">2</div>
+                        <div class="cal-day">3</div>
+                        <div class="cal-day">4</div>
+                        <div class="cal-day">5</div>
+                        <div class="cal-day">6</div>
+                        <div class="cal-day">7</div>
+                        <div class="cal-day">8</div>
+                        <div class="cal-day">9</div>
+                        <div class="cal-day">10</div>
+                        <div class="cal-day">11</div>
+                        <div class="cal-day">12</div>
+                        <div class="cal-day">13</div>
+                        <div class="cal-day">14</div>
+                        <div class="cal-day">15</div>
+                        <div class="cal-day">16</div>
+                        <div class="cal-day">17</div>
+                        <div class="cal-day">18</div>
+                        <div class="cal-day">19</div>
+                        <div class="cal-day">20</div>
+                        <div class="cal-day">21</div>
+                        <div class="cal-day">22</div>
+                        <div class="cal-day">23</div>
+                        <div class="cal-day">24</div>
+                        <div class="cal-day">25</div>
+                        <div class="cal-day">26</div>
+                        <div class="cal-day active">27</div>
+                        <div class="cal-day">28</div>
+                        <div class="cal-day">29</div>
+                        <div class="cal-day">30</div>
+                        <div class="cal-day" style="color: #ccc;">1</div>
+                        <div class="cal-day" style="color: #ccc;">2</div>
+                    </div>
+                    <div style="margin-top: 24px; font-size: 0.8rem; color: var(--gray); text-align: center;">Notice Board</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANNOUNCEMENTS SECTION -->
+        <div id="section-announcements" class="db-section" style="display:none;">
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Main</div>
+                    <h1 class="db-title">Announcement</h1>
+                    <p class="db-sub">Manage what users see across the system.</p>
+                </div>
+                <a href="{% url 'announcement_create' %}" class="db-btn teal">+ Add Announcement</a>
+            </div>
+            <div class="db-card">
+                <table class="db-table">
+                    <thead><tr><th>Title</th><th>Content</th><th>Date Created</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {% for ann in announcements %}
+                        <tr>
+                            <td><strong>{{ ann.title }}</strong></td>
+                            <td>{{ ann.content|truncatechars:50 }}</td>
+                            <td>{{ ann.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="db-actions">
+                                    <a href="{% url 'announcement_edit' ann.pk %}" class="db-btn-e">Edit</a>
+                                    <a href="{% url 'announcement_delete' ann.pk %}" class="db-btn-d">Del</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="db-empty">No announcement yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VIDEOS SECTION -->
+        <div id="section-videos" class="db-section" style="display:none;">
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Content</div>
+                    <h1 class="db-title">Videos</h1>
+                    <p class="db-sub">Manage all videos here.</p>
+                </div>
+                <a href="{% url 'video_create' %}" class="db-btn teal">+ Add Video</a>
+            </div>
+            <div class="db-card">
+                <table class="db-table">
+                    <thead><tr><th>Title</th><th>Category</th><th>Duration</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {% for video in all_videos %}
+                        <tr>
+                            <td>{{ video.title }}</td>
+                            <td><span class="db-badge green">{{ video.category }}</span></td>
+                            <td>{{ video.duration|default:"-" }}</td>
+                            <td>
+                                <div class="db-actions">
+                                    <a href="{% url 'video_edit' video.pk %}" class="db-btn-e">Edit</a>
+                                    <a href="{% url 'video_delete' video.pk %}" class="db-btn-d">Del</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="db-empty">No videos yet. Click "+ Add Video" to start!</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- FLIPBOOKS SECTION -->
+        <div id="section-flipbooks" class="db-section" style="display:none;">
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Content</div>
+                    <h1 class="db-title">Flipbooks</h1>
+                    <p class="db-sub">Manage all DIY flipbook tutorials here.</p>
+                </div>
+                <a href="{% url 'flipbook_create' %}" class="db-btn green">+ Add Flipbook</a>
+            </div>
+            <div class="db-card">
+                <table class="db-table">
+                    <thead><tr><th>Title</th><th>Category</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {% for flipbook in all_flipbooks %}
+                        <tr>
+                            <td>{{ flipbook.title }}</td>
+                            <td><span class="db-badge teal">{{ flipbook.category }}</span></td>
+                            <td>
+                                <div class="db-actions">
+                                    <a href="{% url 'flipbook_edit' flipbook.pk %}" class="db-btn-e">Edit</a>
+                                    <a href="{% url 'flipbook_delete' flipbook.pk %}" class="db-btn-d">Del</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="db-empty">No flipbooks yet. Click "+ Add Flipbook" to start!</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- USERS SECTION -->
+        <div id="section-users" class="db-section" style="display:none;">
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Manage</div>
+                    <h1 class="db-title">Registered Users</h1>
+                    <p class="db-sub">All accounts registered on CraftyKids.</p>
+                </div>
+            </div>
+            <div class="db-card">
+                <table class="db-table">
+                    <thead><tr><th>Username</th><th>Full Name</th><th>Email</th><th>Date Joined</th><th>Admin</th></tr></thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td><strong>{{ u.username }}</strong></td>
+                            <td>{{ u.get_full_name|default:"-" }}</td>
+                            <td>{{ u.email|default:"-" }}</td>
+                            <td>{{ u.date_joined|date:"M d, Y" }}</td>
+                            <td>
+                                {% if u.is_superuser %}
+                                    <span class="db-badge green">Yes</span>
+                                {% else %}
+                                    <span class="db-badge gray">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="db-empty">No users found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CATEGORIES SECTION -->
+        <div id="section-categories" class="db-section" style="display:none;">
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Manage</div>
+                    <h1 class="db-title">Categories</h1>
+                    <p class="db-sub">Manage subject categories for videos and flipbooks.</p>
+                </div>
+                <button onclick="document.getElementById('modal-add-cat').style.display='flex'" class="db-btn green">+ Add Category</button>
+            </div>
+            <div class="db-card">
+                <table class="db-table">
+                    <thead><tr><th>Name</th><th>Videos</th><th>Flipbooks</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr>
+                            <td><strong>{{ cat.name }}</strong></td>
+                            <td>{{ cat.videos.count }}</td>
+                            <td>{{ cat.flipbooks.count }}</td>
+                            <td>
+                                <div class="db-actions">
+                                    <button onclick="openEditCat({{ cat.pk }}, '{{ cat.name }}')" class="db-btn-e">Edit</button>
+                                    <button onclick="openDelCat({{ cat.pk }}, '{{ cat.name }}')" class="db-btn-d">Del</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="db-empty">No categories yet. Click "+ Add Category" to start!</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="section-audit" class="db-section" style="display:none;">
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Security</div>
+                    <h1 class="db-title">Audit Log</h1>
+                    <p class="db-sub">Track logins and changes made in the system.</p>
+                </div>
+                <a href="/admin/main/auditlog/" class="db-btn teal">Open in Admin</a>
+            </div>
+            <div class="db-card">
+                <table class="db-table">
+                    <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>IP Address</th></tr></thead>
+                    <tbody>
+                        {% for log in recent_audit_logs %}
+                        <tr>
+                            <td>{{ log.created_at|date:"M d, Y h:i A" }}</td>
+                            <td>{{ log.actor.username|default:"System" }}</td>
+                            <td>{{ log.get_action_display }}</td>
+                            <td>{{ log.target_label }}</td>
+                            <td>{{ log.ip_address|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="db-empty">No audit logs yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="section-archive" class="db-section" style="display:none;">
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Manage</div>
+                    <h1 class="db-title">Archived Files</h1>
+                    <p class="db-sub">Monitor videos and flipbooks that were deleted by users.</p>
+                </div>
+            </div>
+            
+            <div class="db-card" style="margin-bottom: 20px;">
+                <div class="db-card-head"><h3>Archived Videos</h3></div>
+                <table class="db-table">
+                    <thead><tr><th>Title</th><th>Category</th><th>Archived On</th></tr></thead>
+                    <tbody>
+                        {% for video in archived_videos %}
+                        <tr>
+                            <td>{{ video.title }}</td>
+                            <td><span class="db-badge green">{{ video.category }}</span></td>
+                            <td>{{ video.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="db-empty">No archived videos.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="db-card">
+                <div class="db-card-head"><h3>Archived Flipbooks</h3></div>
+                <table class="db-table">
+                    <thead><tr><th>Title</th><th>Category</th><th>Archived On</th></tr></thead>
+                    <tbody>
+                        {% for flipbook in archived_flipbooks %}
+                        <tr>
+                            <td>{{ flipbook.title }}</td>
+                            <td><span class="db-badge teal">{{ flipbook.category }}</span></td>
+                            <td>{{ flipbook.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="db-empty">No archived flipbooks.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- MODAL: Add Category -->
+<div id="modal-add-cat" class="db-modal-overlay" style="display:none;">
+    <div class="db-modal">
+        <h3>Add Category</h3>
+        <form method="POST" action="{% url 'category_create' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Category Name</label>
+                <input type="text" name="name" placeholder="e.g. Mathematics" required>
+            </div>
+            <div class="db-modal-btns">
+                <button type="submit" class="db-btn green">Save</button>
+                <button type="button" onclick="document.getElementById('modal-add-cat').style.display='none'" class="db-btn-outline">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Edit Category -->
+<div id="modal-edit-cat" class="db-modal-overlay" style="display:none;">
+    <div class="db-modal">
+        <h3>Edit Category</h3>
+        <form method="POST" id="edit-cat-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Category Name</label>
+                <input type="text" name="name" id="edit-cat-name" required>
+            </div>
+            <div class="db-modal-btns">
+                <button type="submit" class="db-btn green">Update</button>
+                <button type="button" onclick="document.getElementById('modal-edit-cat').style.display='none'" class="db-btn-outline">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Delete Category -->
+<div id="modal-del-cat" class="db-modal-overlay" style="display:none;">
+    <div class="db-modal">
+        <h3>Delete Category</h3>
+        <p style="color:#5A6A5A; margin-bottom:20px;">Are you sure you want to delete <strong id="del-cat-name"></strong>?</p>
+        <form method="POST" id="del-cat-form">
+            {% csrf_token %}
+            <div class="db-modal-btns">
+                <button type="submit" class="db-btn red">Yes, Delete</button>
+                <button type="button" onclick="document.getElementById('modal-del-cat').style.display='none'" class="db-btn-outline">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showSection(name) {
+    const sectionId = 'section-' + name;
+    const targetSection = document.getElementById(sectionId);
+
+    if (!targetSection) {
+        return;
+    }
+
+    document.querySelectorAll('.db-section').forEach((section) => {
+        section.style.display = 'none';
+    });
+
+    document.querySelectorAll('.db-sidebar-item').forEach((item) => {
+        item.classList.remove('active');
+    });
+
+    targetSection.style.display = 'block';
+
+    const activeItem = document.querySelector('.db-sidebar-item[data-section="' + name + '"]');
+    if (activeItem) {
+        activeItem.classList.add('active');
+    }
+
+    if (window.location.hash !== '#' + sectionId) {
+        window.location.hash = sectionId;
+    }
+}
+
+function openEditCat(pk, name) {
+    document.getElementById('edit-cat-form').action = '/dashboard/category/' + pk + '/edit/';
+    document.getElementById('edit-cat-name').value = name;
+    document.getElementById('modal-edit-cat').style.display = 'flex';
+}
+
+function openDelCat(pk, name) {
+    document.getElementById('del-cat-form').action = '/dashboard/category/' + pk + '/delete/';
+    document.getElementById('del-cat-name').textContent = name;
+    document.getElementById('modal-del-cat').style.display = 'flex';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const hash = window.location.hash.replace('#section-', '');
+    const defaultSection = hash || 'overview';
+    showSection(defaultSection);
+});
+</script>
+
+{% endblock %}

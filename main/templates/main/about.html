@@ -1,0 +1,80 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}- About{% endblock %}
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/about.css' %}">
+{% endblock %}
+{% block content %}
+
+<section class="about-hero">
+    <div class="about-hero-inner">
+        <p class="about-kicker">Learn More About Us</p>
+        <h1 class="about-page-title">About CraftyKids</h1>
+        <p class="about-page-sub">Discover the story behind our creative learning platform and the school community it supports.</p>
+    </div>
+</section>
+
+<section class="about-section">
+    <div class="about-card">
+        <div class="about-icon">&#10084;</div>
+        <div>
+            <h3>Our Purpose</h3>
+            <p>CraftyKids is designed to help elementary students learn through creative, hands-on DIY projects. We believe that combining structured education with fun, colorful activities helps children retain knowledge better while developing their fine motor skills and creativity.</p>
+        </div>
+    </div>
+
+    <div class="about-card">
+        <div class="about-icon">&#127979;</div>
+        <div>
+            <h3>Project Background</h3>
+            <p>This platform was specially developed for <strong>Progressive Elementary School</strong>. Our goal is to provide a safe, engaging online environment where students, teachers, and parents can collaborate and access high-quality educational materials anytime, anywhere.</p>
+        </div>
+    </div>
+
+    <div class="about-two-col">
+        <div class="about-contact">
+            <h3>Contact Us</h3>
+            <p><strong>School:</strong> Progressive Elementary School</p>
+            <p><strong>Address:</strong> Camia St., Progressive Village 15, Barangay Molino II, Bacoor City, Cavite, 4102.</p>
+            <p><strong>Email:</strong> 136597@deped.gov.ph</p>
+            <p><strong>Phone:</strong> (046) 434 0253</p>
+        </div>
+        <div class="about-everyone">
+            <h3>For Everyone</h3>
+            <ul>
+                <li><strong>Students:</strong> Fun and easy-to-follow tutorials</li>
+                <li><strong>Teachers:</strong> Structured curriculum support</li>
+                <li><strong>Parents:</strong> Safe and ad-free learning environment</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block footer %}
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <div class="footer-logo">CraftyKids</div>
+            <p>Learning through creative and hands-on DIY activities for elementary students.</p>
+        </div>
+        <div class="footer-links">
+            <h4>Explore</h4>
+            <a href="{% url 'home' %}">Home</a>
+            <a href="{% url 'about' %}">About Us</a>
+            <a href="{% url 'support_us' %}">Support Us</a>
+            <a href="{% url 'faqs' %}">FAQs</a>
+        </div>
+        <div class="footer-links">
+            <h4>Developed For</h4>
+            <strong>Progressive Elementary School</strong>
+            <p>Empowering young minds with creativity and structured learning.</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>&copy; 2026 CraftyKids. All rights reserved.</span>
+        <span>Made with <span class="footer-heart">&#10084;</span> for kids</span>
+    </div>
+</footer>
+{% endblock %}

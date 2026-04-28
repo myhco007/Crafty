@@ -1,0 +1,515 @@
+.db-wrap {
+    display: flex;
+    min-height: calc(100vh - 64px);
+}
+
+.db-sidebar {
+    width: 220px;
+    background: #0d2818;
+    padding: 24px 0;
+    flex-shrink: 0;
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+}
+
+.db-sidebar-logo {
+    font-family: "Fredoka One", cursive;
+    font-size: 1.3rem;
+    padding: 0 20px 20px;
+    border-bottom: 1px solid #1a4a2a;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, #ffd93d, #2ecc71);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.db-sidebar-section {
+    font-size: 0.7rem;
+    color: #3a6a3a;
+    text-transform: uppercase;
+    padding: 14px 20px 5px;
+    letter-spacing: 1px;
+    font-weight: 800;
+}
+
+.db-sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 20px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #7aaa7a;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.db-sidebar-item:hover {
+    color: #a8f0c6;
+    background: rgba(46, 204, 113, 0.08);
+}
+
+.db-sidebar-item.active {
+    color: #2ecc71;
+    background: rgba(46, 204, 113, 0.15);
+    border-left: 3px solid #2ecc71;
+}
+
+.db-main {
+    flex: 1;
+    padding: 32px;
+    background: #fffdf0;
+    overflow-y: auto;
+}
+
+.db-page-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #ffd93d, #2ecc71);
+    color: #0d2818;
+    font-weight: 800;
+    font-size: 0.82rem;
+    padding: 5px 16px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+}
+
+.db-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.db-title {
+    font-family: "Fredoka One", cursive;
+    font-size: 1.6rem;
+    color: var(--dark);
+    margin-bottom: 4px;
+}
+
+.db-sub {
+    font-size: 0.88rem;
+    color: var(--gray);
+}
+
+.db-top-btns {
+    display: flex;
+    gap: 10px;
+}
+
+.db-btn,
+.db-btn-outline {
+    padding: 9px 20px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 0.88rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: opacity 0.2s, transform 0.2s, background 0.2s;
+}
+
+.db-btn {
+    border: none;
+}
+
+.db-btn:hover,
+.db-btn-outline:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
+.db-btn.green {
+    background: var(--green);
+    color: var(--white);
+}
+
+.db-btn.teal {
+    background: var(--teal);
+    color: var(--white);
+}
+
+.db-btn.red {
+    background: #ff6b6b;
+    color: var(--white);
+}
+
+.db-btn-outline {
+    border: 2px solid var(--green-mid);
+    background: var(--white);
+    color: var(--gray);
+}
+
+.db-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.db-stat,
+.db-card {
+    background: var(--white);
+    border-radius: 14px;
+    border: 1.5px solid var(--green-mid);
+}
+
+.db-stat {
+    padding: 18px;
+}
+
+.db-stat-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.db-stat-lbl {
+    font-size: 0.72rem;
+    color: var(--gray);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.db-stat-ico {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.ico-v {
+    background: #fffbe6;
+}
+
+.ico-f {
+    background: #a8f0c6;
+}
+
+.ico-u {
+    background: #e0f7fa;
+}
+
+.ico-c {
+    background: #fce4ec;
+}
+
+.ico-a {
+    background: #fff3e0;
+}
+
+.db-stat-num {
+    font-family: "Fredoka One", cursive;
+    font-size: 2rem;
+    color: var(--green-dark);
+    line-height: 1;
+}
+
+.db-stat-hint {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-top: 4px;
+}
+
+.db-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.db-card {
+    overflow: hidden;
+}
+
+.db-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1.5px solid #e8faf0;
+    background: #fffbe6;
+}
+
+.db-card-head h3 {
+    font-family: "Fredoka One", cursive;
+    font-size: 1rem;
+    color: var(--dark);
+}
+
+.db-view-all {
+    font-size: 0.78rem;
+    color: var(--green-dark);
+    font-weight: 800;
+    background: #e8faf0;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+.db-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.db-table th {
+    background: var(--green-light);
+    color: var(--green-dark);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    text-align: left;
+    letter-spacing: 0.5px;
+}
+
+.db-table td {
+    padding: 10px 16px;
+    color: var(--dark);
+    border-bottom: 1px solid var(--green-light);
+}
+
+.db-table tr:last-child td {
+    border-bottom: none;
+}
+
+.db-table tr:hover td {
+    background: #f8fffb;
+}
+
+.db-empty {
+    text-align: center;
+    color: #bbb;
+    font-style: italic;
+    padding: 20px;
+}
+
+.db-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.db-badge.green {
+    background: #a8f0c6;
+    color: var(--green-dark);
+}
+
+.db-badge.teal {
+    background: #e0f7fa;
+    color: var(--teal-dark);
+}
+
+.db-badge.gray {
+    background: #eee;
+    color: #888;
+}
+
+.db-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.db-btn-e,
+.db-btn-d {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.db-btn-e {
+    background: #e8faf0;
+    color: var(--green-dark);
+}
+
+.db-btn-d {
+    background: #ffebee;
+    color: #e53935;
+}
+
+.db-btn-e:hover,
+.db-btn-d:hover {
+    opacity: 0.8;
+}
+
+.db-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.db-modal {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 32px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+    border-top: 4px solid var(--green);
+}
+
+.db-modal h3 {
+    font-family: "Fredoka One", cursive;
+    font-size: 1.3rem;
+    color: var(--dark);
+    margin-bottom: 20px;
+}
+
+.db-modal-btns {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.metro-container {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.metro-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 140px;
+    gap: 12px;
+}
+
+.metro-calendar {
+    width: 320px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1.5px solid var(--green-mid);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.metro-tile {
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.metro-tile:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+}
+
+.metro-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+}
+
+.metro-text {
+    font-family: "Fredoka One", cursive;
+    font-size: 0.95rem;
+    text-align: center;
+    line-height: 1.2;
+    letter-spacing: 0.5px;
+}
+
+.tile-wide {
+    grid-column: span 2;
+}
+
+.tile-tall {
+    grid-row: span 2;
+}
+
+.bg-red { background: #ff6b81; }
+.bg-blue { background: #70a1ff; }
+.bg-purple { background: #a29bfe; }
+.bg-yellow { background: #ffd32a; color: #574b00; }
+.bg-teal { background: #1dd1a1; }
+.bg-green { background: #2ed573; }
+.bg-pink { background: #ff9ff3; }
+.bg-orange { background: #ffa502; }
+
+/* Simple Calendar Styles */
+.cal-header {
+    text-align: center;
+    font-family: "Fredoka One", cursive;
+    color: var(--green-dark);
+    font-size: 1.2rem;
+    margin-bottom: 16px;
+}
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    text-align: center;
+}
+.cal-day-name {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--gray);
+    margin-bottom: 8px;
+}
+.cal-day {
+    font-size: 0.85rem;
+    padding: 6px 0;
+    color: var(--dark);
+    font-weight: 600;
+    border-radius: 8px;
+}
+.cal-day.active {
+    background: var(--green);
+    color: #fff;
+}
+
+@media (max-width: 1200px) {
+    .metro-container {
+        flex-direction: column;
+    }
+    .metro-calendar {
+        width: 100%;
+    }
+}
+
+@media (max-width: 960px) {
+    .db-wrap {
+        flex-direction: column;
+    }
+
+    .db-sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+    }
+
+    .metro-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

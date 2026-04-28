@@ -1,0 +1,60 @@
+Folder PATH listing
+Volume serial number is 04ED-2F9B
+C:.
+³   db.sqlite3
+³   manage.py
+³   structure.txt
+³   
+ÃÄÄÄcraftykids
+³   ³   asgi.py
+³   ³   settings.py
+³   ³   urls.py
+³   ³   wsgi.py
+³   ³   __init__.py
+³   ³   
+³   ÀÄÄÄ__pycache__
+³           settings.cpython-312.pyc
+³           urls.cpython-312.pyc
+³           wsgi.cpython-312.pyc
+³           __init__.cpython-312.pyc
+³           
+ÃÄÄÄmain
+³   ³   admin.py
+³   ³   apps.py
+³   ³   models.py
+³   ³   tests.py
+³   ³   urls.py
+³   ³   views.py
+³   ³   __init__.py
+³   ³   
+³   ÃÄÄÄmigrations
+³   ³   ³   __init__.py
+³   ³   ³   
+³   ³   ÀÄÄÄ__pycache__
+³   ³           __init__.cpython-312.pyc
+³   ³           
+³   ÃÄÄÄtemplates
+³   ³   ÀÄÄÄmain
+³   ³           about.html
+³   ³           base.html
+³   ³           flipbook_confirm_delete.html
+³   ³           flipbook_form.html
+³   ³           flipbook_list.html
+³   ³           home.html
+³   ³           notifications.html
+³   ³           video_confirm_delete.html
+³   ³           video_form.html
+³   ³           video_list.html
+³   ³           
+³   ÀÄÄÄ__pycache__
+³           admin.cpython-312.pyc
+³           apps.cpython-312.pyc
+³           models.cpython-312.pyc
+³           urls.cpython-312.pyc
+³           views.cpython-312.pyc
+³           __init__.cpython-312.pyc
+³           
+ÀÄÄÄstatic
+    ÀÄÄÄcss
+            style.css
+            

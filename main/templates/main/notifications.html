@@ -1,0 +1,37 @@
+{% extends 'main/base.html' %}
+{% block title %}- Notifications{% endblock %}
+{% load static %}
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="notif-page">
+    <h1> Notifications</h1>
+    <p class="subtitle">Stay updated with the latest news and activities.</p>
+
+    {% for notif in notifications %}
+    <div class="notif-card">
+        <div class="notif-icon" style="font-size: 1.5rem;">
+            {% if notif.icon == 'Video' %}🎥{% elif notif.icon == 'Book' %}📖{% elif notif.icon == 'Note' %}📢{% else %}⭐{% endif %}
+        </div>
+        <div class="notif-body">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h4>{{ notif.title }}</h4>
+                <span class="notif-date" style="font-size:0.8rem; color:var(--gray);">{{ notif.created_at|timesince }} ago</span>
+            </div>
+            <p>{{ notif.message }}</p>
+        </div>
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 40px; color: var(--gray); background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);">
+        <p style="font-weight: 700;">No notifications at this time.</p>
+    </div>
+    {% endfor %}
+
+    <div class="notif-back">
+        <a href="{% url 'home' %}" class="btn-back">← Back to Home Page</a>
+    </div>
+</div>
+
+{% endblock %}

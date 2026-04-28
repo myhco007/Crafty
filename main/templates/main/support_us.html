@@ -1,0 +1,51 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}- Support Us{% endblock %}
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/info_pages.css' %}">
+{% endblock %}
+{% block content %}
+
+<section class="info-hero">
+    <div class="info-hero-inner">
+        <p class="info-kicker">Help Our Learning Community</p>
+        <h1 class="info-page-title">Support Us</h1>
+        <p class="info-page-sub">Your support helps CraftyKids continue providing fun, creative, and meaningful learning materials for elementary students.</p>
+    </div>
+</section>
+
+<section class="info-section">
+    <div class="info-card">
+        <div class="info-icon">&#127912;</div>
+        <div>
+            <h3>Donate Learning Materials</h3>
+            <p>You can help by donating art supplies, recycled materials, printable resources, and other classroom-friendly tools that children can use for DIY activities.</p>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <div class="info-icon">&#128101;</div>
+        <div>
+            <h3>Partner With Us</h3>
+            <p>Schools, parents, teachers, and local organizations are welcome to collaborate with us to create more educational content and student-friendly projects.</p>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <div class="info-icon">&#128161;</div>
+        <div>
+            <h3>Share Ideas</h3>
+            <p>If you have suggestions for activities, lessons, or improvements, your ideas can help us build a better and more engaging platform for young learners.</p>
+        </div>
+    </div>
+
+    <div class="info-contact-box">
+        <h3>How to Reach Us</h3>
+        <p><strong>School:</strong> Progressive Elementary School</p>
+        <p><strong>Email:</strong> 136597@deped.gov.ph</p>
+        <p><strong>Phone:</strong> (046) 434 0253</p>
+        <p><strong>Address:</strong> Camia St., Progressive Village 15, Barangay Molino II, Bacoor City, Cavite, 4102.</p>
+    </div>
+</section>
+
+{% endblock %}

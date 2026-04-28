@@ -1,0 +1,103 @@
+{% extends 'main/base.html' %}
+{% block title %}- DIY Flipbook Tutorials{% endblock %}
+{% load static %}
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/flipbook_list.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="page-section">
+    <h1 class="page-title">DIY Flipbook Tutorials</h1>
+    <p class="page-sub">Read step-by-step instructions in our digital books!</p>
+
+    <div class="tab-row">
+        <a href="?{% if active != 'Mathematics' %}category=Mathematics&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if selected_grade and selected_grade != 'All Grades' %}grade={{ selected_grade }}&{% endif %}{% if selected_craft and selected_craft != 'All Categories' %}craft_category={{ selected_craft }}{% endif %}" class="tab-btn {% if active == 'Mathematics' %}active{% endif %}">Mathematics</a>
+        <a href="?{% if active != 'MAPEH' %}category=MAPEH&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if selected_grade and selected_grade != 'All Grades' %}grade={{ selected_grade }}&{% endif %}{% if selected_craft and selected_craft != 'All Categories' %}craft_category={{ selected_craft }}{% endif %}" class="tab-btn {% if active == 'MAPEH' %}active{% endif %}">MAPEH</a>
+        <a href="?{% if active != 'Science' %}category=Science&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if selected_grade and selected_grade != 'All Grades' %}grade={{ selected_grade }}&{% endif %}{% if selected_craft and selected_craft != 'All Categories' %}craft_category={{ selected_craft }}{% endif %}" class="tab-btn {% if active == 'Science' %}active{% endif %}">Science</a>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+        <form method="GET" action="" class="yt-search-form">
+            {% if request.GET.category %}
+                <input type="hidden" name="category" value="{{ request.GET.category }}">
+            {% endif %}
+            
+            <select name="grade" class="yt-grade-select" onchange="this.form.submit()">
+                <option value="All Grades" {% if selected_grade == 'All Grades' %}selected{% endif %}>GRADE</option>
+                <option value="Grade 1" {% if selected_grade == 'Grade 1' %}selected{% endif %}>GRADE 1</option>
+                <option value="Grade 2" {% if selected_grade == 'Grade 2' %}selected{% endif %}>GRADE 2</option>
+                <option value="Grade 3" {% if selected_grade == 'Grade 3' %}selected{% endif %}>GRADE 3</option>
+                <option value="Grade 4" {% if selected_grade == 'Grade 4' %}selected{% endif %}>GRADE 4</option>
+                <option value="Grade 5" {% if selected_grade == 'Grade 5' %}selected{% endif %}>GRADE 5</option>
+                <option value="Grade 6" {% if selected_grade == 'Grade 6' %}selected{% endif %}>GRADE 6</option>
+            </select>
+
+            <select name="craft_category" class="yt-grade-select" onchange="this.form.submit()">
+                <option value="All Categories" {% if selected_craft == 'All Categories' %}selected{% endif %}>CATEGORY</option>
+                <option value="Toys & Games" {% if selected_craft == 'Toys & Games' %}selected{% endif %}>Toys & Games</option>
+                <option value="Role play & Imagination" {% if selected_craft == 'Role play & Imagination' %}selected{% endif %}>Role play & Imagination</option>
+                <option value="Simple Science & Experiments" {% if selected_craft == 'Simple Science & Experiments' %}selected{% endif %}>Simple Science & Experiments</option>
+                <option value="Home & Classroom decoration" {% if selected_craft == 'Home & Classroom decoration' %}selected{% endif %}>Home & Classroom decoration</option>
+                <option value="Art & Creative crafts" {% if selected_craft == 'Art & Creative crafts' %}selected{% endif %}>Art & Creative crafts</option>
+                <option value="Paper & cardboard crafts" {% if selected_craft == 'Paper & cardboard crafts' %}selected{% endif %}>Paper & cardboard crafts</option>
+                <option value="Health & Hygiene" {% if selected_craft == 'Health & Hygiene' %}selected{% endif %}>Health & Hygiene</option>
+                <option value="Nature & Eco - Friendly projects" {% if selected_craft == 'Nature & Eco - Friendly projects' %}selected{% endif %}>Nature & Eco-Friendly</option>
+                <option value="Gifts & Holiday crafts" {% if selected_craft == 'Gifts & Holiday crafts' %}selected{% endif %}>Gifts & Holiday crafts</option>
+                <option value="Skill - Building crafts" {% if selected_craft == 'Skill - Building crafts' %}selected{% endif %}>Skill-Building crafts</option>
+            </select>
+
+            <input type="text" name="q" class="yt-search-input" placeholder="Search flipbooks..." value="{{ request.GET.q }}">
+            <button type="submit" class="yt-search-btn" aria-label="Search">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            </button>
+        </form>
+    </div>
+
+    <div class="media-grid">
+        {% for flipbook in flipbooks %}
+        <div class="yt-card">
+            <a href="{% url 'flipbook_detail' flipbook.pk %}" class="yt-thumb-container">
+                {% if flipbook.cover_image %}
+                    <img src="{{ flipbook.cover_image.url }}" alt="{{ flipbook.title }}" class="yt-thumb">
+                {% else %}
+                    <div class="yt-thumb-placeholder book-placeholder">
+                        <span class="book-icon">&#128214;</span>
+                    </div>
+                {% endif %}
+            </a>
+            <div class="yt-details">
+                <div class="yt-avatar">
+                    <img src="{% static 'images/favicon.png' %}" alt="CraftyKids">
+                </div>
+                <div class="yt-info">
+                    <h3 class="yt-title">{{ flipbook.title }}</h3>
+                    <div class="yt-meta">
+                        <div class="yt-channel">
+                            CraftyKids
+                            <svg class="yt-verified" viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zM10 17l-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8l-9 9z"/></svg>
+                        </div>
+                        <div class="yt-stats">
+                            {{ flipbook.category }} &bull; {{ flipbook.created_at|timesince }} ago
+                        </div>
+                    </div>
+                </div>
+                <button class="yt-menu-btn" aria-label="More options">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <p>No flipbooks yet for this category. Check back soon!</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="page-nav">
+        <a href="{% url 'video_list' %}" class="btn-nav-left">Back to Videos</a>
+        <a href="{% url 'home' %}" class="btn-nav-right">Return to Home Page</a>
+    </div>
+</div>
+
+{% endblock %}

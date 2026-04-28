@@ -1,0 +1,270 @@
+:root {
+    --green: #2ecc71;
+    --green-dark: #27ae60;
+    --green-mid: #a8f0c6;
+    --green-light: #f0fff4;
+    --teal: #4ecdc4;
+    --teal-dark: #38b2ac;
+    --yellow: #ffd93d;
+    --pink: #ff6b9d;
+    --white: #ffffff;
+    --dark: #1a2e1a;
+    --gray: #5a6a5a;
+    --radius: 16px;
+    --shadow: 0 4px 16px rgba(46, 204, 113, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Nunito", sans-serif;
+    background: var(--green-light);
+    color: var(--dark);
+}
+
+.navbar {
+    background: var(--white);
+    box-shadow: 0 2px 8px rgba(46, 204, 113, 0.12);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    border-bottom: 3px solid var(--green);
+}
+
+.nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.nav-logo {
+    font-family: "Fredoka One", cursive;
+    font-size: 1.5rem;
+    color: var(--green-dark);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: var(--gray);
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--green-dark);
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.nav-notif {
+    font-size: 1.3rem;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+
+.nav-notif:hover {
+    transform: scale(1.2);
+}
+
+.btn-register {
+    background: var(--green);
+    color: var(--white);
+    padding: 9px 20px;
+    border-radius: 24px;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.btn-register:hover {
+    background: var(--green-dark);
+}
+
+.messages {
+    list-style: none;
+    margin-bottom: 20px;
+}
+
+.messages li {
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.messages li.success {
+    background: #e8faf0;
+    color: #27ae60;
+}
+
+.messages li.error {
+    background: #ffebee;
+    color: #e53935;
+}
+
+.messages li.warning {
+    background: #fffbe6;
+    color: #b8860b;
+}
+
+.form-group {
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--dark);
+    margin-bottom: 6px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #d0e8d0;
+    border-radius: 10px;
+    font-family: "Nunito", sans-serif;
+    font-size: 0.95rem;
+    color: var(--dark);
+    background: var(--green-light);
+    transition: border-color 0.2s;
+    outline: none;
+}
+
+.form-group input:focus {
+    border-color: var(--green);
+    background: var(--white);
+}
+
+.form-row {
+    display: flex;
+    gap: 12px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.footer {
+    background: #0d2818;
+    color: #ccc;
+    padding: 48px 24px 20px;
+    margin-top: 80px;
+}
+
+.footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    gap: 48px;
+    flex-wrap: wrap;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #1a4a2a;
+}
+
+.footer-logo {
+    font-family: "Fredoka One", cursive;
+    font-size: 1.4rem;
+    color: var(--green);
+    margin-bottom: 10px;
+}
+
+.footer-brand p {
+    font-size: 0.9rem;
+    max-width: 220px;
+}
+
+.footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.footer-links h4 {
+    color: var(--white);
+    font-family: "Fredoka One", cursive;
+    margin-bottom: 4px;
+}
+
+.footer-links a {
+    color: #aaa;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.footer-links a:hover {
+    color: var(--green);
+}
+
+.footer-links strong {
+    color: var(--white);
+}
+
+.footer-links p {
+    font-size: 0.85rem;
+}
+
+.footer-bottom {
+    max-width: 1100px;
+    margin: 20px auto 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+    color: #777;
+}
+
+@media (max-width: 900px) {
+    .nav-inner {
+        padding: 16px 24px;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 640px) {
+    .nav-links,
+    .nav-right {
+        gap: 12px;
+    }
+
+    .form-row {
+        flex-direction: column;
+    }
+}

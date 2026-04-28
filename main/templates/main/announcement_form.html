@@ -1,0 +1,51 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}- {{ title }}{% endblock %}
+{% block content %}
+<div style="max-width: 600px; margin: 60px auto; padding: 40px; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);">
+    <h1 style="color: var(--green-dark); margin-bottom: 30px; text-align: center; font-family: 'Fredoka One', cursive;">{{ title }}</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Title</label>
+            {{ form.title }}
+        </div>
+        <div class="form-group" style="margin-top: 20px;">
+            <label>Content</label>
+            {{ form.content }}
+        </div>
+        <div class="form-group" style="margin-top: 20px; font-weight: 800; display:flex; align-items:center; gap:8px;">
+            {{ form.is_active }} <label style="margin:0;">Show to everyone?</label>
+        </div>
+        
+        <div style="display: flex; gap: 16px; margin-top: 30px; justify-content: center;">
+            <button type="submit" class="btn-register" style="border: none; cursor: pointer; padding: 12px 30px; font-size: 1.1rem; border-radius:24px;">Save Announcement</button>
+            <a href="{% url 'dashboard' %}#section-announcements" style="padding: 12px 30px; text-decoration: none; color: var(--gray); font-weight: 800; display: flex; align-items: center;">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-group input[type="text"], .form-group textarea {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1.5px solid #d0e8d0;
+        border-radius: 12px;
+        font-family: "Nunito", sans-serif;
+        font-size: 1.05rem;
+        background: var(--green-light);
+        outline: none;
+        transition: all 0.2s;
+    }
+    .form-group textarea {
+        min-height: 200px;
+        resize: vertical;
+    }
+    .form-group input[type="text"]:focus, .form-group textarea:focus {
+        border-color: var(--green);
+        background: var(--white);
+        box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+    }
+</style>
+{% endblock %}

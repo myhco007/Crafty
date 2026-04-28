@@ -1,0 +1,70 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Explore Subjects - CraftyKids{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+<style>
+    .subjects-section {
+        padding-top: 48px !important;
+    }
+
+    .subject-card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block nav %}{% endblock %}
+
+{% block content %}
+<section class="subjects-section" id="subjects" style="min-height: 60vh;">
+    <h2>Explore Content</h2>
+    <p class="section-sub">Pumili kung gusto mong mag-explore ng flipbooks o videos.</p>
+    <div class="cards-row">
+        <a href="{% url 'flipbook_list' %}" class="subject-card-link">
+            <div class="subject-card">
+                <div class="card-icon pink-bg">&#128214;</div>
+                <h3>Flipbook</h3>
+                <p>Tingnan ang mga creative DIY flipbooks at step-by-step activities.</p>
+            </div>
+        </a>
+        <a href="{% url 'video_list' %}" class="subject-card-link">
+            <div class="subject-card">
+                <div class="card-icon green-bg">&#127909;</div>
+                <h3>Videos</h3>
+                <p>Manood ng fun and engaging learning videos for kids.</p>
+            </div>
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block footer %}
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <div class="footer-logo">CraftyKids</div>
+            <p>Learning through creative and hands-on DIY activities for elementary students.</p>
+        </div>
+        <div class="footer-links">
+            <h4>Explore</h4>
+            <a href="{% url 'about' %}">About Us</a>
+            <a href="{% url 'support_us' %}">Support Us</a>
+            <a href="{% url 'faqs' %}">FAQs</a>
+        </div>
+        <div class="footer-links">
+            <h4>Developed For</h4>
+            <strong>Progressive Elementary School</strong>
+            <p>Empowering young minds with creativity and structured learning.</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>&copy; 2026 CraftyKids. All rights reserved.</span>
+        <span>Made with <span class="footer-heart">&#10084;</span> for kids</span>
+    </div>
+</footer>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}- FAQs{% endblock %}
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/info_pages.css' %}">
+{% endblock %}
+{% block content %}
+
+<section class="info-hero">
+    <div class="info-hero-inner">
+        <p class="info-kicker">Helpful Information</p>
+        <h1 class="info-page-title">Frequently Asked Questions</h1>
+        <p class="info-page-sub">Here are some quick answers to common questions about using the CraftyKids platform.</p>
+    </div>
+</section>
+
+<section class="info-section">
+    <div class="faq-item">
+        <h3>What is CraftyKids?</h3>
+        <p>CraftyKids is a learning platform where students can explore videos and flipbooks with fun DIY and educational activities.</p>
+    </div>
+
+    <div class="faq-item">
+        <h3>Who can use this platform?</h3>
+        <p>Students, teachers, parents, and school staff can use CraftyKids to support classroom and at-home learning.</p>
+    </div>
+
+    <div class="faq-item">
+        <h3>Do I need to pay to use CraftyKids?</h3>
+        <p>No. The platform is designed as a school learning resource for children and their families.</p>
+    </div>
+
+    <div class="faq-item">
+        <h3>What can I find here?</h3>
+        <p>You can find educational videos, flipbooks, and creative activity ideas that help make learning more interactive and enjoyable.</p>
+    </div>
+
+    <div class="faq-item">
+        <h3>Who do I contact if I need help?</h3>
+        <p>You may contact Progressive Elementary School through <strong>136597@deped.gov.ph</strong> or <strong>(046) 434 0253</strong> for support and inquiries.</p>
+    </div>
+</section>
+
+{% endblock %}

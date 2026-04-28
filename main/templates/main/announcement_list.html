@@ -1,0 +1,25 @@
+{% extends 'main/base.html' %}
+{% block title %}- Announcement{% endblock %}
+{% block content %}
+<div style="max-width: 900px; margin: 40px auto; padding: 20px;">
+    <h1 style="color: var(--green-dark); margin-bottom: 10px;">🥳 Announcement</h1>
+    <p style="color: var(--gray); margin-bottom: 40px; font-size: 1.1rem; font-weight: 600;">Stay up-to-date with the latest news, updates, and DIY activities from CraftyKids!</p>
+
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        {% for ann in announcements %}
+        <div style="background: var(--white); padding: 30px; border-radius: var(--radius); box-shadow: var(--shadow); border-left: 6px solid var(--green);">
+            <h2 style="color: var(--dark); font-size: 1.5rem; margin-bottom: 8px; font-family: 'Fredoka One', cursive;">{{ ann.title }}</h2>
+            <p style="font-size: 0.9rem; color: #888; font-weight: 700; margin-bottom: 20px;">🗓️ Posted on {{ ann.created_at|date:"F j, Y, g:i A" }}</p>
+            <div style="line-height: 1.7; color: var(--dark); font-size: 1.05rem;">
+                {{ ann.content|linebreaks }}
+            </div>
+        </div>
+        {% empty %}
+        <div style="text-align: center; padding: 60px; background: var(--white); border-radius: var(--radius); color: var(--gray); box-shadow: var(--shadow);">
+            <h3 style="font-family: 'Fredoka One', cursive; margin-bottom:10px;">No announcement at this time.</h3>
+            <p>Check back later for exciting updates and news!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
