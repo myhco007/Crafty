@@ -13,6 +13,14 @@
         href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link id="dark-mode-stylesheet" rel="stylesheet" href="{% static 'css/dark-mode.css' %}" disabled>
+    <script>
+        // Check local storage and apply dark mode immediately if set
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+            document.getElementById('dark-mode-stylesheet').removeAttribute('disabled');
+        }
+    </script>
     {% block page_css %}{% endblock %}
 </head>
 
@@ -29,7 +37,7 @@
                     class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About</a>
                 <a href="{% url 'announcement_list' %}"
                     class="nav-link {% if request.resolver_match.url_name == 'announcement_list' %}active{% endif %}">Announcement</a>
-                {% if user.is_staff %}
+                {% if user.is_authenticated and user.is_staff or user.profile.role == 'TEACHER' %}
                 <a href="{% url 'dashboard' %}"
                     class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
                 {% endif %}
@@ -51,7 +59,13 @@
                     {% endif %}
                 </a>
                 {% if user.is_authenticated %}
-                <span style="font-weight:800; color:var(--green);">{{ user.first_name }}</span>
+                <a href="{% url 'profile' %}" class="nav-profile-circle" style="overflow:hidden;" title="My Profile">
+                    {% if user.profile.profile_picture %}
+                        <img src="{{ user.profile.profile_picture.url }}" alt="Profile" style="width:100%; height:100%; object-fit:cover;">
+                    {% else %}
+                        {{ user.first_name|default:user.username|make_list|first|upper }}
+                    {% endif %}
+                </a>
                 <a href="{% url 'logout' %}" class="btn-register">Logout</a>
                 {% else %}
                 <a href="{% url 'login' %}" class="btn-login">Login</a>
@@ -63,6 +77,8 @@
 
     {% block content %}{% endblock %}
     {% block footer %}{% endblock %}
+
+
 
     {% block scripts %}{% endblock %}
 </body>

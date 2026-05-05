@@ -27,3 +27,16 @@ class AnnouncementForm(forms.ModelForm):
         model = Announcement
         fields = ['title', 'content', 'is_active']
 
+from django.contrib.auth.models import User
+from .models import UserProfile
+
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name']
+
+class UserProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['profile_picture']
+

@@ -19,8 +19,8 @@
         <!-- Left Side: Welcome Text -->
         <div class="auth-box-left">
             <div class="auth-welcome-text">
-                <h1>Welcome!</h1>
-                <p>Create your account to get started with Progressive Elementary School.</p>
+                <h1>Join as a Teacher</h1>
+                <p>Register as an educator to start uploading DIY projects and flipbooks for your students.</p>
             </div>
         </div>
 
@@ -29,10 +29,10 @@
             <div class="auth-card">
                 <div class="auth-logo">
                     <div class="auth-logo-text">Crafty Kids</div>
-                    <p class="auth-card-welcome">Welcome to your creative space!</p>
+                    <p class="auth-card-welcome">Educator Registration</p>
                 </div>
 
-                <h2 class="auth-card-title">Register</h2>
+                <h2 class="auth-card-title">Teacher Signup</h2>
 
                 {% if messages %}
                     <ul class="messages">
@@ -43,19 +43,19 @@
                 {% endif %}
 
                 <!-- Register Form -->
-                <form method="POST" action="{% url 'register' %}">
+                <form method="POST" action="{% url 'teacher_register' %}">
                     {% csrf_token %}
                     <div class="form-group">
                         <label>Full Name</label>
-                        <input type="text" name="full_name" placeholder="" autocomplete="off" required>
+                        <input type="text" name="full_name" placeholder="Enter full name" autocomplete="off" required>
                     </div>
                     <div class="form-group">
                         <label>Email Address</label>
-                        <input type="email" name="email" placeholder="" autocomplete="off" required>
+                        <input type="email" name="email" placeholder="Enter email" autocomplete="off" required>
                     </div>
                     <div class="form-group">
                         <label>Username</label>
-                        <input type="text" name="username" placeholder="" autocomplete="off" required>
+                        <input type="text" name="username" placeholder="Choose username" autocomplete="off" required>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -63,7 +63,6 @@
                             <div class="password-field-wrapper">
                                 <input type="password" name="password1" id="password1" placeholder="••••••••" required>
                                 <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password1', this)">
-                                    <!-- Initially Eye-Off (Slashed) because password is hidden -->
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                                 </button>
                             </div>
@@ -78,11 +77,11 @@
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn-auth">Register</button>
+                    <button type="submit" class="btn-auth">Register as Teacher</button>
 
                     <div style="text-align: center; margin-top: 20px; font-size: 0.9rem;">
-                        <p style="color: #666; margin-bottom: 8px;">Want to share your lessons?</p>
-                        <a href="{% url 'teacher_register' %}" style="color: var(--green-dark); font-weight: 800; text-decoration: none;">Sign up as a teacher</a>
+                        <p style="color: #666; margin-bottom: 8px;">Not a teacher?</p>
+                        <a href="{% url 'register' %}" style="color: var(--green-dark); font-weight: 800; text-decoration: none;">Standard Client Registration</a>
                     </div>
                 </form>
 

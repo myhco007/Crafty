@@ -1,0 +1,417 @@
+/* interactions.css */
+.video-detail-container,
+.flipbook-interactions {
+    font-family: 'Nunito', sans-serif;
+}
+
+.video-detail-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 30px;
+}
+
+@media (max-width: 992px) {
+    .video-detail-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.video-player-wrap {
+    width: 100%;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.main-player {
+    width: 100%;
+    height: 100%;
+}
+
+.video-info-section {
+    margin-top: 20px;
+}
+
+.video-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 10px;
+}
+
+.video-meta-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #606060;
+    font-size: 0.95rem;
+}
+
+.like-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f2f2f2;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #000;
+    transition: background 0.2s;
+}
+
+.like-btn.active {
+    background: #ffebee;
+    color: #e91e63;
+}
+
+.like-btn.active svg {
+    fill: #e91e63;
+}
+
+.separator {
+    margin: 15px 0;
+    border: none;
+    border-top: 1px solid #e5e5e5;
+}
+
+.video-description {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #000;
+}
+
+/* Comments Section */
+.comments-section {
+    margin-top: 40px;
+}
+
+.comments-count {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #000;
+}
+
+.comment-form-wrap {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.user-avatar-placeholder img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.comment-form {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.comment-name-input {
+    border: none;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 5px 0;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-bottom 0.2s;
+}
+
+.comment-name-input:focus {
+    border-bottom: 2px solid #000;
+}
+
+.comment-textarea {
+    border: none;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 5px 0;
+    font-size: 0.95rem;
+    resize: none;
+    outline: none;
+    min-height: 40px;
+    transition: border-bottom 0.2s;
+}
+
+.comment-textarea:focus {
+    border-bottom: 2px solid #000;
+}
+
+.comment-form-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.comment-submit-btn {
+    background: #000;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.comment-submit-btn:hover {
+    background: #333;
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.comment-item {
+    display: flex;
+    gap: 15px;
+}
+
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ccc;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.comment-author {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #000;
+}
+
+.comment-date {
+    font-size: 0.75rem;
+    color: #606060;
+}
+
+.comment-text {
+    font-size: 0.95rem;
+    color: #000;
+    margin: 0;
+}
+
+.no-comments {
+    color: #606060;
+    font-style: italic;
+}
+
+.login-notice-box {
+    background: #f9f9f9;
+    border: 1px dashed #ccc;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.login-notice-box svg {
+    color: #606060;
+}
+
+.like-btn.disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    position: relative;
+}
+
+.like-btn.disabled:hover::after {
+    content: "Login to like";
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+/* Sidebar */
+.btn-back {
+    display: block;
+    text-align: center;
+    background: #f2f2f2;
+    color: #000;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+.btn-back:hover {
+    background: #e5e5e5;
+}
+
+.sidebar-title {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 5px;
+}
+
+/* Flipbook specific adjustments */
+.flipbook-viewer-page {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+.flipbook-interactions {
+    margin-top: 30px;
+}
+
+/* Global Login Popup */
+.login-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+.login-popup {
+    background: #fff;
+    width: min(90vw, 400px);
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    animation: popupScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popupScale {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.login-popup-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.login-popup-title {
+    font-family: "Fredoka One", cursive;
+    color: #27ae60;
+    margin-bottom: 10px;
+}
+
+.login-popup-text {
+    color: #5a6a5a;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.login-popup-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-popup-login {
+    background: #2ecc71;
+    color: #fff;
+    padding: 12px;
+    border-radius: 24px;
+    text-decoration: none;
+    font-weight: 800;
+}
+
+.btn-popup-cancel {
+    background: #f2f2f2;
+    color: #5a6a5a;
+    padding: 12px;
+    border-radius: 24px;
+    text-decoration: none;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+}
+
+font-size: 0.95rem;
+}
+
+.res-item-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #aaa;
+}
+
+.res-options-list {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.res-option {
+    padding: 10px 48px;
+    /* Indent to match YT style */
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.res-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.res-option.active {
+    background: rgba(255, 255, 255, 0.05);
+    font-weight: bold;
+    position: relative;
+}
+
+.res-option.active::before {
+    content: "✓";
+    position: absolute;
+    left: 18px;
+    color: #fff;
+}
+
+position: absolute;
+left: 18px;
+color: #fff;
+}

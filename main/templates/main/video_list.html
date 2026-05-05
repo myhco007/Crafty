@@ -10,73 +10,121 @@
     <h1 class="page-title">Videos</h1>
     <p class="page-sub">Watch fun, animated tutorials for your DIY projects!</p>
 
-    <!-- Category Tabs -->
+    <!-- Subject Tabs -->
     <div class="tab-row">
         <a href="?{% if active != 'Mathematics' %}category=Mathematics&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if selected_grade and selected_grade != 'All Grades' %}grade={{ selected_grade }}&{% endif %}{% if selected_craft and selected_craft != 'All Categories' %}craft_category={{ selected_craft }}{% endif %}" class="tab-btn {% if active == 'Mathematics' %}active{% endif %}">Mathematics</a>
         <a href="?{% if active != 'MAPEH' %}category=MAPEH&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if selected_grade and selected_grade != 'All Grades' %}grade={{ selected_grade }}&{% endif %}{% if selected_craft and selected_craft != 'All Categories' %}craft_category={{ selected_craft }}{% endif %}" class="tab-btn {% if active == 'MAPEH' %}active{% endif %}">MAPEH</a>
         <a href="?{% if active != 'Science' %}category=Science&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if selected_grade and selected_grade != 'All Grades' %}grade={{ selected_grade }}&{% endif %}{% if selected_craft and selected_craft != 'All Categories' %}craft_category={{ selected_craft }}{% endif %}" class="tab-btn {% if active == 'Science' %}active{% endif %}">Science</a>
     </div>
 
-    <!-- Search Bar -->
+    <!-- Search + Filter Bar -->
     <div class="search-container">
-        <form method="GET" action="" class="yt-search-form">
+        <form method="GET" action="" class="yt-search-form" id="main-filter-form">
             {% if request.GET.category %}
                 <input type="hidden" name="category" value="{{ request.GET.category }}">
             {% endif %}
-            
-            <select name="grade" class="yt-grade-select" onchange="this.form.submit()">
-                <option value="All Grades" {% if selected_grade == 'All Grades' %}selected{% endif %}>GRADE</option>
-                <option value="Grade 1" {% if selected_grade == 'Grade 1' %}selected{% endif %}>GRADE 1</option>
-                <option value="Grade 2" {% if selected_grade == 'Grade 2' %}selected{% endif %}>GRADE 2</option>
-                <option value="Grade 3" {% if selected_grade == 'Grade 3' %}selected{% endif %}>GRADE 3</option>
-                <option value="Grade 4" {% if selected_grade == 'Grade 4' %}selected{% endif %}>GRADE 4</option>
-                <option value="Grade 5" {% if selected_grade == 'Grade 5' %}selected{% endif %}>GRADE 5</option>
-                <option value="Grade 6" {% if selected_grade == 'Grade 6' %}selected{% endif %}>GRADE 6</option>
-            </select>
-
-            <select name="craft_category" class="yt-grade-select" onchange="this.form.submit()">
-                <option value="All Categories" {% if selected_craft == 'All Categories' %}selected{% endif %}>CATEGORY</option>
-                <option value="Toys & Games" {% if selected_craft == 'Toys & Games' %}selected{% endif %}>Toys & Games</option>
-                <option value="Role play & Imagination" {% if selected_craft == 'Role play & Imagination' %}selected{% endif %}>Role play & Imagination</option>
-                <option value="Simple Science & Experiments" {% if selected_craft == 'Simple Science & Experiments' %}selected{% endif %}>Simple Science & Experiments</option>
-                <option value="Home & Classroom decoration" {% if selected_craft == 'Home & Classroom decoration' %}selected{% endif %}>Home & Classroom decoration</option>
-                <option value="Art & Creative crafts" {% if selected_craft == 'Art & Creative crafts' %}selected{% endif %}>Art & Creative crafts</option>
-                <option value="Paper & cardboard crafts" {% if selected_craft == 'Paper & cardboard crafts' %}selected{% endif %}>Paper & cardboard crafts</option>
-                <option value="Health & Hygiene" {% if selected_craft == 'Health & Hygiene' %}selected{% endif %}>Health & Hygiene</option>
-                <option value="Nature & Eco - Friendly projects" {% if selected_craft == 'Nature & Eco - Friendly projects' %}selected{% endif %}>Nature & Eco-Friendly</option>
-                <option value="Gifts & Holiday crafts" {% if selected_craft == 'Gifts & Holiday crafts' %}selected{% endif %}>Gifts & Holiday crafts</option>
-                <option value="Skill - Building crafts" {% if selected_craft == 'Skill - Building crafts' %}selected{% endif %}>Skill-Building crafts</option>
-            </select>
+            <input type="hidden" name="grade" id="hidden-grade" value="{{ selected_grade|default:'All Grades' }}">
+            <input type="hidden" name="craft_category" id="hidden-craft" value="{{ selected_craft|default:'All Categories' }}">
 
             <input type="text" name="q" class="yt-search-input" placeholder="Search videos..." value="{{ request.GET.q }}">
             <button type="submit" class="yt-search-btn" aria-label="Search">
                 <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
             </button>
         </form>
+
+        <!-- Filter Button + Dropdown -->
+        <div class="filter-wrap" id="filter-wrap">
+            <button class="filter-toggle-btn {% if selected_grade and selected_grade != 'All Grades' %}has-filter{% endif %}" id="filter-toggle-btn" type="button">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M4.25 5.61C6.27 8.2 10 13 10 13v6c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-6s3.72-4.8 5.74-7.39A.998.998 0 0 0 18.95 4H5.04a1 1 0 0 0-.79 1.61z"/></svg>
+                Filter
+                {% if selected_grade and selected_grade != 'All Grades' %}<span class="filter-dot"></span>{% endif %}
+            </button>
+
+            <div class="filter-dropdown" id="filter-dropdown">
+                <!-- Step 1: Grade -->
+                <div class="filter-panel" id="grade-panel">
+                    <div class="filter-panel-title">Select Grade</div>
+                    <div class="filter-pill-group">
+                        <button type="button" class="filter-pill {% if not selected_grade or selected_grade == 'All Grades' %}active{% endif %}" onclick="selectGrade('All Grades')">All</button>
+                        <button type="button" class="filter-pill {% if selected_grade == 'Grade 1' %}active{% endif %}" onclick="selectGrade('Grade 1')">Grade 1</button>
+                        <button type="button" class="filter-pill {% if selected_grade == 'Grade 2' %}active{% endif %}" onclick="selectGrade('Grade 2')">Grade 2</button>
+                        <button type="button" class="filter-pill {% if selected_grade == 'Grade 3' %}active{% endif %}" onclick="selectGrade('Grade 3')">Grade 3</button>
+                        <button type="button" class="filter-pill {% if selected_grade == 'Grade 4' %}active{% endif %}" onclick="selectGrade('Grade 4')">Grade 4</button>
+                        <button type="button" class="filter-pill {% if selected_grade == 'Grade 5' %}active{% endif %}" onclick="selectGrade('Grade 5')">Grade 5</button>
+                        <button type="button" class="filter-pill {% if selected_grade == 'Grade 6' %}active{% endif %}" onclick="selectGrade('Grade 6')">Grade 6</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Category (shown after grade selected) -->
+                <div class="filter-panel" id="category-panel" style="{% if not selected_grade or selected_grade == 'All Grades' %}display:none;{% endif %}">
+                    <div class="filter-panel-divider"></div>
+                    <div class="filter-panel-title">Select Category</div>
+                    <div class="filter-pill-group">
+                        <button type="button" class="filter-pill {% if not selected_craft or selected_craft == 'All Categories' %}active{% endif %}" onclick="selectCategory('All Categories')">All</button>
+                        <button type="button" class="filter-pill {% if selected_craft == 'Toys & Games' %}active{% endif %}" onclick="selectCategory('Toys & Games')">Toys & Games</button>
+                        <button type="button" class="filter-pill {% if selected_craft == 'Role play & Imagination' %}active{% endif %}" onclick="selectCategory('Role play & Imagination')">Role play & Imagination</button>
+                        <button type="button" class="filter-pill {% if selected_craft == 'Simple Science & Experiments' %}active{% endif %}" onclick="selectCategory('Simple Science & Experiments')">Simple Science & Experiments</button>
+                        <button type="button" class="filter-pill {% if selected_craft == 'Home & Classroom decoration' %}active{% endif %}" onclick="selectCategory('Home & Classroom decoration')">Home & Classroom Decoration</button>
+                        <button type="button" class="filter-pill {% if selected_craft == 'Art & Creative crafts' %}active{% endif %}" onclick="selectCategory('Art & Creative crafts')">Art & Creative Crafts</button>
+                        <button type="button" class="filter-pill {% if selected_craft == 'Paper & cardboard crafts' %}active{% endif %}" onclick="selectCategory('Paper & cardboard crafts')">Paper & Cardboard Crafts</button>
+                        <button type="button" class="filter-pill {% if selected_craft == 'Health & Hygiene' %}active{% endif %}" onclick="selectCategory('Health & Hygiene')">Health & Hygiene</button>
+                        <button type="button" class="filter-pill {% if selected_craft == 'Nature & Eco - Friendly projects' %}active{% endif %}" onclick="selectCategory('Nature & Eco - Friendly projects')">Nature & Eco-Friendly</button>
+                        <button type="button" class="filter-pill {% if selected_craft == 'Gifts & Holiday crafts' %}active{% endif %}" onclick="selectCategory('Gifts & Holiday crafts')">Gifts & Holiday Crafts</button>
+                        <button type="button" class="filter-pill {% if selected_craft == 'Skill - Building crafts' %}active{% endif %}" onclick="selectCategory('Skill - Building crafts')">Skill-Building Crafts</button>
+                    </div>
+                </div>
+
+                <!-- Apply / Clear -->
+                <div class="filter-actions">
+                    {% if selected_grade and selected_grade != 'All Grades' %}
+                    <a href="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}{% endif %}" class="filter-clear-btn">Clear</a>
+                    {% endif %}
+                    <button type="button" class="filter-apply-btn" onclick="applyFilter()">Apply</button>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Active Filter Tags -->
+    {% if selected_grade and selected_grade != 'All Grades' %}
+    <div class="active-filters">
+        <span class="filter-tag">{{ selected_grade }}
+            <a href="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}{% endif %}" class="remove-filter">×</a>
+        </span>
+        {% if selected_craft and selected_craft != 'All Categories' %}
+        <span class="filter-tag">{{ selected_craft }}
+            <a href="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}grade={{ selected_grade }}" class="remove-filter">×</a>
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
 
     <!-- Video Cards -->
     <div class="media-grid">
         {% for video in videos %}
         <div class="yt-card">
-            <div class="yt-thumb-container" {% if video.video_file %}onclick="openVideoModal('{{ video.video_file.url }}', '{{ video.title|escapejs }}', '{% if video.thumbnail %}{{ video.thumbnail.url }}{% endif %}')"{% endif %}>
-                {% if video.thumbnail %}
-                    <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" class="yt-thumb">
-                {% else %}
-                    <div class="yt-thumb-placeholder">
-                        <div class="play-btn-circle">&#9654;</div>
-                    </div>
-                {% endif %}
-                {% if video.duration %}
-                    <span class="yt-duration">{{ video.duration }}</span>
-                {% endif %}
-            </div>
+            <a href="{% url 'video_detail' video.pk %}" class="yt-thumb-link">
+                <div class="yt-thumb-container">
+                    {% if video.thumbnail %}
+                        <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" class="yt-thumb">
+                    {% else %}
+                        <div class="yt-thumb-placeholder">
+                            <div class="play-btn-circle">&#9654;</div>
+                        </div>
+                    {% endif %}
+                    {% if video.duration %}
+                        <span class="yt-duration">{{ video.duration }}</span>
+                    {% endif %}
+                </div>
+            </a>
             <div class="yt-details">
                 <div class="yt-avatar">
                     <img src="{% static 'images/favicon.png' %}" alt="CraftyKids">
                 </div>
                 <div class="yt-info">
-                    <h3 class="yt-title">{{ video.title }}</h3>
+                    <a href="{% url 'video_detail' video.pk %}" class="yt-title-link">
+                        <h3 class="yt-title">{{ video.title }}</h3>
+                    </a>
                     <div class="yt-meta">
                         <div class="yt-channel">
                             CraftyKids
@@ -87,65 +135,63 @@
                         </div>
                     </div>
                 </div>
-                <button class="yt-menu-btn" aria-label="More options">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-                </button>
             </div>
         </div>
         {% empty %}
         <div class="empty-state">
-            <p>No videos yet for this category. Check back soon!</p>
+            <p>No videos yet for this filter. Check back soon!</p>
         </div>
         {% endfor %}
     </div>
 
-    <!-- Navigation -->
-    <div class="page-nav">
-        <a href="{% url 'home' %}" class="btn-nav-left">Back to Home</a>
-        <a href="{% url 'flipbook_list' %}" class="btn-nav-right">Go to Flipbook Tutorials</a>
-    </div>
-</div>
 
-<div id="video-modal" class="video-modal" style="display:none;">
-    <div class="video-modal-backdrop" onclick="closeVideoModal()"></div>
-    <div class="video-modal-dialog">
-        <button type="button" class="video-modal-close" onclick="closeVideoModal()">Close</button>
-        <h2 id="video-modal-title" class="video-modal-title">Video</h2>
-        <video id="video-modal-player" controls playsinline preload="metadata">
-            <source id="video-modal-source" src="">
-            Your browser does not support the video tag.
-        </video>
-    </div>
 </div>
 
 <script>
-function openVideoModal(videoUrl, title, posterUrl) {
-    const modal = document.getElementById('video-modal');
-    const player = document.getElementById('video-modal-player');
-    const source = document.getElementById('video-modal-source');
-    const titleNode = document.getElementById('video-modal-title');
+const filterToggle = document.getElementById('filter-toggle-btn');
+const filterDropdown = document.getElementById('filter-dropdown');
+const hiddenGrade = document.getElementById('hidden-grade');
+const hiddenCraft = document.getElementById('hidden-craft');
+const categoryPanel = document.getElementById('category-panel');
 
-    source.src = videoUrl;
-    player.poster = posterUrl || '';
-    titleNode.textContent = title;
-    player.load();
-    modal.style.display = 'flex';
-}
+filterToggle.addEventListener('click', function(e) {
+    e.stopPropagation();
+    filterDropdown.classList.toggle('show');
+});
 
-function closeVideoModal() {
-    const modal = document.getElementById('video-modal');
-    const player = document.getElementById('video-modal-player');
-
-    player.pause();
-    player.currentTime = 0;
-    modal.style.display = 'none';
-}
-
-document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape') {
-        closeVideoModal();
+document.addEventListener('click', function(e) {
+    if (!document.getElementById('filter-wrap').contains(e.target)) {
+        filterDropdown.classList.remove('show');
     }
 });
+
+function selectGrade(grade) {
+    hiddenGrade.value = grade;
+    // Highlight active
+    document.querySelectorAll('#grade-panel .filter-pill').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+
+    if (grade === 'All Grades') {
+        hiddenCraft.value = 'All Categories';
+        categoryPanel.style.display = 'none';
+        applyFilter();
+    } else {
+        hiddenCraft.value = 'All Categories';
+        document.querySelectorAll('#category-panel .filter-pill').forEach(p => p.classList.remove('active'));
+        document.querySelector('#category-panel .filter-pill').classList.add('active');
+        categoryPanel.style.display = 'block';
+    }
+}
+
+function selectCategory(cat) {
+    hiddenCraft.value = cat;
+    document.querySelectorAll('#category-panel .filter-pill').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function applyFilter() {
+    document.getElementById('main-filter-form').submit();
+}
 </script>
 
 {% endblock %}

@@ -19,8 +19,8 @@
         <!-- Left Side: Welcome Text -->
         <div class="auth-box-left">
             <div class="auth-welcome-text">
-                <h1>Welcome Back!</h1>
-                <p>Log in to continue your learning journey with Progressive Elementary School.</p>
+                <h1>Educator Portal</h1>
+                <p>Welcome to the Progressive Elementary School Teacher Dashboard. Log in to manage your lessons and creativity.</p>
             </div>
         </div>
 
@@ -29,10 +29,10 @@
             <div class="auth-card">
                 <div class="auth-logo">
                     <div class="auth-logo-text">Crafty Kids</div>
-                    <p class="auth-card-welcome">Welcome to your creative space!</p>
+                    <p class="auth-card-welcome">Teacher Dashboard Access</p>
                 </div>
 
-                <h2 class="auth-card-title">Login</h2>
+                <h2 class="auth-card-title">Teacher Login</h2>
 
                 {% if messages %}
                 <ul class="messages">
@@ -42,10 +42,10 @@
                 </ul>
                 {% endif %}
 
-                <form method="POST" action="{% url 'login' %}">
+                <form method="POST" action="{% url 'teacher_login' %}">
                     {% csrf_token %}
                     <div class="form-group">
-                        <label for="username">Username</label>
+                        <label for="username">Teacher Username</label>
                         <input type="text" name="username" id="username" placeholder="Enter username" autocomplete="off"
                             required>
                     </div>
@@ -69,11 +69,11 @@
                         <a href="#" class="forgot-link">Forgot Password?</a>
                     </div>
 
-                    <button type="submit" class="btn-auth">Login</button>
+                    <button type="submit" class="btn-auth">Login as Teacher</button>
                     
                     <div style="text-align: center; margin-top: 20px; font-size: 0.9rem;">
-                        <p style="color: #666; margin-bottom: 8px;">Are you an educator?</p>
-                        <a href="{% url 'teacher_login' %}" style="color: var(--green-dark); font-weight: 800; text-decoration: none;">Log in as a teacher here</a>
+                        <p style="color: #666; margin-bottom: 8px;">Not a teacher?</p>
+                        <a href="{% url 'login' %}" style="color: var(--green-dark); font-weight: 800; text-decoration: none;">Standard Client Login</a>
                     </div>
                 </form>
 

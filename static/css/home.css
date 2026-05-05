@@ -168,3 +168,8 @@
     }
 
 }
+
+/* Remove footer gap on home page */
+.footer {
+    margin-top: 0 !important;
+}

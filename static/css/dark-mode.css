@@ -1,0 +1,121 @@
+/* Global Dark Mode Overrides */
+html.dark-mode {
+    --green-light: #121212;
+    --white: #1e1e1e;
+    --dark: #e0e0e0;
+    --gray: #a0a0a0;
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --green-mid: #1a4a2a; 
+}
+
+html.dark-mode body {
+    background: var(--green-light);
+    color: var(--dark);
+}
+
+/* Navbar */
+html.dark-mode .navbar {
+    background: var(--white);
+    border-bottom-color: var(--green-dark);
+}
+html.dark-mode .nav-link {
+    color: var(--dark);
+}
+html.dark-mode .nav-notif {
+    color: var(--dark);
+}
+
+/* Dashboard Overrides */
+html.dark-mode .db-sidebar {
+    background: #081a0f !important;
+}
+html.dark-mode .db-header {
+    border-bottom-color: #2a2a2a !important;
+}
+html.dark-mode .db-card {
+    background: var(--white) !important;
+    box-shadow: var(--shadow) !important;
+}
+html.dark-mode .db-table th {
+    background: #2a2a2a !important;
+    color: var(--dark) !important;
+}
+html.dark-mode .db-table tr {
+    border-bottom-color: #2a2a2a !important;
+}
+html.dark-mode .db-table td {
+    color: var(--dark) !important;
+}
+html.dark-mode .db-btn-outline {
+    border-color: var(--gray) !important;
+    color: var(--dark) !important;
+}
+html.dark-mode .db-modal {
+    background: var(--white) !important;
+    color: var(--dark) !important;
+}
+
+/* Hardcoded Badges and Elements */
+html.dark-mode .db-badge.gray { background: #333 !important; color: #ccc !important; }
+html.dark-mode .pending-badge { background: #4a3600 !important; color: #ffca28 !important; }
+html.dark-mode .db-badge.red { background: #4a1c1c !important; color: #ff6b6b !important; }
+html.dark-mode .db-btn-e[style*="background:#fff3cd"] { background: #4a3600 !important; color: #ffca28 !important; }
+html.dark-mode .db-btn-e[style*="background:#d4edda"] { background: #0f3d1f !important; color: #2ecc71 !important; }
+
+/* Login & Forms */
+html.dark-mode .login-card {
+    background: rgba(30, 30, 30, 0.8) !important;
+}
+html.dark-mode .form-control,
+html.dark-mode input[type="text"],
+html.dark-mode input[type="email"],
+html.dark-mode input[type="password"],
+html.dark-mode select,
+html.dark-mode textarea {
+    background: #2a2a2a !important;
+    color: var(--dark) !important;
+    border-color: #444 !important;
+}
+html.dark-mode .toggle-password {
+    color: var(--gray) !important;
+}
+
+/* Content Pages */
+html.dark-mode .mission-card, 
+html.dark-mode .value-card, 
+html.dark-mode .story-card,
+html.dark-mode .vid-card,
+html.dark-mode .flip-card,
+html.dark-mode .faq-item {
+    background: var(--white) !important;
+    color: var(--dark) !important;
+    box-shadow: var(--shadow) !important;
+}
+
+html.dark-mode .vid-title,
+html.dark-mode .flip-title,
+html.dark-mode .faq-question {
+    color: var(--dark) !important;
+}
+
+html.dark-mode .cat-filter {
+    background: #2a2a2a !important;
+    color: var(--dark) !important;
+}
+html.dark-mode .cat-filter.active {
+    background: var(--green) !important;
+    color: #fff !important;
+}
+
+/* YouTube Style Cards (Videos & Flipbooks) */
+html.dark-mode .yt-title {
+    color: var(--dark) !important;
+}
+html.dark-mode .yt-meta,
+html.dark-mode .yt-verified,
+html.dark-mode .yt-channel {
+    color: var(--gray) !important;
+}
+html.dark-mode .yt-menu-btn {
+    color: var(--dark) !important;
+}
