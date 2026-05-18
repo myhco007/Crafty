@@ -20,6 +20,9 @@
             <a href="{{ flipbook.pdf_file.url }}" target="_blank" rel="noopener" class="viewer-link primary">Open PDF in
                 New Tab</a>
             {% endif %}
+            {% if user.is_authenticated %}
+            <button id="mark-finished-btn" class="viewer-link primary" style="background-color: var(--green); border: none; cursor: pointer;">Mark as Finished ✔</button>
+            {% endif %}
         </div>
     </div>
 
@@ -221,6 +224,11 @@
             .then(data => {
                 if (data.liked) {
                     btn.classList.add('active');
+                    confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    });
                 } else {
                     btn.classList.remove('active');
                 }
@@ -228,6 +236,38 @@
             })
             .catch(error => console.error('Error:', error));
         });
+
+        // Flipbook Completion Tracking
+        {% if user.is_authenticated %}
+        document.getElementById('mark-finished-btn')?.addEventListener('click', function() {
+            const btn = this;
+            fetch("{% url 'mark_completed' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ 'flipbook_id': '{{ flipbook.id }}' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
+                    btn.innerText = "Completed! 🌟";
+                    btn.style.pointerEvents = 'none';
+                    btn.style.opacity = '0.8';
+                    
+                    const toast = document.createElement('div');
+                    toast.innerText = '🌟 Activity Complete! A sticker was added to your calendar.';
+                    toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#4ade80; color:#064e3b; padding:15px 25px; border-radius:12px; font-weight:bold; box-shadow:0 4px 6px rgba(0,0,0,0.1); z-index:9999; animation: slideIn 0.5s ease-out;';
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 5000);
+                }
+            })
+            .catch(err => console.error(err));
+        });
+        {% endif %}
         </script>
 
         <!-- Comments Section -->
@@ -268,9 +308,12 @@
                         <div class="avatar-circle">{{ comment.name|slice:":1"|upper }}</div>
                     </div>
                     <div class="comment-content">
-                        <div class="comment-header">
+                        <div class="comment-header" style="display: flex; align-items: center; gap: 10px;">
                             <span class="comment-author">{{ comment.name }}</span>
                             <span class="comment-date">{{ comment.created_at|timesince }} ago</span>
+                            {% if request.user.is_authenticated and request.user == comment.user or request.user.profile.role == 'SUPER_ADMIN' %}
+                            <a href="{% url 'flipbook_comment_delete' comment.pk %}" class="delete-comment-btn">Delete</a>
+                            {% endif %}
                         </div>
                         <p class="comment-text">{{ comment.text }}</p>
                     </div>

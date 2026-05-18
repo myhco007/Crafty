@@ -65,13 +65,22 @@
 <div class="confirm-box">
     <div style="font-size: 4rem; margin-bottom: 20px;">🗑️</div>
     <h1 class="confirm-title">Are you sure?</h1>
-    <p class="confirm-text">You are about to remove "<strong>{{ object }}</strong>". It will be moved to the archive and hidden from users.</p>
+    <p class="confirm-text">
+        You are about to remove "<strong>{{ object }}</strong>". 
+        {% if permanent %}
+        It will be permanently deleted and cannot be recovered.
+        {% else %}
+        It will be moved to the archive and hidden from users.
+        {% endif %}
+    </p>
     
     <form method="POST">
         {% csrf_token %}
         <div class="confirm-actions">
             <a href="javascript:history.back()" class="btn-cancel">Cancel</a>
-            <button type="submit" class="btn-delete">Yes, Delete it!</button>
+            <button type="submit" class="btn-delete">
+                {% if permanent %}Yes, Delete permanently!{% else %}Yes, Archive it!{% endif %}
+            </button>
         </div>
     </form>
 </div>

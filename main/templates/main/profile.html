@@ -5,125 +5,275 @@
 
 {% block page_css %}
 <style>
-    .profile-wrap {
-        max-width: 800px;
+    .profile-container {
+        max-width: 1000px;
         margin: 40px auto;
         padding: 0 20px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 30px;
     }
-    .profile-card {
+
+    @media (min-width: 768px) {
+        .profile-container {
+            grid-template-columns: 350px 1fr;
+            align-items: start;
+        }
+    }
+
+    /* ID CARD (Left Column) */
+    .id-card {
         background: var(--white);
         border-radius: var(--radius);
-        padding: 40px;
         box-shadow: var(--shadow);
+        overflow: hidden;
         text-align: center;
-        margin-bottom: 30px;
+        position: relative;
     }
+
+    .id-card-cover {
+        height: 120px;
+        background: linear-gradient(135deg, var(--green-light) 0%, var(--green) 100%);
+        width: 100%;
+        position: relative;
+    }
+
+    .id-card-cover::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 2px, transparent 2px);
+        background-size: 20px 20px;
+    }
+
+    .id-card-body {
+        padding: 0 30px 30px;
+        position: relative;
+    }
+
     .profile-avatar {
-        width: 100px;
-        height: 100px;
-        background: var(--green);
+        width: 120px;
+        height: 120px;
+        background: var(--green-dark);
         color: white;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 3rem;
+        font-size: 3.5rem;
         font-family: 'Fredoka One', cursive;
-        margin: 0 auto 20px;
+        margin: -60px auto 15px;
+        border: 5px solid var(--white);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         overflow: hidden;
+        position: relative;
+        z-index: 2;
     }
+
     .profile-avatar img {
         width: 100%;
         height: 100%;
         object-fit: cover;
     }
+
+    .profile-name {
+        font-family: 'Fredoka One', cursive;
+        font-size: 1.8rem;
+        color: var(--dark);
+        margin-bottom: 5px;
+    }
+
+    .profile-email {
+        color: var(--gray);
+        font-size: 0.95rem;
+        margin-bottom: 15px;
+    }
+
+    .profile-role {
+        display: inline-block;
+        background: #fff3e0;
+        color: #e65100;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .id-card-details {
+        margin-top: 25px;
+        border-top: 2px dashed #e2e8f0;
+        padding-top: 20px;
+        text-align: left;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        background: #f7fafc;
+        padding: 12px 15px;
+        border-radius: 12px;
+    }
+
+    .detail-icon {
+        font-size: 1.5rem;
+        margin-right: 15px;
+        background: var(--white);
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .detail-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .detail-label {
+        font-size: 0.75rem;
+        color: var(--gray);
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+
+    .detail-value {
+        color: var(--dark);
+        font-weight: bold;
+        font-size: 1rem;
+    }
+
+    /* RIGHT COLUMN (Settings & Edit) */
+    .pref-card,
     .edit-profile-card {
         background: var(--white);
         border-radius: var(--radius);
         padding: 30px;
         box-shadow: var(--shadow);
-        margin-top: 30px;
+        margin-bottom: 30px;
     }
+
+    .pref-header {
+        font-family: 'Fredoka One', cursive;
+        font-size: 1.5rem;
+        color: var(--dark);
+        margin-bottom: 20px;
+        border-bottom: 3px solid var(--green-light);
+        padding-bottom: 10px;
+        display: inline-block;
+    }
+
+    .pref-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background: #f7fafc;
+        border-radius: 12px;
+        border: 1px solid #edf2f7;
+    }
+
+    .pref-info h4 {
+        color: var(--dark);
+        margin-bottom: 5px;
+        font-size: 1.1rem;
+    }
+
+    .pref-info p {
+        color: var(--gray);
+        font-size: 0.9rem;
+    }
+
+    /* Edit Form */
     .form-group {
         margin-bottom: 20px;
-        text-align: left;
     }
+
     .form-group label {
         display: block;
         font-weight: 700;
         color: var(--dark);
         margin-bottom: 8px;
     }
+
     .form-group input[type="text"],
-    .form-group input[type="file"] {
+    .form-group input[type="file"],
+    .form-group select {
         width: 100%;
-        padding: 12px;
-        border: 2px solid var(--green-light);
-        border-radius: 8px;
+        padding: 14px;
+        border: 2px solid #edf2f7;
+        background: #f7fafc;
+        border-radius: 12px;
         font-family: inherit;
+        font-size: 1rem;
+        color: var(--dark);
+        transition: all 0.2s;
     }
+
+    .form-group input[type="text"]:focus,
+    .form-group input[type="file"]:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--green);
+        background: var(--white);
+        box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.15);
+    }
+
     .btn-save {
         background: var(--green);
         color: var(--white);
         border: none;
-        padding: 12px 24px;
-        border-radius: 20px;
+        padding: 14px 28px;
+        border-radius: 30px;
         font-weight: bold;
+        font-size: 1rem;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.2s;
+        box-shadow: 0 4px 0 #27ae60;
     }
+
     .btn-save:hover {
-        background: var(--green-dark);
+        transform: translateY(2px);
+        box-shadow: 0 2px 0 #27ae60;
     }
-    .profile-name {
-        font-family: 'Fredoka One', cursive;
-        font-size: 2rem;
-        color: var(--dark);
-        margin-bottom: 5px;
+
+    .btn-save:active {
+        transform: translateY(4px);
+        box-shadow: none;
     }
-    .profile-email {
-        color: var(--gray);
-        margin-bottom: 15px;
-    }
-    .profile-role {
-        display: inline-block;
-        background: var(--green-light);
-        color: var(--green-dark);
-        padding: 6px 16px;
-        border-radius: 20px;
+
+    .btn-remove {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 30px;
         font-weight: bold;
-        font-size: 0.9rem;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 0 #b91c1c;
     }
-    
-    .pref-card {
-        background: var(--white);
-        border-radius: var(--radius);
-        padding: 30px;
-        box-shadow: var(--shadow);
+
+    .btn-remove:hover {
+        transform: translateY(2px);
+        box-shadow: 0 2px 0 #b91c1c;
     }
-    .pref-header {
-        font-family: 'Fredoka One', cursive;
-        font-size: 1.5rem;
-        color: var(--dark);
-        margin-bottom: 20px;
-        border-bottom: 2px solid var(--green-light);
-        padding-bottom: 10px;
+
+    .btn-remove:active {
+        transform: translateY(4px);
+        box-shadow: none;
     }
-    .pref-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px 0;
-    }
-    .pref-info h4 {
-        color: var(--dark);
-        margin-bottom: 5px;
-    }
-    .pref-info p {
-        color: var(--gray);
-        font-size: 0.9rem;
-    }
-    
+
     /* Toggle Switch */
     .theme-switch {
         position: relative;
@@ -131,11 +281,13 @@
         width: 60px;
         height: 34px;
     }
-    .theme-switch input { 
+
+    .theme-switch input {
         opacity: 0;
         width: 0;
         height: 0;
     }
+
     .slider {
         position: absolute;
         cursor: pointer;
@@ -143,10 +295,11 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #ccc;
+        background-color: #cbd5e0;
         transition: .4s;
         border-radius: 34px;
     }
+
     .slider:before {
         position: absolute;
         content: "";
@@ -157,96 +310,474 @@
         background-color: white;
         transition: .4s;
         border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
-    input:checked + .slider {
+
+    input:checked+.slider {
         background-color: var(--green);
     }
-    input:checked + .slider:before {
+
+    input:checked+.slider:before {
         transform: translateX(26px);
     }
-    
+
+    :root.dark-mode .detail-item,
+    :root.dark-mode .pref-item {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+
+    :root.dark-mode .pref-info h4,
+    :root.dark-mode .detail-value {
+        color: #f7fafc;
+    }
+
+    :root.dark-mode .detail-label,
+    :root.dark-mode .pref-info p {
+        color: #a0aec0;
+    }
+
+    :root.dark-mode .detail-icon {
+        background: #4a5568;
+        box-shadow: none;
+    }
+
+    :root.dark-mode .form-group input[type="text"],
+    :root.dark-mode .form-group input[type="file"],
+    :root.dark-mode .form-group select {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+
+    :root.dark-mode .form-group input[type="text"]:focus,
+    :root.dark-mode .form-group input[type="file"]:focus,
+    :root.dark-mode .form-group select:focus {
+        background: #1a202c;
+    }
+
+    .pref-item-clickable {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .pref-item-clickable:hover {
+        background: #edf2f7;
+    }
+
+    :root.dark-mode .pref-item-clickable:hover {
+        background: #4a5568;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="profile-wrap">
-    
-    <div class="profile-card">
-        <div class="profile-avatar">
-            {% if user.profile.profile_picture %}
-                <img src="{{ user.profile.profile_picture.url }}" alt="Profile Picture">
-            {% else %}
-                {{ user.username|make_list|first|upper }}
-            {% endif %}
+<div class="profile-container">
+
+    <!-- LEFT COLUMN: ID CARD -->
+    <div class="profile-left">
+        <div class="id-card">
+            <div class="id-card-cover"></div>
+            <div class="id-card-body">
+                <div style="position: relative; display: inline-block;">
+                    <div class="profile-avatar">
+                        {% if user.profile.profile_picture %}
+                        <img id="avatar-preview" src="{{ user.profile.profile_picture.url }}" alt="Profile Picture"
+                            style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+                        {% else %}
+                        <div id="avatar-preview-text"
+                            style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+                            {{ user.username|make_list|first|upper }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <button type="button" onclick="document.querySelector('input[type=file]').click()"
+                        style="position: absolute; bottom: -5px; right: 0; background: var(--green); color: white; border: 3px solid var(--white); width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; transition: transform 0.2s; padding: 0;"
+                        onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                        +
+                    </button>
+                </div>
+                <h1 class="profile-name">{{ user.get_full_name|default:user.username }}</h1>
+                <p class="profile-email">{{ user.email|default:"No email provided" }}</p>
+                <div class="profile-role">
+                    {% if user.profile %}
+                    {{ user.profile.get_role_display }}
+                    {% elif user.is_superuser %}
+                    Super Admin
+                    {% else %}
+                    User
+                    {% endif %}
+                </div>
+
+                {% if user.profile.role == 'CLIENT' %}
+                <div class="id-card-details">
+                    <div class="detail-item">
+                        <span class="detail-icon" style="color: #6b46c1; background: #faf5ff;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </span>
+                        <div class="detail-text">
+                            <span class="detail-label">LRN</span>
+                            <span class="detail-value">{{ user.profile.lrn_number|default:"Not specified" }}</span>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon" style="color: #d97706; background: #fef3c7;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                                <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                            </svg>
+                        </span>
+                        <div class="detail-text">
+                            <span class="detail-label">Grade Level</span>
+                            <span class="detail-value">
+                                {{ user.profile.grade_level|default:"Not specified" }}
+                                {% if user.profile.pending_grade %}
+                                <br><small
+                                    style="color: #d97706; font-size: 0.8rem; display: flex; align-items: center; margin-top: 4px;">
+                                    <svg style="margin-right: 4px;" width="14" height="14" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    Pending Request: {{ user.profile.pending_grade }}
+                                </small>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
         </div>
-        <h1 class="profile-name">{{ user.get_full_name|default:user.username }}</h1>
-        <p class="profile-email">{{ user.email|default:"No email provided" }}</p>
-        <div class="profile-role">
-            {% if user.profile %}
-                {{ user.profile.get_role_display }}
-            {% elif user.is_superuser %}
-                Super Admin
-            {% else %}
-                User
-            {% endif %}
+
+        <div class="pref-card" style="margin-top: 30px;">
+            <h2 class="pref-header">Preferences</h2>
+            <div class="pref-item">
+                <div class="pref-info">
+                    <h4>Dark Mode</h4>
+                    <p>Toggle between light and dark themes.</p>
+                </div>
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
+
     </div>
 
-    <div class="pref-card">
-        <h2 class="pref-header">Preferences</h2>
-        
-        <div class="pref-item">
-            <div class="pref-info">
-                <h4>Dark Mode</h4>
-                <p>Toggle between light and dark themes.</p>
+    <!-- RIGHT COLUMN: SETTINGS & EDIT -->
+    <div class="profile-right">
+
+        <div class="pref-card">
+            <h2 class="pref-header">Manage password</h2>
+            <div class="pref-item pref-item-clickable" onclick="openInitialPwdConfirmModal()">
+                <div class="pref-info" style="display: flex; align-items: center;">
+                    <span class="detail-icon" style="margin-right: 15px; color: #3182ce; background: #ebf8ff;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </span>
+                    <div>
+                        <h4 style="margin-bottom: 2px;">Password</h4>
+                        <p style="margin: 0;">Change your password</p>
+                    </div>
+                </div>
+                <div style="color: var(--gray); font-size: 1.5rem; line-height: 1;">›</div>
             </div>
-            <label class="theme-switch">
-                <input type="checkbox" id="theme-toggle">
-                <span class="slider"></span>
-            </label>
+        </div>
+
+
+        <div class="edit-profile-card">
+            <h2 class="pref-header">Edit Profile</h2>
+            <form id="edit-profile-form" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_username">Username</label>
+                    {{ u_form.username }}
+                </div>
+                <div class="form-group" style="display: none;">
+                    <label for="id_profile_picture">Profile Picture</label>
+                    {{ p_form.profile_picture }}
+                </div>
+                {% if user.profile.role == 'CLIENT' %}
+                <div class="form-group">
+                    <label for="id_grade_level">Grade Level</label>
+                    {{ p_form.grade_level }}
+                    {% if user.profile.pending_grade %}
+                    <small
+                        style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; color: #d97706; font-weight: bold; background: #fffbeb; padding: 8px 12px; border-radius: 8px; border: 1px solid #fef3c7;">
+                        <span style="display: flex; align-items: center;">
+                            <svg style="margin-right: 8px;" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            Pending Request for Change Grade: {{ user.profile.pending_grade }}
+                        </span>
+                        <button type="submit" formaction="{% url 'cancel_grade_request' %}" formnovalidate
+                            style="background: transparent; border: 1px solid #d97706; color: #d97706; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.2s;"
+                            onmouseover="this.style.background='#fef3c7'"
+                            onmouseout="this.style.background='transparent'">
+                            Cancel Request
+                        </button>
+                    </small>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="form-group"
+                    style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-top: 30px;">
+                    <button type="button" class="btn-save" onclick="showSaveConfirmModal()">Save Changes</button>
+                    {% if user.profile.profile_picture %}
+                    <button type="submit" name="remove_pfp" value="1" class="btn-remove">Remove Picture</button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<!-- Password Verification Modal -->
+<div class="modal-overlay" id="pwd-verify-modal"
+    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="confirm-box"
+        style="background: var(--white); padding: 30px; border-radius: var(--radius); max-width: 400px; width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <h2 style="font-family: 'Fredoka One', cursive; margin-bottom: 10px; color: var(--dark);">Verify Password</h2>
+        <p style="color: var(--gray); margin-bottom: 20px;">Please enter your current password to continue.</p>
+        <input type="password" id="current-pwd-input" placeholder="Current Password"
+            style="width: 100%; padding: 12px; border: 2px solid #edf2f7; border-radius: 8px; margin-bottom: 15px; font-family: inherit;">
+        <div id="verify-error" style="color: #e53935; font-size: 0.9rem; margin-bottom: 15px; display: none;"></div>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button onclick="document.getElementById('pwd-verify-modal').style.display='none'"
+                style="padding: 10px 20px; border: none; background: #edf2f7; color: var(--dark); border-radius: 20px; font-weight: bold; cursor: pointer;">Cancel</button>
+            <button onclick="verifyPassword()"
+                style="padding: 10px 20px; border: none; background: var(--green); color: white; border-radius: 20px; font-weight: bold; cursor: pointer;">Next</button>
         </div>
     </div>
-    
-    <div class="edit-profile-card">
-        <h2 class="pref-header">Edit Profile</h2>
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="id_username">Username</label>
-                {{ u_form.username }}
-            </div>
-            <div class="form-group">
-                <label for="id_profile_picture">Profile Picture</label>
-                {{ p_form.profile_picture }}
-            </div>
-            <button type="submit" class="btn-save">Save Changes</button>
-        </form>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal-overlay" id="pwd-change-modal"
+    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="confirm-box"
+        style="background: var(--white); padding: 30px; border-radius: var(--radius); max-width: 400px; width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <h2 style="font-family: 'Fredoka One', cursive; margin-bottom: 10px; color: var(--dark);">Change Password</h2>
+        <p style="color: var(--gray); margin-bottom: 20px;">Create a strong, new password.</p>
+        <input type="password" id="new-pwd-input" placeholder="New Password"
+            style="width: 100%; padding: 12px; border: 2px solid #edf2f7; border-radius: 8px; margin-bottom: 15px; font-family: inherit;">
+        <input type="password" id="confirm-pwd-input" placeholder="Confirm New Password"
+            style="width: 100%; padding: 12px; border: 2px solid #edf2f7; border-radius: 8px; margin-bottom: 15px; font-family: inherit;">
+        <div id="change-error" style="color: #e53935; font-size: 0.9rem; margin-bottom: 15px; display: none;"></div>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button onclick="document.getElementById('pwd-change-modal').style.display='none'"
+                style="padding: 10px 20px; border: none; background: #edf2f7; color: var(--dark); border-radius: 20px; font-weight: bold; cursor: pointer;">Cancel</button>
+            <button onclick="changePassword()"
+                style="padding: 10px 20px; border: none; background: var(--green); color: white; border-radius: 20px; font-weight: bold; cursor: pointer;">Update
+                Password</button>
+        </div>
     </div>
-    
+</div>
+
+<!-- Initial Password Confirm Modal -->
+<div class="modal-overlay" id="pwd-initial-confirm-modal"
+    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1050; align-items: center; justify-content: center;">
+    <div class="confirm-box"
+        style="background: var(--white); padding: 40px 30px; border-radius: 20px; max-width: 400px; width: 90%; text-align: center; border: 3px dashed #d97706; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <div style="font-size: 4rem; margin-bottom: 15px; color: #d97706; display: flex; justify-content: center;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+        </div>
+        <h2 style="font-family: 'Fredoka One', cursive; margin-bottom: 10px; color: #d97706; font-size: 1.8rem;">Change
+            Password?</h2>
+        <p style="color: var(--gray); margin-bottom: 30px; font-size: 1rem;">You're about to change your password,
+            Continue?</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button onclick="document.getElementById('pwd-initial-confirm-modal').style.display='none'"
+                style="padding: 12px 24px; border: none; background: #edf2f7; color: var(--dark); border-radius: 30px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: background 0.2s;">Cancel</button>
+            <button onclick="openPasswordVerifyModal()"
+                style="padding: 12px 24px; border: none; background: #d97706; color: white; border-radius: 30px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 0 #b45309; transition: transform 0.1s;">Yes,
+                Continue!</button>
+        </div>
+    </div>
+</div>
+
+<!-- Password Success Modal -->
+<div class="modal-overlay" id="pwd-success-modal"
+    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="confirm-box"
+        style="background: var(--white); padding: 40px 30px; border-radius: 20px; max-width: 400px; width: 90%; text-align: center; border: 3px dashed var(--green); box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <div style="font-size: 4rem; margin-bottom: 15px; color: var(--green); display: flex; justify-content: center;">
+            <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+        </div>
+        <h2 style="font-family: 'Fredoka One', cursive; margin-bottom: 10px; color: var(--green); font-size: 1.8rem;">
+            Password Changed!</h2>
+        <p style="color: var(--gray); margin-bottom: 30px; font-size: 1rem;">Your password has been successfully
+            updated.</p>
+        <div style="display: flex; justify-content: center;">
+            <button onclick="document.getElementById('pwd-success-modal').style.display='none'"
+                style="padding: 12px 30px; border: none; background: var(--green); color: white; border-radius: 30px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 0 #27ae60; transition: transform 0.1s;">Awesome!</button>
+        </div>
+    </div>
+</div>
+
+<!-- Save Changes Confirmation Modal -->
+<div class="modal-overlay" id="save-confirm-modal"
+    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="confirm-box"
+        style="background: var(--white); padding: 40px 30px; border-radius: 20px; max-width: 400px; width: 90%; text-align: center; border: 3px dashed var(--green); box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <div style="font-size: 4rem; margin-bottom: 15px; color: var(--green); display: flex; justify-content: center;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+        </div>
+        <h2 style="font-family: 'Fredoka One', cursive; margin-bottom: 10px; color: var(--green); font-size: 1.8rem;">
+            Save Changes?</h2>
+        <p style="color: var(--gray); margin-bottom: 30px; font-size: 1rem;">Are you sure you want to save the updates
+            to your profile?</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button onclick="document.getElementById('save-confirm-modal').style.display='none'"
+                style="padding: 12px 24px; border: none; background: #edf2f7; color: var(--dark); border-radius: 30px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: background 0.2s;">Cancel</button>
+            <button onclick="submitProfileForm()"
+                style="padding: 12px 24px; border: none; background: var(--green); color: white; border-radius: 30px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 0 #27ae60; transition: transform 0.1s;">Yes,
+                Save!</button>
+        </div>
+    </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const themeToggle = document.getElementById('theme-toggle');
-    const root = document.documentElement;
-    const stylesheet = document.getElementById('dark-mode-stylesheet');
-    
-    // Set initial state of toggle
-    if (localStorage.getItem('theme') === 'dark') {
-        themeToggle.checked = true;
+    function showSaveConfirmModal() {
+        document.getElementById('save-confirm-modal').style.display = 'flex';
     }
-    
-    themeToggle.addEventListener('change', () => {
-        if (themeToggle.checked) {
-            root.classList.add('dark-mode');
-            stylesheet.removeAttribute('disabled');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            root.classList.remove('dark-mode');
-            stylesheet.setAttribute('disabled', 'true');
-            localStorage.setItem('theme', 'light');
+
+    function submitProfileForm() {
+        document.getElementById('edit-profile-form').submit();
+    }
+
+    function openInitialPwdConfirmModal() {
+        document.getElementById('pwd-initial-confirm-modal').style.display = 'flex';
+    }
+
+    function openPasswordVerifyModal() {
+        document.getElementById('pwd-initial-confirm-modal').style.display = 'none';
+        document.getElementById('current-pwd-input').value = '';
+        document.getElementById('verify-error').style.display = 'none';
+        document.getElementById('pwd-verify-modal').style.display = 'flex';
+    }
+
+    function verifyPassword() {
+        const pwd = document.getElementById('current-pwd-input').value;
+        if (!pwd) return;
+
+        fetch('{% url "verify_password_ajax" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ password: pwd })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('pwd-verify-modal').style.display = 'none';
+                    document.getElementById('new-pwd-input').value = '';
+                    document.getElementById('confirm-pwd-input').value = '';
+                    document.getElementById('change-error').style.display = 'none';
+                    document.getElementById('pwd-change-modal').style.display = 'flex';
+                } else {
+                    document.getElementById('verify-error').innerText = data.error;
+                    document.getElementById('verify-error').style.display = 'block';
+                }
+            });
+    }
+
+    function changePassword() {
+        const newPwd = document.getElementById('new-pwd-input').value;
+        const confirmPwd = document.getElementById('confirm-pwd-input').value;
+
+        if (!newPwd || !confirmPwd) return;
+        if (newPwd !== confirmPwd) {
+            document.getElementById('change-error').innerText = "Passwords do not match.";
+            document.getElementById('change-error').style.display = 'block';
+            return;
+        }
+
+        fetch('{% url "update_password_ajax" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ new_password: newPwd, confirm_password: confirmPwd })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('pwd-change-modal').style.display = 'none';
+                    document.getElementById('pwd-success-modal').style.display = 'flex';
+                } else {
+                    document.getElementById('change-error').innerText = data.error;
+                    document.getElementById('change-error').style.display = 'block';
+                }
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const themeToggle = document.getElementById('theme-toggle');
+        const root = document.documentElement;
+        const stylesheet = document.getElementById('dark-mode-stylesheet');
+
+        // Set initial state of toggle
+        if (localStorage.getItem('theme') === 'dark') {
+            themeToggle.checked = true;
+        }
+
+        themeToggle.addEventListener('change', () => {
+            if (themeToggle.checked) {
+                root.classList.add('dark-mode');
+                stylesheet.removeAttribute('disabled');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                root.classList.remove('dark-mode');
+                stylesheet.setAttribute('disabled', 'true');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        // Live preview for profile picture
+        const fileInput = document.querySelector('input[type="file"]');
+        const avatarPreviewContainer = document.querySelector('.profile-avatar');
+
+        if (fileInput && avatarPreviewContainer) {
+            fileInput.addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        avatarPreviewContainer.innerHTML = '<img id="avatar-preview" src="' + e.target.result + '" alt="Profile Picture" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">';
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
         }
     });
-});
 </script>
 {% endblock %}

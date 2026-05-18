@@ -2,8 +2,23 @@
 {% load static %}
 {% block title %}- {{ title }}{% endblock %}
 {% block content %}
-<div style="max-width: 600px; margin: 60px auto; padding: 40px; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);">
-    <h1 style="color: var(--green-dark); margin-bottom: 30px; text-align: center; font-family: 'Fredoka One', cursive;">{{ title }}</h1>
+<div
+    style="max-width: 600px; margin: 60px auto; padding: 40px; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);">
+    <h1 style="color: var(--green-dark); margin-bottom: 30px; text-align: center; font-family: 'Fredoka One', cursive;">
+        {{ title }}</h1>
+
+    {% if form.errors %}
+    <div style="background: #ffebee; color: #c62828; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.95rem; font-weight: bold; border-left: 5px solid #e53935; text-align: left;">
+        Please correct the following errors:
+        <ul style="margin: 5px 0 0 20px; padding: 0;">
+            {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+            <li>{{ field|capfirst }}: {{ error }}</li>
+            {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
 
     <form method="POST">
         {% csrf_token %}
@@ -12,22 +27,31 @@
             {{ form.title }}
         </div>
         <div class="form-group" style="margin-top: 20px;">
+            <label>Category</label>
+            {{ form.category }}
+        </div>
+        <div class="form-group" style="margin-top: 20px;">
             <label>Content</label>
             {{ form.content }}
         </div>
         <div class="form-group" style="margin-top: 20px; font-weight: 800; display:flex; align-items:center; gap:8px;">
             {{ form.is_active }} <label style="margin:0;">Show to everyone?</label>
         </div>
-        
+
         <div style="display: flex; gap: 16px; margin-top: 30px; justify-content: center;">
-            <button type="submit" class="btn-register" style="border: none; cursor: pointer; padding: 12px 30px; font-size: 1.1rem; border-radius:24px;">Save Announcement</button>
-            <a href="{% url 'dashboard' %}#section-announcements" style="padding: 12px 30px; text-decoration: none; color: var(--gray); font-weight: 800; display: flex; align-items: center;">Cancel</a>
+            <button type="submit" class="btn-register"
+                style="border: none; cursor: pointer; padding: 12px 30px; font-size: 1.1rem; border-radius:24px;">Save
+                Announcement</button>
+            <a href="{% url 'dashboard' %}#section-announcements"
+                style="padding: 12px 30px; text-decoration: none; color: var(--gray); font-weight: 800; display: flex; align-items: center;">Cancel</a>
         </div>
     </form>
 </div>
 
 <style>
-    .form-group input[type="text"], .form-group textarea {
+    .form-group input[type="text"],
+    .form-group select,
+    .form-group textarea {
         width: 100%;
         padding: 14px 16px;
         border: 1.5px solid #d0e8d0;
@@ -37,12 +61,17 @@
         background: var(--green-light);
         outline: none;
         transition: all 0.2s;
+        box-sizing: border-box;
     }
+
     .form-group textarea {
         min-height: 200px;
         resize: vertical;
     }
-    .form-group input[type="text"]:focus, .form-group textarea:focus {
+
+    .form-group input[type="text"]:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
         border-color: var(--green);
         background: var(--white);
         box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);

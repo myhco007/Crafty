@@ -1,0 +1,206 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}- Calendar & Parent Summary{% endblock %}
+{% block page_css %}
+<style>
+    .calendar-container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+        background: var(--white);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+    
+    .parent-summary {
+        max-width: 900px;
+        margin: 0 auto 40px auto;
+        padding: 30px;
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border-left: 5px solid var(--primary);
+    }
+    
+    .parent-summary h2 {
+        color: #065f46; /* Forced dark green */
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .summary-stats {
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .stat-card {
+        flex: 1;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #059669; /* Forced emerald green */
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-weight: 600;
+        color: #4b5563; /* Forced dark gray */
+    }
+    
+    /* FullCalendar Overrides */
+    .fc-event {
+        cursor: pointer;
+        border-radius: 6px;
+        padding: 3px 5px;
+        font-weight: 600;
+        border: none;
+    }
+    .fc-event-video {
+        background-color: #3b82f6 !important;
+    }
+    .fc-event-flipbook {
+        background-color: #ec4899 !important;
+        color: white !important;
+    }
+    .fc-event-holiday, .fc-event-event {
+        background-color: transparent !important;
+        border: none !important;
+        color: #6b7280 !important; /* Gray color for minimal look */
+        padding: 0px 2px !important;
+        font-size: 0.8em !important;
+        opacity: 0.85;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .summary-stats {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<!-- FullCalendar Core -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 20px;">
+    <!-- Parent Summary Section -->
+    <div class="parent-summary">
+        <h2 style="display: flex; align-items: center; gap: 10px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #065f46;">
+                <circle cx="7" cy="6" r="3.5"></circle>
+                <circle cx="17.5" cy="11.5" r="2.5"></circle>
+                <path d="M2 21v-3a4 4 0 0 1 4-4h4.5"></path>
+                <path d="M10.5 14v7"></path>
+                <path d="M10.5 14c3.5 0 5 1.5 6 2.5"></path>
+                <path d="M14 21v-2a3 3 0 0 1 3-3h1a3 3 0 0 1 3 3v2"></path>
+            </svg>
+            Parent's Weekly Wrap-Up
+        </h2>
+        <p style="font-size: 1.1rem; color: #1f2937;">Here is a summary of the creative activities your child has completed this week!</p>
+        
+        <div class="summary-stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ videos_completed }}</div>
+                <div class="stat-label">Videos Watched</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ flipbooks_completed }}</div>
+                <div class="stat-label">Flipbooks Read</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Calendar Section -->
+    <div class="calendar-container">
+        <h2 style="color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="#f59e0b" stroke="#1f2937" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2C6.48 2 2 6.48 2 12c0 5.52 4.48 10 10 10 1.5 0 2.5-1 2.5-2.5 0-1-.5-1.5-.5-2.5 0-1.5 1-2.5 2.5-2.5h1C20.53 14.5 22 13.03 22 11c0-4.97-4.48-9-10-9z"/>
+                <circle cx="7" cy="10.5" r="1.8" fill="#fde047" stroke="none" />
+                <circle cx="11.5" cy="6.5" r="1.8" fill="#84cc16" stroke="none" />
+                <circle cx="16.5" cy="8.5" r="1.8" fill="#3b82f6" stroke="none" />
+                <circle cx="8" cy="15.5" r="1.8" fill="#ef4444" stroke="none" />
+                <ellipse cx="14.5" cy="17" rx="2.5" ry="1.8" fill="#ffffff" stroke="none" />
+            </svg>
+            My Activity Calendar
+        </h2>
+        <div id='calendar'></div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        
+        // Parse the events JSON passed from Django view
+        var rawEvents = JSON.parse('{{ events_json|safe }}');
+        
+        var calendarEvents = rawEvents.map(function(ev) {
+            return {
+                title: ev.title,
+                start: ev.start,
+                allDay: true,
+                classNames: ['fc-event-' + ev.type],
+                extendedProps: { type: ev.type }
+            };
+        });
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth'
+            },
+            events: calendarEvents,
+            eventContent: function(arg) {
+                var type = arg.event.extendedProps.type;
+                var calendarEventTypes = ['holiday', 'event', 'lesson plan', 'module', 'other'];
+                if (calendarEventTypes.includes(type)) {
+                    var eventIcon = type === 'holiday' ? '🎉' : 
+                                    type === 'lesson plan' ? '📝' : 
+                                    type === 'module' ? '📚' : '📅';
+                    return {
+                        html: '<div style="display: flex; align-items: center; overflow: hidden; white-space: nowrap; color: #4b5563;">' + 
+                              '<span style="margin-right: 4px; font-size: 0.9em;">' + eventIcon + '</span>' + 
+                              '<span style="overflow: hidden; text-overflow: ellipsis; font-size: 0.8em; font-weight: 600;">' + arg.event.title + '</span>' + 
+                              '</div>'
+                    };
+                }
+
+                var isVideo = type === 'video';
+                var iconHtml = isVideo ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 4px; vertical-align: middle;"><rect x="2" y="6" width="14" height="12" rx="2" /><polygon points="22 7 17 10.5 17 13.5 22 17" /></svg>' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: middle;"><path d="M12 6L6 4v14l6 2"></path><path d="M12 6l6-2v14l-6 2"></path><path d="M12 6v14"></path><path d="M3 6v15l9 2 9-2V6"></path></svg>';
+                
+                return {
+                    html: '<div style="display: flex; align-items: center; overflow: hidden; white-space: nowrap; padding: 2px 4px; color: white;">' + 
+                          iconHtml + 
+                          '<span style="overflow: hidden; text-overflow: ellipsis; font-size: 0.85em; font-weight: 500;">' + arg.event.title + '</span>' + 
+                          '</div>'
+                };
+            },
+            eventClick: function(info) {
+                var type = info.event.extendedProps.type;
+                var calendarEventTypes = ['holiday', 'event', 'lesson plan', 'module', 'other'];
+                if (calendarEventTypes.includes(type)) {
+                    alert(info.event.title);
+                } else {
+                    alert("Activity completed: " + info.event.title);
+                }
+            }
+        });
+        
+        calendar.render();
+    });
+</script>
+{% endblock %}

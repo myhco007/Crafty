@@ -119,3 +119,100 @@ html.dark-mode .yt-channel {
 html.dark-mode .yt-menu-btn {
     color: var(--dark) !important;
 }
+
+/* Auth Pages & Landing Pages Overrides */
+html.dark-mode .auth-page {
+    background: var(--green-light) !important;
+}
+html.dark-mode .auth-card {
+    background: rgba(30, 30, 30, 0.9) !important;
+}
+html.dark-mode .auth-card-welcome,
+html.dark-mode .auth-bottom,
+html.dark-mode .auth-bottom p,
+html.dark-mode .forgot-link {
+    color: var(--gray) !important;
+}
+html.dark-mode .form-group label {
+    color: var(--dark) !important;
+}
+html.dark-mode .auth-welcome-text h1,
+html.dark-mode .auth-welcome-text p {
+    color: #fff !important; 
+}
+
+/* Home & About Pages Overrides */
+html.dark-mode .hero-title {
+    color: #fff !important;
+}
+html.dark-mode .hero-title .blue {
+    color: var(--teal) !important;
+}
+html.dark-mode .hero-sub {
+    color: #e0e0e0 !important;
+}
+html.dark-mode .subjects-section {
+    background: var(--green-light) !important;
+}
+html.dark-mode .subjects-section h2 {
+    color: var(--dark) !important;
+}
+html.dark-mode .section-sub {
+    color: var(--gray) !important;
+}
+html.dark-mode .subject-card {
+    background: var(--white) !important;
+    border-color: #333 !important;
+}
+html.dark-mode .subject-card h3 {
+    color: var(--dark) !important;
+}
+html.dark-mode .subject-card p {
+    color: var(--gray) !important;
+}
+html.dark-mode .about-page-title,
+html.dark-mode .about-page-sub {
+    color: var(--dark) !important;
+}
+html.dark-mode .about-card,
+html.dark-mode .about-contact,
+html.dark-mode .about-everyone {
+    background: var(--white) !important;
+    color: var(--dark) !important;
+    border-color: #333 !important;
+}
+html.dark-mode .about-card h3,
+html.dark-mode .about-contact h3,
+html.dark-mode .about-everyone h3 {
+    color: var(--dark) !important;
+}
+html.dark-mode .about-card p,
+html.dark-mode .about-contact p,
+html.dark-mode .about-everyone li {
+    color: var(--gray) !important;
+}
+
+
+/* Hamburger & Dropdown Dark Mode */
+html.dark-mode .btn-hamburger {
+    color: var(--green) !important;
+}
+html.dark-mode .btn-hamburger:hover {
+    background: #2a2a2a !important;
+}
+html.dark-mode .nav-dropdown {
+    background: var(--white) !important;
+    border-color: #333 !important;
+}
+html.dark-mode .nav-dropdown-item {
+    color: var(--dark) !important;
+}
+html.dark-mode .nav-dropdown-item:hover {
+    background: #2a2a2a !important;
+    color: var(--green) !important;
+}
+html.dark-mode .nav-dropdown-item.logout-item:hover {
+    background: #4a1c1c !important;
+    color: var(--pink) !important;
+}
+

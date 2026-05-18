@@ -1,12 +1,36 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib import messages
 from .audit import log_audit_event
-from .models import AnimationVideo, AuditLog, Flipbook, Category, Announcement, Notification, Comment, UserProfile
-from .forms import AnimationVideoForm, FlipbookForm, AnnouncementForm, UserUpdateForm, UserProfileUpdateForm
+from .models import AnimationVideo, AuditLog, Flipbook, Category, Announcement, Notification, VideoComment, FlipbookComment, UserProfile, StudentActivity, CalendarEvent, TeacherTask, PasswordResetCode
+from .forms import AnimationVideoForm, FlipbookForm, AnnouncementForm, UserUpdateForm, UserProfileUpdateForm, CalendarEventForm
+
+import urllib.request
+import urllib.parse
+import json
+from django.conf import settings
+import re
+
+def verify_recaptcha(request):
+    recaptcha_response = request.POST.get('g-recaptcha-response')
+    if not recaptcha_response:
+        return False
+        
+    data = urllib.parse.urlencode({
+        'secret': settings.RECAPTCHA_SECRET_KEY,
+        'response': recaptcha_response
+    }).encode('utf-8')
+    
+    req = urllib.request.Request('https://www.google.com/recaptcha/api/siteverify', data=data)
+    try:
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode('utf-8'))
+            return result.get('success', False)
+    except Exception:
+        return False
 
 # Helpers
 def is_staff_or_teacher(user):
@@ -27,13 +51,41 @@ def support_us(request):
 @login_required(login_url='login')
 def profile_view(request):
     if request.method == 'POST':
+        if 'remove_pfp' in request.POST:
+            request.user.profile.profile_picture.delete(save=True)
+            messages.success(request, 'Profile picture removed successfully!')
+            return redirect('profile')
+            
+        old_grade = request.user.profile.grade_level
         u_form = UserUpdateForm(request.POST, instance=request.user)
         p_form = UserProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
         
         if u_form.is_valid() and p_form.is_valid():
+            new_grade = p_form.cleaned_data.get('grade_level')
+            if new_grade != old_grade and request.user.profile.role == 'CLIENT':
+                from django.utils import timezone
+                from datetime import timedelta
+                
+                # Check cooldown before saving anything
+                if request.user.profile.grade_change_cooldown:
+                    if timezone.now() < request.user.profile.grade_change_cooldown + timedelta(minutes=2):
+                        messages.error(request, 'You recently cancelled a grade change request. Please wait a few minutes before trying again.')
+                        return redirect('profile')
+                
+                # Revert the in-memory grade level so the User save signal doesn't save the new grade incorrectly
+                request.user.profile.grade_level = old_grade
+
             u_form.save()
-            p_form.save()
-            messages.success(request, 'Your profile has been updated successfully!')
+            profile = p_form.save(commit=False)
+            
+            if new_grade != old_grade and request.user.profile.role == 'CLIENT':
+                profile.grade_level = old_grade
+                profile.pending_grade = new_grade
+                messages.success(request, 'Your profile has been updated. Grade change request submitted to Admin.')
+            else:
+                messages.success(request, 'Your profile has been updated successfully!')
+                
+            profile.save()
             return redirect('profile')
         else:
             messages.error(request, 'Please correct the errors below.')
@@ -46,6 +98,57 @@ def profile_view(request):
         'p_form': p_form
     }
     return render(request, 'main/profile.html', context)
+
+@login_required(login_url='login')
+def cancel_grade_request(request):
+    if request.method == 'POST':
+        from django.utils import timezone
+        profile = request.user.profile
+        if profile.pending_grade:
+            profile.pending_grade = None
+            profile.grade_change_cooldown = timezone.now()
+            profile.save()
+            messages.success(request, 'Grade change request cancelled. You must wait 2 minutes before requesting again.')
+    return redirect('profile')
+
+@login_required
+def verify_password_ajax(request):
+    if request.method == 'POST':
+        import json
+        try:
+            data = json.loads(request.body)
+            password = data.get('password', '')
+            user = authenticate(username=request.user.username, password=password)
+            if user is not None:
+                return JsonResponse({'success': True})
+            else:
+                return JsonResponse({'success': False, 'error': 'Incorrect password.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request.'})
+
+@login_required
+def update_password_ajax(request):
+    if request.method == 'POST':
+        import json
+        try:
+            data = json.loads(request.body)
+            new_password = data.get('new_password', '')
+            confirm_password = data.get('confirm_password', '')
+            
+            if len(new_password) < 8:
+                return JsonResponse({'success': False, 'error': 'Password must be at least 8 characters long.'})
+            if new_password != confirm_password:
+                return JsonResponse({'success': False, 'error': 'Passwords do not match.'})
+                
+            request.user.set_password(new_password)
+            request.user.save()
+            update_session_auth_hash(request, request.user) # Keep user logged in
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request.'})
 
 def faqs(request):
     return render(request, 'main/faqs.html')
@@ -61,8 +164,10 @@ def notifications(request):
         
     notifications_list = qs
     
-    # Update session to hide the indicator
-    request.session['last_seen_notifications'] = now().isoformat()
+    # Update profile to hide the indicator
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        request.user.profile.last_seen_notifications = now()
+        request.user.profile.save()
     
     return render(request, 'main/notifications.html', {'notifications': notifications_list})
 
@@ -77,14 +182,23 @@ def video_list(request):
     
     videos = AnimationVideo.objects.filter(is_archived=False, is_approved=True)
     
+    is_client = request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.role == 'CLIENT'
+    
+    if is_client:
+        user_grade = request.user.profile.grade_level
+        if user_grade:
+            from django.db.models import Q
+            videos = videos.filter(Q(grade=user_grade) | Q(grade='All Grades'))
+            grade = user_grade
+    else:
+        if grade and grade != 'All Grades':
+            videos = videos.filter(grade=grade)
+            
     if category:
         videos = videos.filter(category__name=category)
     
     if craft_category and craft_category != 'All Categories':
         videos = videos.filter(craft_category=craft_category)
-        
-    if grade and grade != 'All Grades':
-        videos = videos.filter(grade=grade)
     
     if query:
         videos = videos.filter(title__icontains=query)
@@ -122,7 +236,7 @@ def video_create(request):
                 message=f"A new video tutorial '{video.title}' is now available.",
                 icon="Video"
             )
-        return redirect('dashboard' if request.user.is_staff else 'video_list')
+        return redirect('/dashboard/#section-videos' if request.user.is_staff else 'video_list')
     return render(request, 'main/video_form.html', {'form': form, 'title': 'Add Video'})
 
 @login_required(login_url='login')
@@ -133,7 +247,7 @@ def video_edit(request, pk):
     if form.is_valid():
         updated_video = form.save()
         log_audit_event(request, 'update', updated_video, {'source': 'dashboard'})
-        return redirect('video_list')
+        return redirect('/dashboard/#section-videos' if request.user.is_staff else 'video_list')
     return render(request, 'main/video_form.html', {'form': form, 'title': 'Edit Video'})
 
 @login_required(login_url='login')
@@ -145,12 +259,40 @@ def video_delete(request, pk):
         video.save()
         log_audit_event(request, 'archive', video, {'source': 'dashboard'})
         messages.success(request, 'Video archived successfully!')
-        return redirect('video_list')
+        return redirect('/dashboard/#section-videos' if request.user.is_staff else 'video_list')
     return render(request, 'main/confirm_delete.html', {'object': video})
+
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def video_restore(request, pk):
+    video = get_object_or_404(AnimationVideo, pk=pk)
+    if request.user.profile.role != 'SUPER_ADMIN' and video.author != request.user:
+        messages.error(request, 'You do not have permission to do this.')
+        return redirect('/dashboard/#section-archive')
+    video.is_archived = False
+    video.save()
+    log_audit_event(request, 'restore', video, {'source': 'dashboard'})
+    messages.success(request, 'Video restored successfully!')
+    return redirect('/dashboard/#section-archive')
     
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def video_permanent_delete(request, pk):
+    video = get_object_or_404(AnimationVideo, pk=pk)
+    if request.user.profile.role != 'SUPER_ADMIN' and video.author != request.user:
+        messages.error(request, 'You do not have permission to do this.')
+        return redirect('/dashboard/#section-archive')
+    if request.method == 'POST':
+        log_audit_event(request, 'delete', video, {'source': 'dashboard'})
+        video.delete()
+        messages.success(request, 'Video permanently deleted!')
+        return redirect('/dashboard/#section-archive')
+    return render(request, 'main/confirm_delete.html', {'object': video, 'permanent': True})
+
+@login_required(login_url='login')
 def video_detail(request, pk):
     video = get_object_or_404(AnimationVideo, pk=pk, is_archived=False)
-    comments = video.comments.all()
+    comments = video.comments.filter(is_archived=False)
     has_liked = request.user.is_authenticated and video.liked_by.filter(id=request.user.id).exists()
     return render(request, 'main/video_detail.html', {'video': video, 'comments': comments, 'has_liked': has_liked})
 
@@ -179,8 +321,19 @@ def video_comment(request, pk):
         name = request.POST.get('name', 'Anonymous').strip() or 'Anonymous'
         text = request.POST.get('text', '').strip()
         if text:
-            Comment.objects.create(video=video, name=name, text=text)
+            VideoComment.objects.create(video=video, user=request.user, name=name, text=text)
     return redirect('video_detail', pk=pk)
+
+@login_required(login_url='login')
+def video_comment_delete(request, pk):
+    comment = get_object_or_404(VideoComment, pk=pk)
+    if request.user == comment.user or (hasattr(request.user, 'profile') and request.user.profile.role == 'SUPER_ADMIN'):
+        comment.is_archived = True
+        comment.save()
+        messages.success(request, 'Comment deleted successfully.')
+    else:
+        messages.error(request, 'You are not authorized to delete this comment.')
+    return redirect('video_detail', pk=comment.video.pk)
 
 
 # Flipbooks CRUD
@@ -193,14 +346,23 @@ def flipbook_list(request):
     
     flipbooks = Flipbook.objects.filter(is_archived=False, is_approved=True)
     
+    is_client = request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.role == 'CLIENT'
+    
+    if is_client:
+        user_grade = request.user.profile.grade_level
+        if user_grade:
+            from django.db.models import Q
+            flipbooks = flipbooks.filter(Q(grade=user_grade) | Q(grade='All Grades'))
+            grade = user_grade
+    else:
+        if grade and grade != 'All Grades':
+            flipbooks = flipbooks.filter(grade=grade)
+            
     if category:
         flipbooks = flipbooks.filter(category__name=category)
     
     if craft_category and craft_category != 'All Categories':
         flipbooks = flipbooks.filter(craft_category=craft_category)
-        
-    if grade and grade != 'All Grades':
-        flipbooks = flipbooks.filter(grade=grade)
     
     if query:
         flipbooks = flipbooks.filter(title__icontains=query)
@@ -208,9 +370,10 @@ def flipbook_list(request):
     return render(request, 'main/flipbook_list.html', {'flipbooks': flipbooks, 'active': category, 'selected_grade': grade, 'selected_craft': craft_category})
 
 # DITO KO IDINAGDAG YUNG FLIPBOOK DETAIL VIEW
+@login_required(login_url='login')
 def flipbook_detail(request, pk):
     flipbook = get_object_or_404(Flipbook, pk=pk, is_archived=False)
-    comments = flipbook.comments.all()
+    comments = flipbook.comments.filter(is_archived=False)
     has_liked = request.user.is_authenticated and flipbook.liked_by.filter(id=request.user.id).exists()
     return render(request, 'main/flipbook_detail.html', {'flipbook': flipbook, 'comments': comments, 'has_liked': has_liked})
 
@@ -239,8 +402,19 @@ def flipbook_comment(request, pk):
         name = request.POST.get('name', 'Anonymous').strip() or 'Anonymous'
         text = request.POST.get('text', '').strip()
         if text:
-            Comment.objects.create(flipbook=flipbook, name=name, text=text)
+            FlipbookComment.objects.create(flipbook=flipbook, user=request.user, name=name, text=text)
     return redirect('flipbook_detail', pk=pk)
+
+@login_required(login_url='login')
+def flipbook_comment_delete(request, pk):
+    comment = get_object_or_404(FlipbookComment, pk=pk)
+    if request.user == comment.user or (hasattr(request.user, 'profile') and request.user.profile.role == 'SUPER_ADMIN'):
+        comment.is_archived = True
+        comment.save()
+        messages.success(request, 'Comment deleted successfully.')
+    else:
+        messages.error(request, 'You are not authorized to delete this comment.')
+    return redirect('flipbook_detail', pk=comment.flipbook.pk)
 
 @login_required(login_url='login')
 @user_passes_test(is_staff_or_teacher, login_url='home')
@@ -272,7 +446,7 @@ def flipbook_create(request):
                 message=f"A new flipbook tutorial '{flipbook.title}' is now available.",
                 icon="Book"
             )
-        return redirect('dashboard' if request.user.is_staff else 'flipbook_list')
+        return redirect('/dashboard/#section-flipbooks' if request.user.is_staff else 'flipbook_list')
     return render(request, 'main/flipbook_form.html', {'form': form, 'title': 'Add Flipbook'})
 
 @login_required(login_url='login')
@@ -283,7 +457,7 @@ def flipbook_edit(request, pk):
     if form.is_valid():
         updated_flipbook = form.save()
         log_audit_event(request, 'update', updated_flipbook, {'source': 'dashboard'})
-        return redirect('flipbook_list')
+        return redirect('/dashboard/#section-flipbooks' if request.user.is_staff else 'flipbook_list')
     return render(request, 'main/flipbook_form.html', {'form': form, 'title': 'Edit Flipbook'})
 
 @login_required(login_url='login')
@@ -295,9 +469,35 @@ def flipbook_delete(request, pk):
         flipbook.save()
         log_audit_event(request, 'archive', flipbook, {'source': 'dashboard'})
         messages.success(request, 'Flipbook archived successfully!')
-        return redirect('flipbook_list')
+        return redirect('/dashboard/#section-flipbooks' if request.user.is_staff else 'flipbook_list')
     return render(request, 'main/confirm_delete.html', {'object': flipbook})
 
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def flipbook_restore(request, pk):
+    flipbook = get_object_or_404(Flipbook, pk=pk)
+    if request.user.profile.role != 'SUPER_ADMIN' and flipbook.author != request.user:
+        messages.error(request, 'You do not have permission to do this.')
+        return redirect('/dashboard/#section-archive')
+    flipbook.is_archived = False
+    flipbook.save()
+    log_audit_event(request, 'restore', flipbook, {'source': 'dashboard'})
+    messages.success(request, 'Flipbook restored successfully!')
+    return redirect('/dashboard/#section-archive')
+
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def flipbook_permanent_delete(request, pk):
+    flipbook = get_object_or_404(Flipbook, pk=pk)
+    if request.user.profile.role != 'SUPER_ADMIN' and flipbook.author != request.user:
+        messages.error(request, 'You do not have permission to do this.')
+        return redirect('/dashboard/#section-archive')
+    if request.method == 'POST':
+        log_audit_event(request, 'delete', flipbook, {'source': 'dashboard'})
+        flipbook.delete()
+        messages.success(request, 'Flipbook permanently deleted!')
+        return redirect('/dashboard/#section-archive')
+    return render(request, 'main/confirm_delete.html', {'object': flipbook, 'permanent': True})
 
 # Auth
 
@@ -305,50 +505,104 @@ def login_view(request, template_name='main/login.html'):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        next_url = request.POST.get('next') or request.GET.get('next')
+        
+        if not verify_recaptcha(request):
+            messages.error(request, 'CAPTCHA verification failed. Please try again.')
+            return render(request, template_name, {'recaptcha_site_key': settings.RECAPTCHA_SITE_KEY})
+            
         user = authenticate(request, username=username, password=password)
         if user:
-            if user.profile.role == 'TEACHER' and not user.profile.is_approved:
-                messages.error(request, 'Your teacher account is pending approval from the Main Admin.')
+            if template_name == 'main/teacher_login.html' and user.profile.role not in ['TEACHER', 'SUPER_ADMIN']:
+                messages.error(request, 'Student accounts cannot log in through the Teacher portal.')
+                return render(request, template_name)
+            elif template_name == 'main/login.html' and user.profile.role != 'CLIENT':
+                messages.error(request, 'Teacher and Admin accounts must log in through the Teacher portal.')
+                return render(request, template_name)
+
+            if not user.profile.is_approved and user.profile.role != 'SUPER_ADMIN':
+                messages.error(request, 'Your account is pending approval from the Main Admin.')
                 return render(request, template_name)
             
             login(request, user)
             log_audit_event(request, 'login', user, {'source': 'auth'}, target_label=user.username)
             
-            if user.profile.role in ['SUPER_ADMIN', 'TEACHER']:
-                return redirect('dashboard')
+            if next_url:
+                return redirect(next_url)
+                
             return redirect('home')
         else:
             messages.error(request, 'Invalid username or password.')
-    return render(request, template_name)
+    return render(request, template_name, {'recaptcha_site_key': settings.RECAPTCHA_SITE_KEY})
 
 def register_view(request):
     if request.method == 'POST':
-        full_name  = request.POST.get('full_name')
+        first_name = request.POST.get('first_name')
+        last_name  = request.POST.get('last_name')
         email      = request.POST.get('email')
+        lrn_number = request.POST.get('lrn_number')
+        grade_level = request.POST.get('grade_level')
         username   = request.POST.get('username')
         password1  = request.POST.get('password1')
         password2  = request.POST.get('password2')
 
         if password1 != password2:
             messages.error(request, 'Passwords do not match.')
+        elif not re.search(r'[a-zA-Z]', password1) or not re.search(r'[0-9]', password1) or not re.search(r'_', password1):
+            messages.error(request, 'Password must contain a combination of letters, numbers, and an underscore.')
+        elif not email or not email.lower().endswith('@gmail.com'):
+            pass # Frontend will handle the warning display
+        elif User.objects.filter(email__iexact=email).exists():
+            messages.error(request, 'This Gmail account is already registered. Please use a different one.')
         elif User.objects.filter(username=username).exists():
             messages.error(request, 'Username already taken.')
+        elif not lrn_number or not lrn_number.isdigit() or len(lrn_number) != 12:
+            messages.error(request, 'LRN Number must be exactly 12 digits.')
+        elif UserProfile.objects.filter(lrn_number=lrn_number).exists():
+            messages.error(request, 'This LRN Number is already registered by another user. Please use a different one.')
+        elif not verify_recaptcha(request):
+            messages.error(request, 'CAPTCHA verification failed. Please prove you are human.')
         else:
             user = User.objects.create_user(username=username, email=email, password=password1)
-            first, *last = full_name.split(' ', 1)
-            user.first_name = first
-            user.last_name = last[0] if last else ''
+            user.first_name = first_name
+            user.last_name = last_name
             user.save()
             
+            # Profile is automatically created by signal, just update it
+            user.profile.lrn_number = lrn_number
+            if grade_level:
+                user.profile.grade_level = grade_level
+            user.profile.save()
+            
             # Profile defaults to CLIENT, which is correct here
-            login(request, user)
+            # Set is_approved to False explicitly (although default is False)
+            user.profile.is_approved = False
+            user.profile.save()
+            
             log_audit_event(request, 'register', user, {'source': 'auth'}, target_label=user.username)
-            return redirect('home')
-    return render(request, 'main/register.html')
+            
+            # Notify Super Admin
+            full_name_combined = f"{first_name} {last_name}".strip()
+            from main.models import Notification
+            Notification.objects.create(
+                title="New Student Registration",
+                message=f"A new student account '{username}' ({full_name_combined}) is pending approval.",
+                icon="User",
+                link_url="/dashboard/#section-pending"
+            )
+            
+            messages.success(request, 'Registration successful! Please wait for the Main Admin to approve your account. We will send you an email if your account was approved, or denied.')
+            return redirect('login')
+            
+    return render(request, 'main/register.html', {
+        'form_data': request.POST if request.method == 'POST' else None,
+        'recaptcha_site_key': settings.RECAPTCHA_SITE_KEY
+    })
 
 def teacher_register_view(request):
     if request.method == 'POST':
-        full_name  = request.POST.get('full_name')
+        first_name = request.POST.get('first_name')
+        last_name  = request.POST.get('last_name')
         email      = request.POST.get('email')
         username   = request.POST.get('username')
         password1  = request.POST.get('password1')
@@ -356,33 +610,50 @@ def teacher_register_view(request):
 
         if password1 != password2:
             messages.error(request, 'Passwords do not match.')
+        elif not re.search(r'[a-zA-Z]', password1) or not re.search(r'[0-9]', password1) or not re.search(r'_', password1):
+            messages.error(request, 'Password must contain a combination of letters, numbers, and an underscore.')
+        elif not email or not email.lower().endswith('@gmail.com'):
+            pass # Frontend will handle the warning display
+        elif User.objects.filter(email__iexact=email).exists():
+            messages.error(request, 'This Gmail account is already registered. Please use a different one.')
         elif User.objects.filter(username=username).exists():
             messages.error(request, 'Username already taken.')
+        elif not verify_recaptcha(request):
+            messages.error(request, 'CAPTCHA verification failed. Please prove you are human.')
         else:
             user = User.objects.create_user(username=username, email=email, password=password1)
-            first, *last = full_name.split(' ', 1)
-            user.first_name = first
-            user.last_name = last[0] if last else ''
+            user.first_name = first_name
+            user.last_name = last_name
             user.save()
             
             # Set role to TEACHER and is_approved to False
             user.profile.role = 'TEACHER'
             user.profile.is_approved = False
+            
+            faculty_id = request.FILES.get('faculty_id')
+            if faculty_id:
+                user.profile.faculty_id_image = faculty_id
+                
             user.profile.save()
             
             log_audit_event(request, 'register', user, {'source': 'teacher_auth'}, target_label=user.username)
             
             # Notify Super Admin
+            full_name_combined = f"{first_name} {last_name}".strip()
             Notification.objects.create(
                 title="New Teacher Registration",
-                message=f"A new teacher account '{username}' ({full_name}) is pending approval.",
+                message=f"A new teacher account '{username}' ({full_name_combined}) is pending approval.",
                 icon="User",
                 link_url="/dashboard/#section-users"
             )
             
-            messages.success(request, 'Registration successful! Please wait for the Main Admin to approve your account.')
+            messages.success(request, 'Registration successful! Please wait for the Main Admin to approve your account. We will send you an email if your account was approved, or denied.')
             return redirect('login')
-    return render(request, 'main/teacher_register.html')
+            
+    return render(request, 'main/teacher_register.html', {
+        'form_data': request.POST if request.method == 'POST' else None,
+        'recaptcha_site_key': settings.RECAPTCHA_SITE_KEY
+    })
 
 def logout_view(request):
     if request.user.is_authenticated:
@@ -408,7 +679,8 @@ def dashboard(request):
             'total_flipbooks':  Flipbook.objects.filter(is_archived=False).count(),
             'total_users':      User.objects.count(),
             'total_categories': Category.objects.count(),
-            'pending_teachers': User.objects.filter(profile__role='TEACHER', profile__is_approved=False),
+            'pending_users':    User.objects.filter(profile__is_approved=False, is_active=True).exclude(profile__role='SUPER_ADMIN'),
+            'pending_grade_users': User.objects.filter(profile__pending_grade__isnull=False).exclude(profile__pending_grade=''),
             'pending_videos':   AnimationVideo.objects.filter(is_approved=False, is_archived=False),
             'pending_flipbooks': Flipbook.objects.filter(is_approved=False, is_archived=False),
             'recent_audit_logs': AuditLog.objects.select_related('actor')[:8],
@@ -416,9 +688,15 @@ def dashboard(request):
             'all_flipbooks':    Flipbook.objects.filter(is_archived=False).order_by('-created_at'),
             'archived_videos':  AnimationVideo.objects.filter(is_archived=True).order_by('-created_at'),
             'archived_flipbooks': Flipbook.objects.filter(is_archived=True).order_by('-created_at'),
-            'users':            User.objects.order_by('-date_joined'),
+            'archived_video_comments': VideoComment.objects.filter(is_archived=True).order_by('-created_at'),
+            'archived_flipbook_comments': FlipbookComment.objects.filter(is_archived=True).order_by('-created_at'),
+            'users':            User.objects.filter(profile__is_archived=False).order_by('-date_joined'),
+            'archived_users':   User.objects.filter(profile__is_archived=True).order_by('-date_joined'),
             'categories':       Category.objects.all(),
-            'announcements':    Announcement.objects.all().order_by('-created_at'),
+            'announcements':    Announcement.objects.filter(is_archived=False).order_by('-created_at'),
+            'archived_announcements': Announcement.objects.filter(is_archived=True).order_by('-created_at'),
+            'calendar_events':  CalendarEvent.objects.filter(is_archived=False).order_by('date'),
+            'archived_events':  CalendarEvent.objects.filter(is_archived=True).order_by('date'),
         }
     else: # TEACHER
         context = {
@@ -426,8 +704,39 @@ def dashboard(request):
             'role_display': 'Teacher',
             'my_videos':    AnimationVideo.objects.filter(author=request.user, is_archived=False),
             'my_flipbooks': Flipbook.objects.filter(author=request.user, is_archived=False),
+            'archived_videos': AnimationVideo.objects.filter(author=request.user, is_archived=True).order_by('-created_at'),
+            'archived_flipbooks': Flipbook.objects.filter(author=request.user, is_archived=True).order_by('-created_at'),
+            'archived_video_comments': VideoComment.objects.filter(video__author=request.user, is_archived=True).order_by('-created_at'),
+            'archived_flipbook_comments': FlipbookComment.objects.filter(flipbook__author=request.user, is_archived=True).order_by('-created_at'),
             'categories':   Category.objects.all(),
+            'calendar_events': CalendarEvent.objects.filter(is_archived=False).order_by('date'),
+            'archived_events': CalendarEvent.objects.filter(is_archived=True).order_by('date'),
         }
+        
+    context['teacher_tasks'] = TeacherTask.objects.filter(user=request.user).order_by('created_at')
+    
+    # Add JSON events for the calendar javascript
+    events_list = []
+    for evt in context['calendar_events']:
+        events_list.append({
+            'title': evt.title,
+            'date': evt.date.isoformat(),
+            'type': evt.event_type,
+            'description': evt.description,
+            'image_url': evt.image.url if evt.image else ''
+        })
+        
+    for task in context['teacher_tasks']:
+        if task.due_date:
+            events_list.append({
+                'title': f"[Task] {task.title}",
+                'date': task.due_date.isoformat(),
+                'type': 'task',
+                'description': f"Status: {task.status}",
+                'image_url': ''
+            })
+            
+    context['events_json'] = json.dumps(events_list)
         
     return render(request, 'main/dashboard.html', context)
 
@@ -435,43 +744,133 @@ def dashboard(request):
 @user_passes_test(is_super_admin, login_url='home')
 def approve_content(request, model_type, pk):
     if model_type == 'video':
-        AnimationVideo.objects.filter(pk=pk).update(is_approved=True)
-        obj = AnimationVideo.objects.get(pk=pk)
+        obj = get_object_or_404(AnimationVideo, pk=pk)
     elif model_type == 'flipbook':
-        Flipbook.objects.filter(pk=pk).update(is_approved=True)
-        obj = Flipbook.objects.get(pk=pk)
+        obj = get_object_or_404(Flipbook, pk=pk)
     else:
-        return redirect('dashboard')
+        return redirect('/dashboard/#section-pending')
         
-    log_audit_event(request, 'approve', obj, {'source': 'dashboard'})
-    messages.success(request, f'{model_type.capitalize()} approved!')
-    return redirect('dashboard')
+    if request.method == 'POST':
+        if model_type == 'video':
+            AnimationVideo.objects.filter(pk=pk).update(is_approved=True)
+        elif model_type == 'flipbook':
+            Flipbook.objects.filter(pk=pk).update(is_approved=True)
+            
+        log_audit_event(request, 'approve', obj, {'source': 'dashboard'})
+        messages.success(request, f'{model_type.capitalize()} approved!')
+        return redirect('/dashboard/#section-pending')
+        
+    return render(request, 'main/confirm_action.html', {
+        'title': f'Approve {model_type.capitalize()}?',
+        'icon': '✅',
+        'message': f'You are about to approve the {model_type} "<strong>{obj.title}</strong>". It will be visible to all users.',
+        'btn_text': 'Yes, Approve!',
+        'is_destructive': False
+    })
 
 @login_required(login_url='login')
 @user_passes_test(is_super_admin, login_url='home')
-def approve_teacher(request, pk):
+def approve_user(request, pk):
     user = get_object_or_404(User, pk=pk)
+    role_display = user.profile.get_role_display() if hasattr(user, 'profile') else 'User'
     
-    # Update profile attribute
-    if hasattr(user, 'profile'):
-        user.profile.is_approved = True
-        user.profile.save()
+    if request.method == 'POST':
+        # Update profile attribute
+        if hasattr(user, 'profile'):
+            user.profile.is_approved = True
+            user.profile.save()
+        
+        # Update user staff status if teacher
+        if hasattr(user, 'profile') and user.profile.role == 'TEACHER':
+            user.is_staff = True
+        user.save()
+        
+        log_audit_event(request, 'approve', user, {'source': 'dashboard'}, target_label=user.username)
+        messages.success(request, f'{role_display} {user.username} approved!')
+        return redirect('/dashboard/#section-pending')
+        
+    return render(request, 'main/confirm_action.html', {
+        'title': 'Approve Account?',
+        'icon': '✅',
+        'message': f'You are about to approve the {role_display} account for "<strong>{user.username}</strong>".',
+        'btn_text': 'Yes, Approve!',
+        'is_destructive': False
+    })
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def approve_grade(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        if hasattr(user, 'profile') and user.profile.pending_grade:
+            user.profile.grade_level = user.profile.pending_grade
+            user.profile.pending_grade = None
+            user.profile.save()
+            log_audit_event(request, 'approve_grade', user, {'source': 'dashboard'}, target_label=user.username)
+            messages.success(request, f'Grade level updated for {user.username}!')
+        return redirect('/dashboard/#section-pending')
     
-    # Update user staff status
-    user.is_staff = True
-    user.save()
+    return render(request, 'main/confirm_action.html', {
+        'title': 'Approve Grade Change?',
+        'icon': '✅',
+        'message': f'Approve grade change to <strong>{user.profile.pending_grade}</strong> for "<strong>{user.username}</strong>"?',
+        'btn_text': 'Yes, Approve!',
+        'is_destructive': False
+    })
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def reject_grade(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        if hasattr(user, 'profile'):
+            user.profile.pending_grade = None
+            user.profile.save()
+            log_audit_event(request, 'reject_grade', user, {'source': 'dashboard'}, target_label=user.username)
+            messages.success(request, f'Grade change rejected for {user.username}.')
+        return redirect('/dashboard/#section-pending')
+        
+    return render(request, 'main/confirm_action.html', {
+        'title': 'Reject Grade Change?',
+        'icon': '🚫',
+        'message': f'Reject grade change request for "<strong>{user.username}</strong>"?',
+        'btn_text': 'Yes, Reject!',
+        'is_destructive': True
+    })
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def reject_user(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    username = user.username
+    role_display = user.profile.get_role_display() if hasattr(user, 'profile') else 'User'
     
-    log_audit_event(request, 'approve', user, {'source': 'dashboard'}, target_label=user.username)
-    
-    messages.success(request, f'Teacher {user.username} approved!')
-    return redirect('dashboard')
+    if request.method == 'POST':
+        if hasattr(user, 'profile'):
+            user.profile.is_archived = True
+            user.profile.save()
+        user.is_active = False
+        user.save()
+        
+        log_audit_event(request, 'archive', user, {'source': 'dashboard'}, target_label=username)
+        messages.success(request, f'{role_display} {username} request denied and account archived.')
+        return redirect('/dashboard/#section-pending')
+        
+    return render(request, 'main/confirm_action.html', {
+        'title': 'Deny Account?',
+        'icon': '🚫',
+        'message': f'You are about to deny the {role_display} account for "<strong>{username}</strong>". It will be archived and hidden from users.',
+        'btn_text': 'Yes, Deny!',
+        'is_destructive': True
+    })
+
 
 @login_required(login_url='login')
 @user_passes_test(is_super_admin, login_url='home')
 def toggle_user_status(request, pk):
     if request.user.pk == pk:
         messages.error(request, "You cannot deactivate your own account.")
-        return redirect('dashboard')
+        return redirect('/dashboard/#section-users')
     
     user = get_object_or_404(User, pk=pk)
     user.is_active = not user.is_active
@@ -481,24 +880,57 @@ def toggle_user_status(request, pk):
     log_audit_event(request, action, user, {'source': 'dashboard'}, target_label=user.username)
     status_str = "activated" if user.is_active else "deactivated"
     messages.success(request, f'User {user.username} has been {status_str}.')
-    return redirect('dashboard')
+    return redirect('/dashboard/#section-users')
 
 @login_required(login_url='login')
 @user_passes_test(is_super_admin, login_url='home')
 def delete_user(request, pk):
     if request.method == 'POST':
         if request.user.pk == pk:
-            messages.error(request, "You cannot delete your own account.")
-            return redirect('dashboard')
+            messages.error(request, "You cannot archive your own account.")
+            return redirect('/dashboard/#section-users')
             
         user = get_object_or_404(User, pk=pk)
         username = user.username
+        
+        if hasattr(user, 'profile'):
+            user.profile.is_archived = True
+            user.profile.save()
+        user.is_active = False
+        user.save()
+        
+        log_audit_event(request, 'archive', user, {'source': 'dashboard'}, target_label=username)
+        messages.success(request, f'User {username} archived successfully.')
+    return redirect('/dashboard/#section-users')
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def user_restore(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    if hasattr(user, 'profile'):
+        user.profile.is_archived = False
+        user.profile.save()
+    user.is_active = True
+    user.save()
+    
+    log_audit_event(request, 'restore', user, {'source': 'dashboard'}, target_label=user.username)
+    messages.success(request, f'User {user.username} restored successfully!')
+    return redirect('/dashboard/#section-archive')
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def user_permanent_delete(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        if request.user.pk == pk:
+            messages.error(request, "You cannot delete your own account.")
+            return redirect('/dashboard/#section-archive')
+        username = user.username
         log_audit_event(request, 'delete', user, {'source': 'dashboard'}, target_label=username)
         user.delete()
-        
-        messages.success(request, f'User {username} deleted successfully.')
-    return redirect('dashboard')
-
+        messages.success(request, f'User {username} permanently deleted!')
+        return redirect('/dashboard/#section-archive')
+    return render(request, 'main/confirm_delete.html', {'object': user, 'permanent': True})
 
 # Category CRUD
 
@@ -514,8 +946,8 @@ def category_create(request):
                 category = Category.objects.create(name=name)
                 log_audit_event(request, 'create', category, {'source': 'dashboard'})
                 messages.success(request, f'Category "{name}" created!')
-        return redirect('dashboard')
-    return redirect('dashboard')
+        return redirect('/dashboard/#section-archive')
+    return redirect('/dashboard/#section-archive')
 
 @login_required(login_url='login')
 @user_passes_test(is_super_admin, login_url='home')
@@ -546,7 +978,7 @@ def explore_subjects(request):
 # Announcements CRUD
 
 def announcement_list(request):
-    announcements = Announcement.objects.filter(is_active=True).order_by('-created_at')
+    announcements = Announcement.objects.filter(is_active=True, is_archived=False).order_by('-created_at')
     return render(request, 'main/announcement_list.html', {'announcements': announcements})
 
 
@@ -563,7 +995,7 @@ def announcement_create(request):
             icon="Note"
         )
         messages.success(request, 'Announcement created!')
-        return redirect('dashboard')
+        return redirect('/dashboard/#section-announcements')
     return render(request, 'main/announcement_form.html', {'form': form, 'title': 'Create Announcement'})
 
 
@@ -576,7 +1008,7 @@ def announcement_edit(request, pk):
         announcement = form.save()
         log_audit_event(request, 'update', announcement, {'source': 'dashboard'})
         messages.success(request, 'Announcement updated!')
-        return redirect('dashboard')
+        return redirect('/dashboard/#section-announcements')
     return render(request, 'main/announcement_form.html', {'form': form, 'title': 'Edit Announcement'})
 
 
@@ -585,8 +1017,319 @@ def announcement_edit(request, pk):
 def announcement_delete(request, pk):
     announcement = get_object_or_404(Announcement, pk=pk)
     if request.method == 'POST':
+        announcement.is_archived = True
+        announcement.save()
+        log_audit_event(request, 'archive', announcement, {'source': 'dashboard'})
+        messages.success(request, 'Announcement archived!')
+        return redirect('/dashboard/#section-announcements')
+    return render(request, 'main/confirm_delete.html', {'object': announcement})
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def announcement_restore(request, pk):
+    announcement = get_object_or_404(Announcement, pk=pk)
+    announcement.is_archived = False
+    announcement.save()
+    log_audit_event(request, 'restore', announcement, {'source': 'dashboard'})
+    messages.success(request, 'Announcement restored!')
+    return redirect('/dashboard/#section-archive')
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def announcement_permanent_delete(request, pk):
+    announcement = get_object_or_404(Announcement, pk=pk)
+    if request.method == 'POST':
         log_audit_event(request, 'delete', announcement, {'source': 'dashboard'})
         announcement.delete()
-        messages.success(request, 'Announcement deleted!')
-        return redirect('dashboard')
-    return render(request, 'main/confirm_delete.html', {'object': announcement})
+        messages.success(request, 'Announcement permanently deleted!')
+        return redirect('/dashboard/#section-archive')
+    return render(request, 'main/confirm_delete.html', {'object': announcement, 'permanent': True})
+
+# Calendar Activities
+
+@login_required(login_url='login')
+def student_calendar(request):
+    import json
+    from django.utils.timezone import now
+    from datetime import timedelta
+    
+    # Get all activities for the student
+    activities = StudentActivity.objects.filter(user=request.user)
+    
+    # Generate weekly wrap-up statistics
+    today = now().date()
+    start_of_week = today - timedelta(days=today.weekday())
+    
+    week_activities = activities.filter(completed_at__date__gte=start_of_week)
+    total_week_crafts = week_activities.count()
+    videos_completed = week_activities.filter(video__isnull=False).count()
+    flipbooks_completed = week_activities.filter(flipbook__isnull=False).count()
+    
+    # Prepare data for the frontend calendar
+    events = []
+    for act in activities:
+        title = act.video.title if act.video else act.flipbook.title if act.flipbook else "Activity"
+        events.append({
+            'title': title,
+            'start': act.completed_at.strftime('%Y-%m-%d'),
+            'type': 'video' if act.video else 'flipbook'
+        })
+        
+    calendar_events = CalendarEvent.objects.filter(is_archived=False)
+    for evt in calendar_events:
+        events.append({
+            'title': evt.title,
+            'start': evt.date.strftime('%Y-%m-%d'),
+            'type': 'holiday' if evt.event_type == 'Holiday' else 'event',
+        })
+        
+    context = {
+        'events_json': json.dumps(events),
+        'total_week_crafts': total_week_crafts,
+        'videos_completed': videos_completed,
+        'flipbooks_completed': flipbooks_completed,
+    }
+    
+    return render(request, 'main/calendar.html', context)
+
+import json
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+
+@login_required
+@require_POST
+def mark_completed(request):
+    try:
+        data = json.loads(request.body)
+        video_id = data.get('video_id')
+        flipbook_id = data.get('flipbook_id')
+        
+        if video_id:
+            video = get_object_or_404(AnimationVideo, pk=video_id)
+            # Avoid duplicate completion on the same day if desired, but for now just record it
+            StudentActivity.objects.create(user=request.user, video=video)
+            return JsonResponse({'status': 'success', 'message': 'Video completion recorded!'})
+            
+        if flipbook_id:
+            flipbook = get_object_or_404(Flipbook, pk=flipbook_id)
+            StudentActivity.objects.create(user=request.user, flipbook=flipbook)
+            return JsonResponse({'status': 'success', 'message': 'Flipbook completion recorded!'})
+            
+        return JsonResponse({'status': 'error', 'message': 'No valid ID provided.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+# Calendar Events CRUD
+
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def calendar_event_create(request):
+    form = CalendarEventForm(request.POST or None, request.FILES or None)
+    if form.is_valid():
+        event = form.save(commit=False)
+        event.author = request.user
+        event.save()
+        log_audit_event(request, 'create', event, {'source': 'dashboard', 'status': 'approved'})
+        messages.success(request, 'Calendar Event/Holiday added successfully!')
+        return redirect('/dashboard/#section-calendar')
+    return render(request, 'main/calendar_event_form.html', {'form': form, 'title': 'Add Calendar Event'})
+
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def calendar_event_edit(request, pk):
+    event = get_object_or_404(CalendarEvent, pk=pk)
+    form = CalendarEventForm(request.POST or None, request.FILES or None, instance=event)
+    if form.is_valid():
+        updated_event = form.save()
+        log_audit_event(request, 'update', updated_event, {'source': 'dashboard'})
+        messages.success(request, 'Calendar Event/Holiday updated successfully!')
+        return redirect('/dashboard/#section-calendar')
+    return render(request, 'main/calendar_event_form.html', {'form': form, 'title': 'Edit Calendar Event'})
+
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def calendar_event_delete(request, pk):
+    event = get_object_or_404(CalendarEvent, pk=pk)
+    if request.method == 'POST':
+        event.is_archived = True
+        event.save()
+        log_audit_event(request, 'archive', event, {'source': 'dashboard'})
+        messages.success(request, 'Calendar Event/Holiday archived successfully!')
+        return redirect('/dashboard/#section-calendar')
+    return render(request, 'main/confirm_delete.html', {'object': event})
+
+# Teacher Tasks API
+from django.views.decorators.http import require_POST
+from datetime import datetime
+
+@login_required(login_url='login')
+@require_POST
+def task_create_api(request):
+    try:
+        data = json.loads(request.body)
+        title = data.get('title', '').strip()
+        if not title:
+            return JsonResponse({'status': 'error', 'message': 'Title is required'}, status=400)
+            
+        task = TeacherTask.objects.create(
+            user=request.user,
+            title=title,
+            status='To Do'
+        )
+        return JsonResponse({
+            'status': 'success',
+            'task': {
+                'id': task.id,
+                'title': task.title,
+                'status': task.status,
+                'due_date': task.due_date.strftime('%Y-%m-%d') if task.due_date else None,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@login_required(login_url='login')
+@require_POST
+def task_update_api(request, task_id):
+    try:
+        task = get_object_or_404(TeacherTask, id=task_id, user=request.user)
+        data = json.loads(request.body)
+        
+        if 'title' in data:
+            task.title = data['title'].strip()
+        if 'status' in data:
+            task.status = data['status']
+        if 'due_date' in data:
+            due_date_str = data['due_date']
+            if due_date_str:
+                task.due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+            else:
+                task.due_date = None
+                
+        task.save()
+        return JsonResponse({
+            'status': 'success',
+            'task': {
+                'id': task.id,
+                'title': task.title,
+                'status': task.status,
+                'due_date': task.due_date.strftime('%Y-%m-%d') if task.due_date else None,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@login_required(login_url='login')
+@require_POST
+def task_delete_api(request, task_id):
+    try:
+        task = get_object_or_404(TeacherTask, id=task_id, user=request.user)
+        task.delete()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@require_POST
+def increment_announcement_views(request, pk):
+    try:
+        announcement = get_object_or_404(Announcement, pk=pk)
+        announcement.views += 1
+        announcement.save(update_fields=['views'])
+        return JsonResponse({'status': 'success', 'views': announcement.views})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+import random
+from django.core.mail import send_mail
+from django.utils import timezone
+from datetime import timedelta
+
+def forgot_password_view(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        if not email:
+            messages.error(request, "Please enter your email address.")
+            return redirect('forgot_password')
+        
+        user = User.objects.filter(email=email).first()
+        if user:
+            code = str(random.randint(100000, 999999))
+            PasswordResetCode.objects.filter(user=user).delete()
+            PasswordResetCode.objects.create(user=user, code=code)
+            
+            subject = "Your Password Reset Code"
+            message = f"Hello {user.first_name or user.username},\n\nYour password reset code is: {code}\nThis code will expire in 15 minutes.\n\nThank you,\nCraftyKids Team"
+            try:
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+                request.session['reset_email'] = email
+                messages.success(request, "A 6-digit password reset code has been sent to your email.")
+                return redirect('verify_reset_code')
+            except Exception as e:
+                messages.error(request, f"Failed to send email. Please ensure the email configuration is correct. ({str(e)})")
+                return redirect('forgot_password')
+        else:
+            messages.error(request, "No account found with that email address.")
+            return redirect('forgot_password')
+
+    return render(request, 'main/forgot_password.html')
+
+def verify_reset_code_view(request):
+    email = request.session.get('reset_email')
+    if not email:
+        messages.error(request, "Session expired. Please request a new code.")
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        code = request.POST.get('code')
+        user = User.objects.filter(email=email).first()
+        if user:
+            reset_obj = PasswordResetCode.objects.filter(user=user).first()
+            if reset_obj and reset_obj.code == code:
+                if timezone.now() > reset_obj.created_at + timedelta(minutes=15):
+                    messages.error(request, "This code has expired. Please request a new one.")
+                    reset_obj.delete()
+                    return redirect('forgot_password')
+                
+                request.session['reset_verified'] = True
+                reset_obj.delete()
+                messages.success(request, "Code verified! Please enter your new password.")
+                return redirect('reset_password')
+            else:
+                messages.error(request, "Invalid code. Please try again.")
+        else:
+            messages.error(request, "User not found.")
+            return redirect('forgot_password')
+
+    return render(request, 'main/verify_reset_code.html', {'email': email})
+
+def reset_password_view(request):
+    if not request.session.get('reset_verified'):
+        messages.error(request, "Please verify your reset code first.")
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if len(new_password) < 8:
+            messages.error(request, "Password must be at least 8 characters long.")
+            return redirect('reset_password')
+        
+        if new_password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return redirect('reset_password')
+
+        email = request.session.get('reset_email')
+        user = User.objects.filter(email=email).first()
+        if user:
+            user.set_password(new_password)
+            user.save()
+            del request.session['reset_email']
+            del request.session['reset_verified']
+            messages.success(request, "Your password has been reset successfully. You can now log in.")
+            return redirect('login')
+        else:
+            messages.error(request, "An error occurred. Please try again.")
+            return redirect('forgot_password')
+
+    return render(request, 'main/reset_password.html')

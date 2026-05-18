@@ -45,6 +45,9 @@
                 <div class="filter-panel" id="grade-panel">
                     <div class="filter-panel-title">Select Grade</div>
                     <div class="filter-pill-group">
+                        {% if request.user.is_authenticated and request.user.profile.role == 'CLIENT' and request.user.profile.grade_level %}
+                        <button type="button" class="filter-pill active" onclick="selectGrade('{{ request.user.profile.grade_level }}')">{{ request.user.profile.grade_level }}</button>
+                        {% else %}
                         <button type="button" class="filter-pill {% if not selected_grade or selected_grade == 'All Grades' %}active{% endif %}" onclick="selectGrade('All Grades')">All</button>
                         <button type="button" class="filter-pill {% if selected_grade == 'Grade 1' %}active{% endif %}" onclick="selectGrade('Grade 1')">Grade 1</button>
                         <button type="button" class="filter-pill {% if selected_grade == 'Grade 2' %}active{% endif %}" onclick="selectGrade('Grade 2')">Grade 2</button>
@@ -52,6 +55,7 @@
                         <button type="button" class="filter-pill {% if selected_grade == 'Grade 4' %}active{% endif %}" onclick="selectGrade('Grade 4')">Grade 4</button>
                         <button type="button" class="filter-pill {% if selected_grade == 'Grade 5' %}active{% endif %}" onclick="selectGrade('Grade 5')">Grade 5</button>
                         <button type="button" class="filter-pill {% if selected_grade == 'Grade 6' %}active{% endif %}" onclick="selectGrade('Grade 6')">Grade 6</button>
+                        {% endif %}
                     </div>
                 </div>
 

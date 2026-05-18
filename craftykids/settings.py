@@ -95,7 +95,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Manila'
 
 USE_I18N = True
 
@@ -120,3 +120,20 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Allow iframes from same origin for viewing PDFs
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# Force users to log in again after closing the browser
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Google reCAPTCHA v2 (Production Keys)
+RECAPTCHA_SITE_KEY = '6LcNM-0sAAAAAGpbXDa9_PLYP-86zY_u01Oy8mMJ'
+RECAPTCHA_SECRET_KEY = '6LcNM-0sAAAAAJzeSTMKdtGRZXXljgJ4rtf7FMbo'
+
+# Email Configuration (Gmail SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+# TODO: Replace with your actual Gmail address
+EMAIL_HOST_USER = 'myhcobaling@gmail.com'
+EMAIL_HOST_PASSWORD = 'dusppiaaubctozna'
+DEFAULT_FROM_EMAIL = 'myhcobaling@gmail.com'

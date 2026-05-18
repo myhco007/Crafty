@@ -4,9 +4,222 @@
 {% block page_css %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 <style>
-    .pending-badge { background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; }
-    .approve-btn { background: #e8faf0; color: #2ecc71; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.75rem; text-decoration: none; display: inline-block; }
-    .reject-btn { background: #ffebee; color: #e53935; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-weight: 800; font-size: 0.75rem; text-decoration: none; display: inline-block; margin-left: 5px; }
+    .pending-badge {
+        background: #fff3e0;
+        color: #e65100;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 800;
+    }
+
+    .approve-btn {
+        background: #e8faf0;
+        color: #2ecc71;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 0.75rem;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .reject-btn {
+        background: #ffebee;
+        color: #e53935;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 0.75rem;
+        text-decoration: none;
+        display: inline-block;
+        margin-left: 5px;
+    }
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideUpFade {
+    0% {
+        opacity: 0;
+        transform: translateY(50px) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(230, 242, 230, 0.6);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeInOverlay 0.3s ease-out forwards;
+}
+.confirm-box {
+    max-width: 500px;
+    background: var(--white);
+    padding: 40px;
+    border-radius: var(--radius);
+    text-align: center;
+    box-shadow: var(--shadow);
+    border: 2px dashed var(--green);
+    animation: slideUpFade 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.confirm-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+}
+.confirm-text {
+    font-size: 1.1rem;
+    color: var(--gray);
+    margin-bottom: 30px;
+}
+.confirm-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+.btn-action {
+    color: var(--white);
+    font-family: 'Fredoka One', cursive;
+    padding: 12px 24px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-action:hover {
+    transform: translateY(2px);
+}
+.btn-cancel {
+    background: #f1f1f1;
+    color: var(--gray);
+    font-weight: 800;
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-cancel:hover {
+    background: #e0e0e0;
+    color: var(--dark);
+}
+/* Tasks Styles */
+.task-group {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    border: 2px solid #f1f5f9;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+.task-card {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    gap: 12px;
+}
+.task-card:last-child {
+    border-bottom: none;
+}
+.task-card:hover {
+    background-color: #f8fafc;
+    border-radius: 8px;
+}
+.task-title {
+    flex-grow: 1;
+}
+.task-title-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--dark);
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+.task-title-input:hover, .task-title-input:focus {
+    background: #fff;
+    box-shadow: 0 0 0 2px #e2e8f0;
+    outline: none;
+}
+.task-status {
+    width: 160px;
+}
+.task-status-select {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: none;
+    font-weight: 700;
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-align: center;
+    appearance: none;
+    outline: none;
+}
+.task-due-date {
+    width: 140px;
+}
+.task-date-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: inherit;
+    color: var(--gray);
+    outline: none;
+}
+.task-actions {
+    width: 40px;
+    text-align: right;
+}
+.task-del-btn {
+    background: transparent;
+    border: none;
+    color: #cbd5e1;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.task-del-btn:hover {
+    color: var(--pink);
+}
+.task-add-row {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    margin-top: 8px;
+}
+#new-task-input {
+    flex-grow: 1;
+    padding: 12px 16px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+#new-task-input:focus {
+    border-color: var(--green);
+}
 </style>
 {% endblock %}
 {% block content %}
@@ -17,22 +230,41 @@
     <div class="db-sidebar">
         <div class="db-sidebar-logo">CraftyKids</div>
         <div class="db-sidebar-section">Main</div>
-        <a href="#section-overview" data-section="overview" class="db-sidebar-item active" onclick="showSection('overview'); return false;">Dashboard</a>
+        <a href="#section-overview" data-section="overview" class="db-sidebar-item active"
+            onclick="showSection('overview'); return false;">Dashboard</a>
         {% if role == 'SUPER_ADMIN' %}
-        <a href="#section-announcements" data-section="announcements" class="db-sidebar-item" onclick="showSection('announcements'); return false;">Announcement</a>
+        <a href="#section-pending" data-section="pending" class="db-sidebar-item"
+            onclick="showSection('pending'); return false;">
+            Pending Approvals
+            {% if pending_users or pending_videos or pending_flipbooks or pending_grade_users %}
+            <span style="background: #e65100; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 5px; font-weight: bold;">!</span>
+            {% endif %}
+        </a>
+        <a href="#section-announcements" data-section="announcements" class="db-sidebar-item"
+            onclick="showSection('announcements'); return false;">Announcement</a>
         {% endif %}
-        
+
         <div class="db-sidebar-section">Content</div>
-        <a href="#section-videos" data-section="videos" class="db-sidebar-item" onclick="showSection('videos'); return false;">Videos</a>
-        <a href="#section-flipbooks" data-section="flipbooks" class="db-sidebar-item" onclick="showSection('flipbooks'); return false;">Flipbooks</a>
-        
+        <a href="#section-videos" data-section="videos" class="db-sidebar-item"
+            onclick="showSection('videos'); return false;">Videos</a>
+        <a href="#section-flipbooks" data-section="flipbooks" class="db-sidebar-item"
+            onclick="showSection('flipbooks'); return false;">Flipbooks</a>
+        <a href="#section-calendar" data-section="calendar" class="db-sidebar-item"
+            onclick="showSection('calendar'); return false;">Calendar</a>
+        {% if role == 'TEACHER' %}
+        <a href="#section-tasks" data-section="tasks" class="db-sidebar-item"
+            onclick="showSection('tasks'); return false;">Tasks</a>
+        {% endif %}
         {% if role == 'SUPER_ADMIN' %}
         <div class="db-sidebar-section">Manage</div>
-        <a href="#section-users" data-section="users" class="db-sidebar-item" onclick="showSection('users'); return false;">Registered Users</a>
-        <a href="#section-categories" data-section="categories" class="db-sidebar-item" onclick="showSection('categories'); return false;">Categories</a>
-        <a href="#section-audit" data-section="audit" class="db-sidebar-item" onclick="showSection('audit'); return false;">Audit Log</a>
-        <a href="#section-archive" data-section="archive" class="db-sidebar-item" onclick="showSection('archive'); return false;">Archive</a>
+        <a href="#section-users" data-section="users" class="db-sidebar-item"
+            onclick="showSection('users'); return false;">Accounts</a>
+
+        <a href="#section-audit" data-section="audit" class="db-sidebar-item"
+            onclick="showSection('audit'); return false;">Audit Log</a>
         {% endif %}
+        <a href="#section-archive" data-section="archive" class="db-sidebar-item"
+            onclick="showSection('archive'); return false;">Archive</a>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -40,184 +272,363 @@
 
         <!-- Messages -->
         {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                    <li class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</li>
-                {% endfor %}
-            </ul>
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</li>
+            {% endfor %}
+        </ul>
         {% endif %}
 
         <!-- OVERVIEW SECTION -->
-        <div id="section-overview" class="db-section">
+        <div id="section-overview" class="db-section" style="display:none;">
             <div class="db-header">
                 <div>
                     <div class="db-page-badge">{{ role_display }} Dashboard</div>
                     <h1 class="db-title">Welcome back, {{ request.user.first_name|default:request.user.username }}!</h1>
-                    <p class="db-sub">Here's what's happening on CraftyKids today.</p>
+                    <p class="db-sub">
+                        Here's what's happening on CraftyKids today. &nbsp;|&nbsp; 
+                        <span style="color: var(--pink); font-weight: bold;">🕒 <span id="live-dashboard-clock"></span></span>
+                    </p>
                 </div>
-                <div class="db-top-btns">
-                    <a href="#section-videos" onclick="showSection('videos'); return false;" class="db-btn teal">+ Add Video</a>
-                    <a href="#section-flipbooks" onclick="showSection('flipbooks'); return false;" class="db-btn green">+ Add Flipbook</a>
-                </div>
+
             </div>
 
             {% if role == 'SUPER_ADMIN' %}
-            <!-- Pending Approvals Section for Super Admin -->
-            {% if pending_teachers or pending_videos or pending_flipbooks %}
-            <div class="db-card" style="margin-bottom: 24px; border-color: #ffd93d;">
-                <div class="db-card-head" style="background: #fffbe6;">
-                    <h3><span style="color: #e65100;">⚠️ Pending Approvals</span></h3>
-                </div>
-                <table class="db-table">
-                    <thead><tr><th>Type</th><th>Name/Username</th><th>Requested By</th><th>Actions</th></tr></thead>
-                    <tbody>
-                        {% for teacher in pending_teachers %}
-                        <tr>
-                            <td><span class="pending-badge">Teacher Account</span></td>
-                            <td><strong>{{ teacher.username }}</strong></td>
-                            <td>{{ teacher.get_full_name|default:teacher.username }}</td>
-                            <td><a href="{% url 'approve_teacher' teacher.pk %}" class="approve-btn">Approve Teacher</a></td>
-                        </tr>
-                        {% endfor %}
-                        
-                        {% for video in pending_videos %}
-                        <tr>
-                            <td><span class="pending-badge">Video</span></td>
-                            <td><strong>{{ video.title }}</strong></td>
-                            <td>{{ video.author.username }}</td>
-                            <td>
-                                <a href="{% url 'approve_content' 'video' video.pk %}" class="approve-btn">Approve</a>
-                                <a href="{% url 'video_delete' video.pk %}" class="reject-btn">Reject</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-
-                        {% for flipbook in pending_flipbooks %}
-                        <tr>
-                            <td><span class="pending-badge">Flipbook</span></td>
-                            <td><strong>{{ flipbook.title }}</strong></td>
-                            <td>{{ flipbook.author.username }}</td>
-                            <td>
-                                <a href="{% url 'approve_content' 'flipbook' flipbook.pk %}" class="approve-btn">Approve</a>
-                                <a href="{% url 'flipbook_delete' flipbook.pk %}" class="reject-btn">Reject</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% endif %}
 
             <div class="metro-container">
                 <div class="metro-grid">
-                    <a class="metro-tile bg-green tile-tall" href="#section-flipbooks" onclick="showSection('flipbooks'); return false;">
+                    <a class="metro-tile bg-green" href="#section-flipbooks"
+                        onclick="showSection('flipbooks'); return false;">
                         <div class="metro-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60">
-                                <path d="M32 54 Q20 50 10 52 L10 14 Q20 12 32 16 Z" fill="#5b9bd5" rx="2"/>
-                                <path d="M32 54 Q44 50 54 52 L54 14 Q44 12 32 16 Z" fill="#3a7bc8"/>
-                                <rect x="30" y="14" width="4" height="40" fill="#2563a8"/>
-                                <ellipse cx="32" cy="55" rx="22" ry="3" fill="rgba(0,0,0,0.15)"/>
+                                <path d="M32 54 Q20 50 10 52 L10 14 Q20 12 32 16 Z" fill="#5b9bd5" rx="2" />
+                                <path d="M32 54 Q44 50 54 52 L54 14 Q44 12 32 16 Z" fill="#3a7bc8" />
+                                <rect x="30" y="14" width="4" height="40" fill="#2563a8" />
+                                <ellipse cx="32" cy="55" rx="22" ry="3" fill="rgba(0,0,0,0.15)" />
                             </svg>
                         </div>
                         <div class="metro-text">Flipbooks<br><small style="font-size:0.75rem; font-weight: normal;">{{ total_flipbooks }} items</small></div>
                     </a>
-                    <a class="metro-tile bg-teal tile-wide" href="#section-videos" onclick="showSection('videos'); return false;">
-                        <div class="metro-icon">&#9654;</div>
+                    <a class="metro-tile bg-teal" href="#section-videos"
+                        onclick="showSection('videos'); return false;">
+                        <div class="metro-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60">
+                                <circle cx="32" cy="32" r="30" fill="#fff" fill-opacity="0.2"/>
+                                <path d="M24 18 L46 32 L24 46 Z" fill="#fff"/>
+                            </svg>
+                        </div>
                         <div class="metro-text">Videos<br><small style="font-size:0.75rem; font-weight: normal;">{{ total_videos }} items</small></div>
                     </a>
-                    <a class="metro-tile bg-pink" href="#section-announcements" onclick="showSection('announcements'); return false;">
-                        <div class="metro-icon">🥳</div>
+                    <a class="metro-tile bg-pink" href="#section-announcements"
+                        onclick="showSection('announcements'); return false;">
+                        <div class="metro-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="50" height="50">
+                                <path d="M12 24 L52 24 L52 48 C52 52.4 48.4 56 44 56 L20 56 C15.6 56 12 52.4 12 48 Z" fill="#fff" fill-opacity="0.3"/>
+                                <path d="M12 24 L52 24 L32 8 Z" fill="#fff"/>
+                                <circle cx="32" cy="40" r="4" fill="#fff"/>
+                            </svg>
+                        </div>
                         <div class="metro-text">Announcements</div>
                     </a>
                     <a class="metro-tile bg-blue" href="#section-users" onclick="showSection('users'); return false;">
-                        <div class="metro-icon">&#128101;</div>
-                        <div class="metro-text">Registered Users<br><small style="font-size:0.75rem; font-weight: normal;">{{ total_users }} users</small></div>
+                        <div class="metro-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="50" height="50">
+                                <circle cx="32" cy="20" r="12" fill="#fff"/>
+                                <path d="M10 56 C10 40 54 40 54 56 Z" fill="#fff"/>
+                            </svg>
+                        </div>
+                        <div class="metro-text">Accounts<br><small
+                                style="font-size:0.75rem; font-weight: normal;">{{ total_users }} users</small></div>
                     </a>
-                    <a class="metro-tile bg-yellow" href="#section-categories" onclick="showSection('categories'); return false;">
-                        <div class="metro-icon">&#128218;</div>
-                        <div class="metro-text">Categories</div>
-                    </a>
+
                     <a class="metro-tile bg-purple" href="#section-audit" onclick="showSection('audit'); return false;">
-                        <div class="metro-icon" style="display: flex; align-items: center; justify-content: center; line-height: 1;">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60" style="display: block;">
-                                <defs><linearGradient id="magnifierGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#00d2ff;stop-opacity:1" /><stop offset="100%" style="stop-color:#3a7bc8;stop-opacity:1" /></linearGradient></defs>
-                                <circle cx="28" cy="28" r="18" stroke="url(#magnifierGradient)" stroke-width="6" fill="none" /><line x1="42" y1="42" x2="54" y2="54" stroke="url(#magnifierGradient)" stroke-width="8" stroke-linecap="round" /><circle cx="22" cy="22" r="5" fill="white" fill-opacity="0.3" />
+                        <div class="metro-icon"
+                            style="display: flex; align-items: center; justify-content: center; line-height: 1;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60"
+                                style="display: block;">
+                                <defs>
+                                    <linearGradient id="magnifierGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#00d2ff;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#3a7bc8;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="28" cy="28" r="18" stroke="url(#magnifierGradient)" stroke-width="6"
+                                    fill="none" />
+                                <line x1="42" y1="42" x2="54" y2="54" stroke="url(#magnifierGradient)" stroke-width="8"
+                                    stroke-linecap="round" />
+                                <circle cx="22" cy="22" r="5" fill="white" fill-opacity="0.3" />
                             </svg>
                         </div>
                         <div class="metro-text">Audit Log</div>
                     </a>
-                    <a class="metro-tile bg-red tile-wide" href="#section-archive" onclick="showSection('archive'); return false;">
-                        <div class="metro-icon">&#128465;</div>
+                    <a class="metro-tile bg-red" href="#section-archive"
+                        onclick="showSection('archive'); return false;">
+                        <div class="metro-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="45" height="45">
+                                <path d="M16 16 L48 16 L44 56 L20 56 Z" fill="#fff" fill-opacity="0.3"/>
+                                <rect x="12" y="8" width="40" height="8" rx="2" fill="#fff"/>
+                                <rect x="28" y="4" width="8" height="4" fill="#fff"/>
+                            </svg>
+                        </div>
                         <div class="metro-text">Archive</div>
                     </a>
                 </div>
                 <div class="metro-calendar">
                     <div id="cal-header" class="cal-header"></div>
                     <div id="cal-grid" class="cal-grid">
-                        <div class="cal-day-name">Sun</div><div class="cal-day-name">Mon</div><div class="cal-day-name">Tue</div><div class="cal-day-name">Wed</div><div class="cal-day-name">Thu</div><div class="cal-day-name">Fri</div><div class="cal-day-name">Sat</div>
+                        <div class="cal-day-name">Sun</div>
+                        <div class="cal-day-name">Mon</div>
+                        <div class="cal-day-name">Tue</div>
+                        <div class="cal-day-name">Wed</div>
+                        <div class="cal-day-name">Thu</div>
+                        <div class="cal-day-name">Fri</div>
+                        <div class="cal-day-name">Sat</div>
                     </div>
-                    <div style="margin-top: 24px; font-size: 0.8rem; color: var(--gray); text-align: center;">Notice Board</div>
+                    <div style="margin-top: 24px; font-size: 0.8rem; color: var(--gray); text-align: center;">Notice
+                        Board</div>
                 </div>
             </div>
             {% else %}
             <!-- Teacher Overview -->
-            <div class="db-grid">
-                <div class="db-card">
-                    <div class="db-card-head"><h3>My Videos</h3></div>
-                    <table class="db-table">
-                        <thead><tr><th>Title</th><th>Status</th></tr></thead>
-                        <tbody>
-                            {% for v in my_videos %}
-                            <tr>
-                                <td>{{ v.title }}</td>
-                                <td>
-                                    {% if v.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span class="pending-badge">Pending</span>{% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}<tr><td colspan="2" class="db-empty">No videos yet.</td></tr>{% endfor %}
-                        </tbody>
-                    </table>
+            <div class="metro-container" style="margin-bottom: 32px;">
+                <div style="flex: 1;">
+                    <div class="db-stats" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+                        <div class="db-stat">
+                            <div class="db-stat-top">
+                                <span class="db-stat-lbl">My Videos</span>
+                                <div class="db-stat-ico ico-v">🎬</div>
+                            </div>
+                            <div class="db-stat-num">{{ my_videos|length }}</div>
+                        </div>
+                        <div class="db-stat">
+                            <div class="db-stat-top">
+                                <span class="db-stat-lbl">My Flipbooks</span>
+                                <div class="db-stat-ico ico-f">📖</div>
+                            </div>
+                            <div class="db-stat-num">{{ my_flipbooks|length }}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="db-card">
-                    <div class="db-card-head"><h3>My Flipbooks</h3></div>
-                    <table class="db-table">
-                        <thead><tr><th>Title</th><th>Status</th></tr></thead>
-                        <tbody>
-                            {% for f in my_flipbooks %}
-                            <tr>
-                                <td>{{ f.title }}</td>
-                                <td>
-                                    {% if f.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span class="pending-badge">Pending</span>{% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}<tr><td colspan="2" class="db-empty">No flipbooks yet.</td></tr>{% endfor %}
-                        </tbody>
-                    </table>
+                
+                <div class="metro-calendar">
+                    <div id="cal-header" class="cal-header"></div>
+                    <div id="cal-grid" class="cal-grid">
+                        <div class="cal-day-name">Sun</div>
+                        <div class="cal-day-name">Mon</div>
+                        <div class="cal-day-name">Tue</div>
+                        <div class="cal-day-name">Wed</div>
+                        <div class="cal-day-name">Thu</div>
+                        <div class="cal-day-name">Fri</div>
+                        <div class="cal-day-name">Sat</div>
+                    </div>
+                    <div style="margin-top: 24px; font-size: 0.8rem; color: var(--gray); text-align: center;">Notice
+                        Board</div>
                 </div>
+            </div>
+
+            <div class="db-header" style="margin-top: 32px;">
+                <h2 class="db-title" style="font-size: 1.4rem;">My Videos</h2>
+            </div>
+            <div class="grid-cards">
+                {% for v in my_videos %}
+                <div class="content-card">
+                    <div class="content-card-thumbnail">
+                        {% if v.thumbnail %}
+                        <img src="{{ v.thumbnail.url }}" alt="Thumbnail">
+                        {% else %}
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                        {% endif %}
+                    </div>
+                    <div class="content-card-header">
+                        <div class="content-card-title">{{ v.title|truncatechars:20 }}</div>
+                        {% if v.is_approved %}
+                            <span class="db-badge green">Approved</span>
+                        {% else %}
+                            <span class="pending-badge">Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state-card">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                    <div class="empty-state-title">No Videos Yet</div>
+                    <div class="empty-state-desc">You haven't uploaded any videos. Once you do, they will appear here!</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="db-header" style="margin-top: 48px;">
+                <h2 class="db-title" style="font-size: 1.4rem;">My Flipbooks</h2>
+            </div>
+            <div class="grid-cards">
+                {% for f in my_flipbooks %}
+                <div class="content-card">
+                    <div class="content-card-thumbnail">
+                        {% if f.thumbnail %}
+                        <img src="{{ f.thumbnail.url }}" alt="Thumbnail">
+                        {% else %}
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                        {% endif %}
+                    </div>
+                    <div class="content-card-header">
+                        <div class="content-card-title">{{ f.title|truncatechars:20 }}</div>
+                        {% if f.is_approved %}
+                            <span class="db-badge green">Approved</span>
+                        {% else %}
+                            <span class="pending-badge">Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state-card">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    <div class="empty-state-title">No Flipbooks Yet</div>
+                    <div class="empty-state-desc">You haven't uploaded any flipbooks. Create your first one to see it here!</div>
+                </div>
+                {% endfor %}
             </div>
             {% endif %}
         </div>
+
+        <!-- PENDING APPROVALS SECTION -->
+        {% if role == 'SUPER_ADMIN' %}
+        <div id="section-pending" class="db-section" style="display:none;">
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Main</div>
+                    <h1 class="db-title">Pending Approvals</h1>
+                    <p class="db-sub">Review and approve pending accounts and content.</p>
+                </div>
+            </div>
+            
+            {% if not pending_users and not pending_videos and not pending_flipbooks and not pending_grade_users %}
+            <div class="empty-state-card">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <div class="empty-state-title">All Caught Up!</div>
+                <div class="empty-state-desc">There are no pending approvals at the moment.</div>
+            </div>
+            {% else %}
+            {% if pending_users %}
+            <h3 style="margin-bottom: 12px; color: var(--green-dark);">Pending Accounts</h3>
+            <div class="grid-cards" style="margin-bottom: 32px;">
+                {% for pending_user in pending_users %}
+                <div class="content-card" style="border-color: #ffd93d;">
+                    <div class="content-card-header" style="flex-direction: column;">
+                        <span class="pending-badge" style="align-self: flex-start; margin-bottom: 8px;">{{ pending_user.profile.get_role_display }} Account</span>
+                        <div class="content-card-title">{{ pending_user.username }}</div>
+                        <div class="content-card-meta">By: {{ pending_user.get_full_name|default:pending_user.username }}</div>
+                    </div>
+                    <div class="content-card-actions" style="flex-direction: column; gap: 8px;">
+                        <button onclick="openDetailsModal('{{ pending_user.username|escapejs }}', '{{ pending_user.profile.grade_level|default:"Not specified"|escapejs }}', '{{ pending_user.date_joined|date:"M d, Y h:i A"|escapejs }}', '{{ pending_user.profile.lrn_number|default:""|escapejs }}', '{{ pending_user.profile.role|escapejs }}', '{{ pending_user.email|escapejs }}', '{% if pending_user.profile.faculty_id_image %}{{ pending_user.profile.faculty_id_image.url|escapejs }}{% endif %}')" style="background: transparent; border: 1px solid #cbd5e0; color: #4a5568; padding: 6px 0; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; width: 100%; transition: all 0.2s;" onmouseover="this.style.background='#f7fafc'" onmouseout="this.style.background='transparent'">Account Details</button>
+                        <div style="display: flex; gap: 8px; justify-content: center; width: 100%;">
+                            <a href="javascript:void(0)" onclick="openActionModal('{% url 'approve_user' pending_user.pk %}', 'Approve Account?', '✅', 'You are about to approve the {{ pending_user.profile.get_role_display|default:"User" }} account for &quot;<strong>{{ pending_user.username }}</strong>&quot;.', 'Yes, Approve!', false)" class="approve-btn" style="flex: 1; text-align: center; margin: 0;">Approve</a>
+                            <a href="javascript:void(0)" onclick="openActionModal('{% url 'reject_user' pending_user.pk %}', 'Deny Account?', '🚫', 'You are about to deny the {{ pending_user.profile.get_role_display|default:"User" }} account for &quot;<strong>{{ pending_user.username }}</strong>&quot;.', 'Yes, Deny!', true)" class="reject-btn" style="flex: 1; text-align: center; margin: 0;">Deny</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if pending_grade_users %}
+            <h3 style="margin-bottom: 12px; color: var(--green-dark);">Pending Grade Changes</h3>
+            <div class="grid-cards" style="margin-bottom: 32px;">
+                {% for pending_user in pending_grade_users %}
+                <div class="content-card" style="border-color: #ffd93d;">
+                    <div class="content-card-header" style="flex-direction: column;">
+                        <span class="pending-badge" style="align-self: flex-start; margin-bottom: 8px;">Grade Change</span>
+                        <div class="content-card-title">{{ pending_user.username }}</div>
+                        <div class="content-card-meta">Current: {{ pending_user.profile.grade_level|default:"None" }}</div>
+                        <div class="content-card-meta">Requested: {{ pending_user.profile.pending_grade }}</div>
+                    </div>
+                    <div class="content-card-actions" style="flex-direction: column; gap: 8px;">
+                        <div style="display: flex; gap: 8px; justify-content: center; width: 100%;">
+                            <a href="javascript:void(0)" onclick="openActionModal('{% url 'approve_grade' pending_user.pk %}', 'Approve Grade Change?', '✅', 'Approve grade change to <strong>{{ pending_user.profile.pending_grade }}</strong> for &quot;<strong>{{ pending_user.username }}</strong>&quot;?', 'Yes, Approve!', false)" class="approve-btn" style="flex: 1; text-align: center; margin: 0;">Approve</a>
+                            <a href="javascript:void(0)" onclick="openActionModal('{% url 'reject_grade' pending_user.pk %}', 'Reject Grade Change?', '🚫', 'Reject grade change request for &quot;<strong>{{ pending_user.username }}</strong>&quot;?', 'Yes, Reject!', true)" class="reject-btn" style="flex: 1; text-align: center; margin: 0;">Reject</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if pending_videos %}
+            <h3 style="margin-bottom: 12px; color: var(--green-dark);">Pending Videos</h3>
+            <div class="grid-cards" style="margin-bottom: 32px;">
+                {% for video in pending_videos %}
+                <div class="content-card" style="border-color: #ffd93d;">
+                    <div class="content-card-header" style="flex-direction: column;">
+                        <span class="pending-badge" style="align-self: flex-start; margin-bottom: 8px;">Video</span>
+                        <div class="content-card-title">{{ video.title }}</div>
+                        <div class="content-card-meta">By: {{ video.author.username }}</div>
+                    </div>
+                    <div class="content-card-actions" style="flex-direction: column; gap: 8px;">
+                        <button onclick="openContentDetailsModal('Video', '{{ video.title|escapejs }}', '{{ video.author.username|escapejs }}', '{{ video.category.name|escapejs }}', '{{ video.created_at|date:"M d, Y h:i A"|escapejs }}', '{{ video.description|escapejs }}', '{% if video.video_file %}{{ video.video_file.url|escapejs }}{% endif %}', '{% url 'approve_content' 'video' video.pk %}', '{% url 'video_delete' video.pk %}')" style="background: transparent; border: 1px solid #cbd5e0; color: #4a5568; padding: 6px 0; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; width: 100%; transition: all 0.2s;" onmouseover="this.style.background='#f7fafc'" onmouseout="this.style.background='transparent'">Content Details</button>
+                        <div style="display: flex; gap: 8px; justify-content: center; width: 100%;">
+                            <a href="javascript:void(0)" onclick="openActionModal('{% url 'approve_content' 'video' video.pk %}', 'Approve Video?', '✅', 'You are about to approve the video &quot;<strong>{{ video.title }}</strong>&quot;.', 'Yes, Approve!', false)" class="approve-btn" style="flex: 1; text-align: center; margin: 0;">Approve</a>
+                            <a href="javascript:void(0)" onclick="openActionModal('{% url 'video_delete' video.pk %}', 'Deny Video?', '🚫', 'You are about to deny the video &quot;<strong>{{ video.title }}</strong>&quot;.', 'Yes, Deny!', true)" class="reject-btn" style="flex: 1; text-align: center; margin: 0;">Deny</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if pending_flipbooks %}
+            <h3 style="margin-bottom: 12px; color: var(--green-dark);">Pending Flipbooks</h3>
+            <div class="grid-cards" style="margin-bottom: 32px;">
+                {% for flipbook in pending_flipbooks %}
+                <div class="content-card" style="border-color: #ffd93d;">
+                    <div class="content-card-header" style="flex-direction: column;">
+                        <span class="pending-badge" style="align-self: flex-start; margin-bottom: 8px;">Flipbook</span>
+                        <div class="content-card-title">{{ flipbook.title }}</div>
+                        <div class="content-card-meta">By: {{ flipbook.author.username }}</div>
+                    </div>
+                    <div class="content-card-actions" style="flex-direction: column; gap: 8px;">
+                        <button onclick="openContentDetailsModal('Flipbook', '{{ flipbook.title|escapejs }}', '{{ flipbook.author.username|escapejs }}', '{{ flipbook.category.name|escapejs }}', '{{ flipbook.created_at|date:"M d, Y h:i A"|escapejs }}', '{{ flipbook.description|escapejs }}', '{% if flipbook.pdf_file %}{{ flipbook.pdf_file.url|escapejs }}{% endif %}', '{% url 'approve_content' 'flipbook' flipbook.pk %}', '{% url 'flipbook_delete' flipbook.pk %}')" style="background: transparent; border: 1px solid #cbd5e0; color: #4a5568; padding: 6px 0; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; width: 100%; transition: all 0.2s;" onmouseover="this.style.background='#f7fafc'" onmouseout="this.style.background='transparent'">Content Details</button>
+                        <div style="display: flex; gap: 8px; justify-content: center; width: 100%;">
+                            <a href="javascript:void(0)" onclick="openActionModal('{% url 'approve_content' 'flipbook' flipbook.pk %}', 'Approve Flipbook?', '✅', 'You are about to approve the flipbook &quot;<strong>{{ flipbook.title }}</strong>&quot;.', 'Yes, Approve!', false)" class="approve-btn" style="flex: 1; text-align: center; margin: 0;">Approve</a>
+                            <a href="javascript:void(0)" onclick="openActionModal('{% url 'flipbook_delete' flipbook.pk %}', 'Deny Flipbook?', '🚫', 'You are about to deny the flipbook &quot;<strong>{{ flipbook.title }}</strong>&quot;.', 'Yes, Deny!', true)" class="reject-btn" style="flex: 1; text-align: center; margin: 0;">Deny</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endif %}
 
         <!-- ANNOUNCEMENTS SECTION -->
         {% if role == 'SUPER_ADMIN' %}
         <div id="section-announcements" class="db-section" style="display:none;">
             <div class="db-header">
-                <div><div class="db-page-badge">Main</div><h1 class="db-title">Announcement</h1><p class="db-sub">Manage what users see across the system.</p></div>
+                <div>
+                    <div class="db-page-badge">Main</div>
+                    <h1 class="db-title">Announcement</h1>
+                    <p class="db-sub">Manage what users see across the system.</p>
+                </div>
                 <a href="{% url 'announcement_create' %}" class="db-btn teal">+ Add Announcement</a>
             </div>
-            <div class="db-card">
-                <table class="db-table">
-                    <thead><tr><th>Title</th><th>Content</th><th>Actions</th></tr></thead>
-                    <tbody>
-                        {% for ann in announcements %}
-                        <tr>
-                            <td><strong>{{ ann.title }}</strong></td>
-                            <td>{{ ann.content|truncatechars:50 }}</td>
-                            <td><div class="db-actions"><a href="{% url 'announcement_edit' ann.pk %}" class="db-btn-e">Edit</a><a href="{% url 'announcement_delete' ann.pk %}" class="db-btn-d">Del</a></div></td>
-                        </tr>
-                        {% empty %}<tr><td colspan="3" class="db-empty">No announcement yet.</td></tr>{% endfor %}
-                    </tbody>
-                </table>
+            <div class="grid-cards">
+                {% for ann in announcements %}
+                <div class="content-card">
+                    <div class="content-card-header" style="flex-direction: column;">
+                        <div class="content-card-title">{{ ann.title }}</div>
+                        <div class="content-card-meta" style="margin-top: 8px;">{{ ann.content|truncatechars:100 }}</div>
+                    </div>
+                    <div class="content-card-actions">
+                        <a href="{% url 'announcement_edit' ann.pk %}" class="db-btn-e">Edit</a>
+                        <a href="javascript:void(0)" onclick="openActionModal('{% url 'announcement_delete' ann.pk %}', 'Archive Announcement?', '🗑️', 'You are about to archive &quot;<strong>{{ ann.title }}</strong>&quot;.', 'Yes, Archive!', true)" class="db-btn-d">Archive</a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state-card">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    <div class="empty-state-title">No Announcements</div>
+                    <div class="empty-state-desc">You haven't posted any announcements yet. Create one to keep everyone informed!</div>
+                </div>
+                {% endfor %}
             </div>
         </div>
         {% endif %}
@@ -225,31 +636,56 @@
         <!-- VIDEOS SECTION -->
         <div id="section-videos" class="db-section" style="display:none;">
             <div class="db-header">
-                <div><div class="db-page-badge">Content</div><h1 class="db-title">Videos</h1><p class="db-sub">Manage videos here.</p></div>
+                <div>
+                    <div class="db-page-badge">Content</div>
+                    <h1 class="db-title">Videos</h1>
+                    <p class="db-sub">Manage videos here.</p>
+                </div>
                 <a href="{% url 'video_create' %}" class="db-btn teal">+ Add Video</a>
             </div>
             <div class="db-card">
                 <table class="db-table">
-                    <thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Actions</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            {% if role != 'SUPER_ADMIN' %}
+                            <th>Actions</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
                     <tbody>
                         {% if role == 'SUPER_ADMIN' %}
-                            {% for video in all_videos %}
-                            <tr>
-                                <td>{{ video.title }}</td>
-                                <td><span class="db-badge green">{{ video.category }}</span></td>
-                                <td>{% if video.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span class="pending-badge">Pending</span>{% endif %}</td>
-                                <td><div class="db-actions"><a href="{% url 'video_edit' video.pk %}" class="db-btn-e">Edit</a><a href="{% url 'video_delete' video.pk %}" class="db-btn-d">Del</a></div></td>
-                            </tr>
-                            {% empty %}<tr><td colspan="4" class="db-empty">No videos yet.</td></tr>{% endfor %}
+                        {% for video in all_videos %}
+                        <tr>
+                            <td>{% if video.is_approved %}<a href="{% url 'video_detail' video.pk %}" style="color: var(--teal); font-weight: bold; text-decoration: underline;">{{ video.title }}</a>{% else %}{{ video.title }}{% endif %}</td>
+                            <td><span class="db-badge green">{{ video.category }}</span></td>
+                            <td>{% if video.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span
+                                    class="pending-badge">Pending</span>{% endif %}</td>
+                        </tr>
+                        {% empty %}<tr>
+                            <td colspan="3" class="db-empty">No videos yet.</td>
+                        </tr>{% endfor %}
                         {% else %}
-                            {% for video in my_videos %}
-                            <tr>
-                                <td>{{ video.title }}</td>
-                                <td><span class="db-badge green">{{ video.category }}</span></td>
-                                <td>{% if video.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span class="pending-badge">Pending</span>{% endif %}</td>
-                                <td><div class="db-actions"><a href="{% url 'video_edit' video.pk %}" class="db-btn-e">Edit</a><a href="{% url 'video_delete' video.pk %}" class="db-btn-d">Del</a></div></td>
-                            </tr>
-                            {% empty %}<tr><td colspan="4" class="db-empty">You haven't uploaded any videos.</td></tr>{% endfor %}
+                        {% for video in my_videos %}
+                        <tr>
+                            <td>{{ video.title }}</td>
+                            <td><span class="db-badge green">{{ video.category }}</span></td>
+                            <td>{% if video.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span
+                                    class="pending-badge">Pending</span>{% endif %}</td>
+                            <td>
+                                {% if video.is_approved %}
+                                <div class="db-actions"><a href="{% url 'video_edit' video.pk %}"
+                                        class="db-btn-e">Edit</a><a href="javascript:void(0)" onclick="openActionModal('{% url 'video_delete' video.pk %}', 'Archive Video?', '🗑️', 'You are about to archive &quot;<strong>{{ video.title }}</strong>&quot;.', 'Yes, Archive!', true)" class="db-btn-d">Archive</a></div>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}<tr>
+                            <td colspan="4" class="db-empty">You haven't uploaded any videos.</td>
+                        </tr>{% endfor %}
                         {% endif %}
                     </tbody>
                 </table>
@@ -259,44 +695,204 @@
         <!-- FLIPBOOKS SECTION -->
         <div id="section-flipbooks" class="db-section" style="display:none;">
             <div class="db-header">
-                <div><div class="db-page-badge">Content</div><h1 class="db-title">Flipbooks</h1><p class="db-sub">Manage flipbook tutorials here.</p></div>
+                <div>
+                    <div class="db-page-badge">Content</div>
+                    <h1 class="db-title">Flipbooks</h1>
+                    <p class="db-sub">Manage flipbook tutorials here.</p>
+                </div>
                 <a href="{% url 'flipbook_create' %}" class="db-btn green">+ Add Flipbook</a>
             </div>
             <div class="db-card">
                 <table class="db-table">
-                    <thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Actions</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            {% if role != 'SUPER_ADMIN' %}
+                            <th>Actions</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
                     <tbody>
                         {% if role == 'SUPER_ADMIN' %}
-                            {% for flipbook in all_flipbooks %}
-                            <tr>
-                                <td>{{ flipbook.title }}</td>
-                                <td><span class="db-badge teal">{{ flipbook.category }}</span></td>
-                                <td>{% if flipbook.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span class="pending-badge">Pending</span>{% endif %}</td>
-                                <td><div class="db-actions"><a href="{% url 'flipbook_edit' flipbook.pk %}" class="db-btn-e">Edit</a><a href="{% url 'flipbook_delete' flipbook.pk %}" class="db-btn-d">Del</a></div></td>
-                            </tr>
-                            {% empty %}<tr><td colspan="4" class="db-empty">No flipbooks yet.</td></tr>{% endfor %}
+                        {% for flipbook in all_flipbooks %}
+                        <tr>
+                            <td>{% if flipbook.is_approved %}<a href="{% url 'flipbook_detail' flipbook.pk %}" style="color: var(--teal); font-weight: bold; text-decoration: underline;">{{ flipbook.title }}</a>{% else %}{{ flipbook.title }}{% endif %}</td>
+                            <td><span class="db-badge teal">{{ flipbook.category }}</span></td>
+                            <td>{% if flipbook.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span
+                                    class="pending-badge">Pending</span>{% endif %}</td>
+                        </tr>
+                        {% empty %}<tr>
+                            <td colspan="3" class="db-empty">No flipbooks yet.</td>
+                        </tr>{% endfor %}
                         {% else %}
-                            {% for flipbook in my_flipbooks %}
-                            <tr>
-                                <td>{{ flipbook.title }}</td>
-                                <td><span class="db-badge teal">{{ flipbook.category }}</span></td>
-                                <td>{% if flipbook.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span class="pending-badge">Pending</span>{% endif %}</td>
-                                <td><div class="db-actions"><a href="{% url 'flipbook_edit' flipbook.pk %}" class="db-btn-e">Edit</a><a href="{% url 'flipbook_delete' flipbook.pk %}" class="db-btn-d">Del</a></div></td>
-                            </tr>
-                            {% empty %}<tr><td colspan="4" class="db-empty">You haven't uploaded any flipbooks.</td></tr>{% endfor %}
+                        {% for flipbook in my_flipbooks %}
+                        <tr>
+                            <td>{{ flipbook.title }}</td>
+                            <td><span class="db-badge teal">{{ flipbook.category }}</span></td>
+                            <td>{% if flipbook.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span
+                                    class="pending-badge">Pending</span>{% endif %}</td>
+                            <td>
+                                {% if flipbook.is_approved %}
+                                <div class="db-actions"><a href="{% url 'flipbook_edit' flipbook.pk %}"
+                                        class="db-btn-e">Edit</a><a href="javascript:void(0)" onclick="openActionModal('{% url 'flipbook_delete' flipbook.pk %}', 'Archive Flipbook?', '🗑️', 'You are about to archive &quot;<strong>{{ flipbook.title }}</strong>&quot;.', 'Yes, Archive!', true)" class="db-btn-d">Archive</a></div>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}<tr>
+                            <td colspan="4" class="db-empty">You haven't uploaded any flipbooks.</td>
+                        </tr>{% endfor %}
                         {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
 
+        <!-- CALENDAR EVENTS SECTION -->
+        <div id="section-calendar" class="db-section" style="display:none;">
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Content</div>
+                    <h1 class="db-title">Calendar</h1>
+                    <p class="db-sub">Manage upcoming events, holidays, lesson plans, and modules.</p>
+                </div>
+                <a href="{% url 'calendar_event_create' %}" class="db-btn green">+ Add Event</a>
+            </div>
+            
+            <div class="grid-cards" style="margin-top: 24px;">
+                {% for evt in calendar_events %}
+                <div class="content-card" style="border-color: {% if evt.event_type == 'Holiday' %}#fde047{% else %}#a29bfe{% endif %};">
+                    <div class="content-card-thumbnail">
+                        {% if evt.image %}
+                        <img src="{{ evt.image.url }}" alt="Event Image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+                        {% else %}
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f8fafc; border-radius: 12px;">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="content-card-header" style="flex-direction: column;">
+                        <span class="db-badge {% if evt.event_type == 'Holiday' %}yellow{% else %}green{% endif %}" style="align-self: flex-start; margin-bottom: 8px;">{{ evt.event_type }}</span>
+                        <div class="content-card-title">{{ evt.title }}</div>
+                        <div class="content-card-meta">{{ evt.date|date:"M d, Y" }}</div>
+                    </div>
+                    {% if evt.description %}
+                    <p style="font-size: 0.85rem; color: var(--gray); margin-top: 8px;">{{ evt.description|truncatechars:60 }}</p>
+                    {% endif %}
+                    <div class="content-card-actions">
+                        <a href="{% url 'calendar_event_edit' evt.pk %}" class="db-btn-e">Edit</a>
+                        <a href="javascript:void(0)" onclick="openActionModal('{% url 'calendar_event_delete' evt.pk %}', 'Archive Event?', '🗑️', 'You are about to archive &quot;<strong>{{ evt.title|escapejs }}</strong>&quot;.', 'Yes, Archive!', true)" class="db-btn-d">Archive</a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state-card" style="grid-column: 1 / -1;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <div class="empty-state-title">No Calendar Events</div>
+                    <div class="empty-state-desc">You haven't added any upcoming calendar events. Create one to get started!</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if role == 'TEACHER' %}
+        <!-- TASKS SECTION -->
+        <div id="section-tasks" class="db-section" style="display:none;">
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Content</div>
+                    <h1 class="db-title">Tasks</h1>
+                    <p class="db-sub">Manage your personal tasks and to-dos.</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 24px;">
+                <h3 style="color: var(--dark); margin-bottom: 12px; font-size: 1.2rem;">To-Do</h3>
+                <div class="task-group" id="todo-tasks-container">
+                    {% for task in teacher_tasks %}
+                    {% if task.status != 'Done' %}
+                    <div class="task-card" data-task-id="{{ task.id }}">
+                        <div class="task-title">
+                            <input type="text" class="task-title-input" value="{{ task.title }}" onchange="updateTask({{ task.id }}, 'title', this.value)">
+                        </div>
+                        <div class="task-status">
+                            <select class="task-status-select" onchange="updateTask({{ task.id }}, 'status', this.value)" 
+                                    style="background-color: {% if task.status == 'Working on it' %}#fde047; color: #854d0e;{% elif task.status == 'Stuck' %}#fbcfe8; color: #9d174d;{% elif task.status == 'Done' %}#bbf7d0; color: #166534;{% else %}#e2e8f0; color: #334155;{% endif %}">
+                                <option value="To Do" {% if task.status == 'To Do' %}selected{% endif %}>To Do</option>
+                                <option value="Working on it" {% if task.status == 'Working on it' %}selected{% endif %}>Working on it</option>
+                                <option value="Stuck" {% if task.status == 'Stuck' %}selected{% endif %}>Stuck</option>
+                                <option value="Done" {% if task.status == 'Done' %}selected{% endif %}>Done</option>
+                            </select>
+                        </div>
+                        <div class="task-due-date">
+                            <input type="date" class="task-date-input" value="{{ task.due_date|date:'Y-m-d' }}" onchange="updateTask({{ task.id }}, 'due_date', this.value)">
+                        </div>
+                        <div class="task-actions">
+                            <button onclick="deleteTask({{ task.id }})" class="task-del-btn" title="Delete Task">×</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                    <div class="task-add-row" id="task-add-row-todo">
+                        <input type="text" id="new-task-input" placeholder="+ Add task" onkeydown="if(event.key === 'Enter') createTask()">
+                        <button onclick="createTask()" class="db-btn green" style="padding: 8px 16px; border-radius: 8px;">Add</button>
+                    </div>
+                </div>
+
+                <h3 style="color: var(--green-dark); margin-top: 32px; margin-bottom: 12px; font-size: 1.2rem;">Completed</h3>
+                <div class="task-group" id="completed-tasks-container">
+                    {% for task in teacher_tasks %}
+                    {% if task.status == 'Done' %}
+                    <div class="task-card" data-task-id="{{ task.id }}">
+                        <div class="task-title">
+                            <input type="text" class="task-title-input completed-title" value="{{ task.title }}" onchange="updateTask({{ task.id }}, 'title', this.value)" style="text-decoration: line-through; color: #94a3b8;">
+                        </div>
+                        <div class="task-status">
+                            <select class="task-status-select" onchange="updateTask({{ task.id }}, 'status', this.value)" 
+                                    style="background-color: #bbf7d0; color: #166534;">
+                                <option value="To Do" {% if task.status == 'To Do' %}selected{% endif %}>To Do</option>
+                                <option value="Working on it" {% if task.status == 'Working on it' %}selected{% endif %}>Working on it</option>
+                                <option value="Stuck" {% if task.status == 'Stuck' %}selected{% endif %}>Stuck</option>
+                                <option value="Done" {% if task.status == 'Done' %}selected{% endif %}>Done</option>
+                            </select>
+                        </div>
+                        <div class="task-due-date">
+                            <input type="date" class="task-date-input" value="{{ task.due_date|date:'Y-m-d' }}" onchange="updateTask({{ task.id }}, 'due_date', this.value)">
+                        </div>
+                        <div class="task-actions">
+                            <button onclick="deleteTask({{ task.id }})" class="task-del-btn" title="Delete Task">×</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         {% if role == 'SUPER_ADMIN' %}
         <!-- USERS SECTION -->
         <div id="section-users" class="db-section" style="display:none;">
-            <div class="db-header"><div><div class="db-page-badge">Manage</div><h1 class="db-title">Registered Users</h1><p class="db-sub">All accounts registered on CraftyKids.</p></div></div>
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Manage</div>
+                    <h1 class="db-title">Accounts</h1>
+                    <p class="db-sub">All accounts registered on CraftyKids.</p>
+                </div>
+            </div>
             <div class="db-card">
                 <table class="db-table">
-                    <thead><tr><th>Username</th><th>Role</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {% for u in users %}
                         <tr>
@@ -305,25 +901,24 @@
                             <td>{{ u.email|default:"-" }}</td>
                             <td>
                                 {% if not u.is_active %}
-                                    <span class="db-badge red" style="background:#f8d7da;color:#721c24;">Deactivated</span>
-                                {% elif u.profile.role == 'TEACHER' %}
-                                    {% if u.profile.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span class="pending-badge">Pending</span>{% endif %}
+                                <span class="db-badge red" style="background:#f8d7da;color:#721c24;">Deactivated</span>
+                                {% elif not u.profile.is_approved and u.profile.role != 'SUPER_ADMIN' %}
+                                <span class="pending-badge">Pending</span>
                                 {% else %}<span class="db-badge green">Active</span>{% endif %}
                             </td>
                             <td>
+                                {% if u.profile.is_approved or u.profile.role == 'SUPER_ADMIN' %}
                                 <div class="db-actions">
-                                    {% if u.profile.role == 'TEACHER' and not u.profile.is_approved %}
-                                        <a href="{% url 'approve_teacher' u.pk %}" class="approve-btn">Approve</a>
-                                    {% endif %}
                                     {% if request.user.pk != u.pk %}
-                                        {% if u.is_active %}
-                                            <a href="{% url 'toggle_user_status' u.pk %}" class="db-btn-e" style="background:#fff3cd; color:#856404; text-decoration:none;">Deactivate</a>
-                                        {% else %}
-                                            <a href="{% url 'toggle_user_status' u.pk %}" class="db-btn-e" style="background:#d4edda; color:#155724; text-decoration:none;">Activate</a>
-                                        {% endif %}
-                                        <button onclick="openDelUser({{ u.pk }}, '{{ u.username }}')" class="db-btn-d">Delete</button>
+                                    {% if u.is_active %}
+                                    <button onclick="openActionModal('{% url 'toggle_user_status' u.pk %}', 'Deactivate User?', '🚫', 'You are about to deactivate the user &quot;<strong>{{ u.username }}</strong>&quot;.', 'Yes, Deactivate!', true)" class="db-btn-e" style="background:#fff3cd; color:#856404; border:none; cursor:pointer; font-family: inherit;">Deactivate</button>
+                                    {% else %}
+                                    <button onclick="openActionModal('{% url 'toggle_user_status' u.pk %}', 'Activate User?', '✅', 'You are about to activate the user &quot;<strong>{{ u.username }}</strong>&quot;.', 'Yes, Activate!', false)" class="db-btn-e" style="background:#d4edda; color:#155724; border:none; cursor:pointer; font-family: inherit;">Activate</button>
+                                    {% endif %}
+                                    <button onclick="openActionModal('{% url 'delete_user' u.pk %}', 'Archive User?', '🗑️', 'You are about to archive the user &quot;<strong>{{ u.username }}</strong>&quot;.', 'Yes, Archive!', true)" class="db-btn-d">Archive</button>
                                     {% endif %}
                                 </div>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -332,77 +927,789 @@
             </div>
         </div>
 
-        <!-- CATEGORIES SECTION -->
-        <div id="section-categories" class="db-section" style="display:none;">
-            <div class="db-header"><div><div class="db-page-badge">Manage</div><h1 class="db-title">Categories</h1><p class="db-sub">Manage subject categories.</p></div><button onclick="document.getElementById('modal-add-cat').style.display='flex'" class="db-btn green">+ Add Category</button></div>
-            <div class="db-card"><table class="db-table"><thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>
-                {% for cat in categories %}<tr><td><strong>{{ cat.name }}</strong></td><td><div class="db-actions"><button onclick="openEditCat({{ cat.pk }}, '{{ cat.name }}')" class="db-btn-e">Edit</button><button onclick="openDelCat({{ cat.pk }}, '{{ cat.name }}')" class="db-btn-d">Del</button></div></td></tr>
-                {% empty %}<tr><td colspan="2" class="db-empty">No categories yet.</td></tr>{% endfor %}
-            </tbody></table></div>
-        </div>
+
 
         <div id="section-audit" class="db-section" style="display:none;">
-            <div class="db-header"><div><div class="db-page-badge">Security</div><h1 class="db-title">Audit Log</h1><p class="db-sub">Track logins and changes.</p></div><a href="/admin/main/auditlog/" class="db-btn teal">Open in Admin</a></div>
-            <div class="db-card"><table class="db-table"><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th></tr></thead><tbody>
-                {% for log in recent_audit_logs %}<tr><td>{{ log.created_at|date:"M d, Y h:i A" }}</td><td>{{ log.actor.username|default:"System" }}</td><td>{{ log.get_action_display }}</td><td>{{ log.target_label }}</td></tr>
-                {% empty %}<tr><td colspan="4" class="db-empty">No logs.</td></tr>{% endfor %}
-            </tbody></table></div>
-        </div>
-
-        <div id="section-archive" class="db-section" style="display:none;">
-            <div class="db-header"><div><div class="db-page-badge">Manage</div><h1 class="db-title">Archived Files</h1><p class="db-sub">Monitor deleted content.</p></div></div>
-            <div class="db-card" style="margin-bottom: 20px;"><div class="db-card-head"><h3>Archived Videos</h3></div><table class="db-table"><thead><tr><th>Title</th><th>Archived On</th></tr></thead><tbody>
-                {% for video in archived_videos %}<tr><td>{{ video.title }}</td><td>{{ video.created_at|date:"M d, Y" }}</td></tr>
-                {% empty %}<tr><td colspan="2" class="db-empty">No archived videos.</td></tr>{% endfor %}
-            </tbody></table></div>
-            <div class="db-card"><div class="db-card-head"><h3>Archived Flipbooks</h3></div><table class="db-table"><thead><tr><th>Title</th><th>Archived On</th></tr></thead><tbody>
-                {% for flipbook in archived_flipbooks %}<tr><td>{{ flipbook.title }}</td><td>{{ flipbook.created_at|date:"M d, Y" }}</td></tr>
-                {% empty %}<tr><td colspan="2" class="db-empty">No archived flipbooks.</td></tr>{% endfor %}
-            </tbody></table></div>
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Security</div>
+                    <h1 class="db-title">Audit Log</h1>
+                    <p class="db-sub">Track logins and changes.</p>
+                </div><a href="/admin/main/auditlog/" class="db-btn teal">Open in Admin</a>
+            </div>
+            <div class="db-card">
+                <table class="db-table">
+                    <thead>
+                        <tr>
+                            <th>When</th>
+                            <th>Actor</th>
+                            <th>Action</th>
+                            <th>Target</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in recent_audit_logs %}<tr>
+                            <td>{{ log.created_at|date:"M d, Y h:i A" }}</td>
+                            <td>{{ log.actor.username|default:"System" }}</td>
+                            <td>{{ log.get_action_display }}</td>
+                            <td>{{ log.target_label }}</td>
+                        </tr>
+                        {% empty %}<tr>
+                            <td colspan="4" class="db-empty">No logs.</td>
+                        </tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
         {% endif %}
+
+        <div id="section-archive" class="db-section" style="display:none;">
+            <div class="db-header">
+                <div>
+                    <div class="db-page-badge">Manage</div>
+                    <h1 class="db-title">Archived Files</h1>
+                    <p class="db-sub">Monitor deleted content.</p>
+                </div>
+            </div>
+            
+            {% if role == 'SUPER_ADMIN' %}
+            <div class="db-card" style="margin-bottom: 20px;">
+                <div class="db-card-head">
+                    <h3>Archived Accounts</h3>
+                </div>
+                <table class="db-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Archived On</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in archived_users %}<tr>
+                            <td>{{ u.username }}</td>
+                            <td><span class="db-badge gray">{{ u.profile.get_role_display }}</span></td>
+                            <td>{{ u.date_joined|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="db-actions">
+                                    <a href="javascript:void(0)" onclick="openActionModal('{% url 'user_restore' u.pk %}', 'Undo Archive?', '↩️', 'You are about to restore the user &quot;<strong>{{ u.username }}</strong>&quot;.', 'Yes, Restore!', false)" class="db-btn-e" style="background:#e8faf0; color:#2ecc71; text-decoration:none;">Undo Archive</a>
+                                    <a href="javascript:void(0)" onclick="openActionModal('{% url 'user_permanent_delete' u.pk %}', 'Permanently Delete?', '🗑️', 'You are about to permanently delete &quot;<strong>{{ u.username }}</strong>&quot;. This cannot be recovered.', 'Yes, Delete permanently!', true)" class="db-btn-d">Permanently delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}<tr>
+                            <td colspan="4" class="db-empty">No archived users.</td>
+                        </tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="db-card" style="margin-bottom: 20px;">
+                <div class="db-card-head">
+                    <h3>Archived Announcements</h3>
+                </div>
+                <table class="db-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Archived On</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ann in archived_announcements %}<tr>
+                            <td>{{ ann.title }}</td>
+                            <td>{{ ann.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="db-actions">
+                                    <a href="javascript:void(0)" onclick="openActionModal('{% url 'announcement_restore' ann.pk %}', 'Undo Archive?', '↩️', 'You are about to restore the announcement &quot;<strong>{{ ann.title }}</strong>&quot;.', 'Yes, Restore!', false)" class="db-btn-e" style="background:#e8faf0; color:#2ecc71; text-decoration:none;">Undo Archive</a>
+                                    <a href="javascript:void(0)" onclick="openActionModal('{% url 'announcement_permanent_delete' ann.pk %}', 'Permanently Delete?', '🗑️', 'You are about to permanently delete &quot;<strong>{{ ann.title }}</strong>&quot;. This cannot be recovered.', 'Yes, Delete permanently!', true)" class="db-btn-d">Permanently delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}<tr>
+                            <td colspan="3" class="db-empty">No archived announcements.</td>
+                        </tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <div class="db-card" style="margin-bottom: 20px;">
+                <div class="db-card-head">
+                    <h3>Archived Videos</h3>
+                </div>
+                <table class="db-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Archived On</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for video in archived_videos %}<tr>
+                            <td>{{ video.title }}</td>
+                            <td>{{ video.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="db-actions">
+                                    <a href="javascript:void(0)" onclick="openActionModal('{% url 'video_restore' video.pk %}', 'Undo Archive?', '↩️', 'You are about to restore the video &quot;<strong>{{ video.title }}</strong>&quot;.', 'Yes, Restore!', false)" class="db-btn-e" style="background:#e8faf0; color:#2ecc71; text-decoration:none;">Undo Archive</a>
+                                    <a href="javascript:void(0)" onclick="openActionModal('{% url 'video_permanent_delete' video.pk %}', 'Permanently Delete?', '🗑️', 'You are about to permanently delete &quot;<strong>{{ video.title }}</strong>&quot;. This cannot be recovered.', 'Yes, Delete permanently!', true)" class="db-btn-d">Permanently delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}<tr>
+                            <td colspan="3" class="db-empty">No archived videos.</td>
+                        </tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="db-card">
+                <div class="db-card-head">
+                    <h3>Archived Flipbooks</h3>
+                </div>
+                <table class="db-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Archived On</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for flipbook in archived_flipbooks %}<tr>
+                            <td>{{ flipbook.title }}</td>
+                            <td>{{ flipbook.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="db-actions">
+                                    <a href="javascript:void(0)" onclick="openActionModal('{% url 'flipbook_restore' flipbook.pk %}', 'Undo Archive?', '↩️', 'You are about to restore the flipbook &quot;<strong>{{ flipbook.title }}</strong>&quot;.', 'Yes, Restore!', false)" class="db-btn-e" style="background:#e8faf0; color:#2ecc71; text-decoration:none;">Undo Archive</a>
+                                    <a href="javascript:void(0)" onclick="openActionModal('{% url 'flipbook_permanent_delete' flipbook.pk %}', 'Permanently Delete?', '🗑️', 'You are about to permanently delete &quot;<strong>{{ flipbook.title }}</strong>&quot;. This cannot be recovered.', 'Yes, Delete permanently!', true)" class="db-btn-d">Permanently delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}<tr>
+                            <td colspan="3" class="db-empty">No archived flipbooks.</td>
+                        </tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="db-card" style="margin-bottom: 20px;">
+                <div class="db-card-head">
+                    <h3>Archived Video Comments</h3>
+                </div>
+                <table class="db-table">
+                    <thead>
+                        <tr>
+                            <th>User/Author</th>
+                            <th>Comment Text</th>
+                            <th>Video</th>
+                            <th>Archived On</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in archived_video_comments %}<tr>
+                            <td>{{ c.user.username|default:c.name }}</td>
+                            <td>{{ c.text|truncatechars:50 }}</td>
+                            <td>{{ c.video.title }}</td>
+                            <td>{{ c.created_at|date:"M d, Y, h:i A" }}</td>
+                        </tr>
+                        {% empty %}<tr>
+                            <td colspan="4" class="db-empty">No archived video comments.</td>
+                        </tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="db-card" style="margin-bottom: 20px;">
+                <div class="db-card-head">
+                    <h3>Archived Flipbook Comments</h3>
+                </div>
+                <table class="db-table">
+                    <thead>
+                        <tr>
+                            <th>User/Author</th>
+                            <th>Comment Text</th>
+                            <th>Flipbook</th>
+                            <th>Archived On</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in archived_flipbook_comments %}<tr>
+                            <td>{{ c.user.username|default:c.name }}</td>
+                            <td>{{ c.text|truncatechars:50 }}</td>
+                            <td>{{ c.flipbook.title }}</td>
+                            <td>{{ c.created_at|date:"M d, Y, h:i A" }}</td>
+                        </tr>
+                        {% empty %}<tr>
+                            <td colspan="4" class="db-empty">No archived flipbook comments.</td>
+                        </tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
     </div>
 </div>
 
+<style>
+    .cal-day {
+        position: relative;
+    }
+    .cal-event-tooltip {
+        display: none;
+        position: absolute;
+        bottom: 110%; 
+        left: 50%;
+        transform: translateX(-50%);
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        padding: 8px;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        min-width: 120px;
+        max-width: 150px;
+        text-align: left;
+        pointer-events: none;
+    }
+    .cal-day:hover .cal-event-tooltip {
+        display: block;
+    }
+    .cal-tooltip-img {
+        width: 100%;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-bottom: 4px;
+    }
+    .cal-tooltip-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--primary);
+        line-height: 1.2;
+        margin-bottom: 2px;
+    }
+    .cal-tooltip-desc {
+        font-size: 0.7rem;
+        color: var(--gray);
+        line-height: 1.2;
+        white-space: normal;
+    }
+</style>
+
 <!-- Calendar Logic (Same as before) -->
 <script>
-function generateCalendar() {
-    const now = new Date(); const year = now.getFullYear(); const month = now.getMonth(); const today = now.getDate();
-    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    if(document.getElementById('cal-header')) document.getElementById('cal-header').textContent = `${monthNames[month]} ${year}`;
-    const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const prevDaysInMonth = new Date(year, month, 0).getDate(); const grid = document.getElementById('cal-grid');
-    if(!grid) return;
-    while (grid.children.length > 7) grid.removeChild(grid.lastChild);
-    for (let i = firstDay - 1; i >= 0; i--) { const d = document.createElement('div'); d.className = 'cal-day'; d.style.color = '#ccc'; d.textContent = prevDaysInMonth - i; grid.appendChild(d); }
-    for (let i = 1; i <= daysInMonth; i++) { const d = document.createElement('div'); d.className = 'cal-day'; if (i === today) d.classList.add('active'); d.textContent = i; grid.appendChild(d); }
-}
-document.addEventListener('DOMContentLoaded', generateCalendar);
+    function generateCalendar() {
+        const now = new Date(); const year = now.getFullYear(); const month = now.getMonth(); const today = now.getDate();
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        if (document.getElementById('cal-header')) document.getElementById('cal-header').textContent = `${monthNames[month]} ${year}`;
+        const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const prevDaysInMonth = new Date(year, month, 0).getDate(); const grid = document.getElementById('cal-grid');
+        if (!grid) return;
+        while (grid.children.length > 7) grid.removeChild(grid.lastChild);
+        
+        const eventsData = JSON.parse('{{ events_json|default:"[]"|escapejs }}');
+        
+        for (let i = firstDay - 1; i >= 0; i--) { const d = document.createElement('div'); d.className = 'cal-day'; d.style.color = '#ccc'; d.textContent = prevDaysInMonth - i; grid.appendChild(d); }
+        for (let i = 1; i <= daysInMonth; i++) { 
+            const d = document.createElement('div'); 
+            d.className = 'cal-day'; 
+            if (i === today) d.classList.add('active'); 
+            
+            const currentMonthStr = String(month + 1).padStart(2, '0');
+            const currentDayStr = String(i).padStart(2, '0');
+            const dateStr = `${year}-${currentMonthStr}-${currentDayStr}`;
+            
+            d.innerHTML = `<span>${i}</span>`;
+            
+            const dayEvents = eventsData.filter(e => e.date === dateStr);
+            if (dayEvents.length > 0) {
+                d.style.borderBottom = '3px solid var(--pink)';
+                d.style.cursor = 'pointer';
+                
+                const tooltip = document.createElement('div');
+                tooltip.className = 'cal-event-tooltip';
+                
+                dayEvents.forEach(e => {
+                    let html = `<div style="margin-bottom: 4px;">`;
+                    if (e.image_url) {
+                        html += `<img src="${e.image_url}" class="cal-tooltip-img" alt="Thumbnail">`;
+                    }
+                    html += `<div class="cal-tooltip-title">${e.title}</div>`;
+                    if (e.description) {
+                        const desc = e.description.length > 50 ? e.description.substring(0, 50) + '...' : e.description;
+                        html += `<div class="cal-tooltip-desc">${desc}</div>`;
+                    }
+                    html += `</div>`;
+                    tooltip.innerHTML += html;
+                });
+                
+                d.appendChild(tooltip);
+            }
+            
+            grid.appendChild(d); 
+        }
+    }
+    
+    function updateLiveClock() {
+        const clockElement = document.getElementById('live-dashboard-clock');
+        if (clockElement) {
+            const now = new Date();
+            const options = { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            clockElement.textContent = now.toLocaleString('en-US', options);
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        generateCalendar();
+        updateLiveClock();
+        setInterval(updateLiveClock, 1000);
+    });
 </script>
+
+<!-- ACTION MODAL (Blur Background) -->
+<div id="action-modal" class="modal-overlay">
+    <div class="confirm-box" id="action-modal-box">
+        <div id="action-modal-icon" style="font-size: 4rem; margin-bottom: 20px;"></div>
+        <h1 id="action-modal-title" class="confirm-title"></h1>
+        <p id="action-modal-text" class="confirm-text"></p>
+        
+        <form id="action-modal-form" method="POST">
+            {% csrf_token %}
+            <div class="confirm-actions">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('action-modal').style.display='none'">Cancel</button>
+                <button type="submit" id="action-modal-btn" class="btn-action"></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="details-modal">
+    <div class="confirm-box" id="details-modal-box" style="border-color: #4a5568;">
+        <div id="details-modal-icon" style="font-size: 3rem; margin-bottom: 10px; display: flex; justify-content: center; color: #4a5568;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </div>
+        <div class="confirm-title" id="details-modal-title" style="color: #4a5568;">Account Details</div>
+        <div class="confirm-text" id="details-modal-text" style="text-align: left; background: #f7fafc; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+            <p style="margin-bottom: 8px;"><strong>Username:</strong> <span id="details-username"></span></p>
+            <p style="margin-bottom: 8px;"><strong>Email:</strong> <span id="details-email"></span></p>
+            <p id="details-grade-container" style="margin-bottom: 8px;"><strong>Grade Level:</strong> <span id="details-grade"></span></p>
+            <p id="details-lrn-container" style="margin-bottom: 8px;"><strong>LRN:</strong> <span id="details-lrn"></span></p>
+            <p style="margin-bottom: 0;"><strong>Date Registered:</strong> <span id="details-date"></span></p>
+            <p id="details-faculty-id-container" style="margin-bottom: 0; margin-top: 15px; display: none; text-align: center;">
+                <strong>Faculty ID:</strong><br>
+                <img id="details-faculty-id-img" src="" alt="Faculty ID" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-top: 10px; border: 1px solid #e2e8f0; object-fit: contain; background: white; padding: 4px;">
+            </p>
+        </div>
+        <div class="confirm-actions">
+            <button type="button" class="btn-cancel" onclick="document.getElementById('details-modal').style.display='none'">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="content-details-modal">
+    <div class="confirm-box" id="content-details-modal-box" style="border-color: #4a5568; max-width: 800px; width: 90%; position: relative; max-height: 90vh; overflow-y: auto;">
+        <!-- X button -->
+        <button type="button" onclick="closeContentDetailsModal()" style="position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 2rem; cursor: pointer; color: #a0aec0; padding: 0; line-height: 1;">&times;</button>
+        <div id="content-details-modal-icon" style="font-size: 3rem; margin-bottom: 10px; display: flex; justify-content: center; color: #4a5568;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        </div>
+        <div class="confirm-title" id="content-details-modal-title" style="color: #4a5568;">Content Details</div>
+        <div class="confirm-text" id="content-details-modal-text" style="text-align: left; background: #f7fafc; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+            <p style="margin-bottom: 8px;"><strong>Title:</strong> <span id="content-details-title"></span></p>
+            <p style="margin-bottom: 8px;"><strong>Author:</strong> <span id="content-details-author"></span></p>
+            <p style="margin-bottom: 8px;"><strong>Category:</strong> <span id="content-details-category"></span></p>
+            <p style="margin-bottom: 8px;"><strong>Date Uploaded:</strong> <span id="content-details-date"></span></p>
+            <p style="margin-bottom: 15px;"><strong>Description:</strong> <span id="content-details-desc"></span></p>
+            <div id="content-media-container" style="display: none; justify-content: center; align-items: center; background: #000; border-radius: 8px; overflow: hidden; margin-top: 20px;">
+                <!-- Media injected here -->
+            </div>
+        </div>
+        <div class="confirm-actions" style="justify-content: space-between;">
+            <button type="button" class="btn-cancel" onclick="closeContentDetailsModal()">Close</button>
+            <div id="content-modal-actions" style="display: none; gap: 8px;">
+                <button type="button" id="modal-deny-btn" class="reject-btn" style="margin: 0; padding: 8px 24px; cursor: pointer; background: var(--pink); color: white; border: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 0 #d84b7a;">Deny</button>
+                <button type="button" id="modal-approve-btn" class="approve-btn" style="margin: 0; padding: 8px 24px; cursor: pointer; background: var(--green); color: white; border: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 0 #27ae60;">Approve</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- MODALS (Super Admin only) -->
 {% if role == 'SUPER_ADMIN' %}
-<div id="modal-add-cat" class="db-modal-overlay" style="display:none;"><div class="db-modal"><h3>Add Category</h3><form method="POST" action="{% url 'category_create' %}">{% csrf_token %}<div class="form-group"><label>Name</label><input type="text" name="name" required></div><div class="db-modal-btns"><button type="submit" class="db-btn green">Save</button><button type="button" onclick="this.closest('.db-modal-overlay').style.display='none'" class="db-btn-outline">Cancel</button></div></form></div></div>
-<div id="modal-edit-cat" class="db-modal-overlay" style="display:none;"><div class="db-modal"><h3>Edit Category</h3><form method="POST" id="edit-cat-form">{% csrf_token %}<div class="form-group"><label>Name</label><input type="text" name="name" id="edit-cat-name" required></div><div class="db-modal-btns"><button type="submit" class="db-btn green">Update</button><button type="button" onclick="this.closest('.db-modal-overlay').style.display='none'" class="db-btn-outline">Cancel</button></div></form></div></div>
-<div id="modal-del-cat" class="db-modal-overlay" style="display:none;"><div class="db-modal"><h3>Delete Category</h3><p>Delete <strong id="del-cat-name"></strong>?</p><form method="POST" id="del-cat-form">{% csrf_token %}<div class="db-modal-btns"><button type="submit" class="db-btn red">Delete</button><button type="button" onclick="this.closest('.db-modal-overlay').style.display='none'" class="db-btn-outline">Cancel</button></div></form></div></div>
-<div id="modal-del-user" class="db-modal-overlay" style="display:none;"><div class="db-modal"><h3>Delete User</h3><p>Delete account for <strong id="del-user-name"></strong>? This cannot be undone.</p><form method="POST" id="del-user-form">{% csrf_token %}<div class="db-modal-btns"><button type="submit" class="db-btn red">Delete</button><button type="button" onclick="this.closest('.db-modal-overlay').style.display='none'" class="db-btn-outline">Cancel</button></div></form></div></div>
 {% endif %}
 
 <script>
-function showSection(name) {
-    const sectionId = 'section-' + name;
-    const targetSection = document.getElementById(sectionId);
-    if (!targetSection) return;
-    document.querySelectorAll('.db-section').forEach(s => s.style.display = 'none');
-    document.querySelectorAll('.db-sidebar-item').forEach(i => i.classList.remove('active'));
-    targetSection.style.display = 'block';
-    const item = document.querySelector('.db-sidebar-item[data-section="' + name + '"]');
-    if (item) item.classList.add('active');
-    window.location.hash = sectionId;
-}
-function openEditCat(pk, name) { document.getElementById('edit-cat-form').action = '/dashboard/category/' + pk + '/edit/'; document.getElementById('edit-cat-name').value = name; document.getElementById('modal-edit-cat').style.display = 'flex'; }
-function openDelCat(pk, name) { document.getElementById('del-cat-form').action = '/dashboard/category/' + pk + '/delete/'; document.getElementById('del-cat-name').textContent = name; document.getElementById('modal-del-cat').style.display = 'flex'; }
-function openDelUser(pk, name) { document.getElementById('del-user-form').action = '/dashboard/user/' + pk + '/delete/'; document.getElementById('del-user-name').textContent = name; document.getElementById('modal-del-user').style.display = 'flex'; }
-document.addEventListener('DOMContentLoaded', () => { showSection(window.location.hash.replace('#section-', '') || 'overview'); });
+    function openDetailsModal(username, grade, date, lrn, role, email, facultyIdUrl) {
+        document.getElementById('details-username').innerText = username;
+        document.getElementById('details-grade').innerText = grade;
+        document.getElementById('details-date').innerText = date;
+        
+        let displayEmail = "Not provided";
+        if (email && email.length > 0) {
+            let parts = email.split('@');
+            if (parts.length === 2) {
+                let local = parts[0];
+                let domain = parts[1];
+                if (local.length > 4) {
+                    displayEmail = local.substring(0, 4) + '****@' + domain;
+                } else {
+                    displayEmail = local.substring(0, 1) + '***@' + domain;
+                }
+            } else {
+                displayEmail = email.substring(0, 4) + '****';
+            }
+        }
+        document.getElementById('details-email').innerText = displayEmail;
+        
+        const lrnContainer = document.getElementById('details-lrn-container');
+        const gradeContainer = document.getElementById('details-grade-container');
+        const facultyIdContainer = document.getElementById('details-faculty-id-container');
+        
+        if (role === 'TEACHER') {
+            lrnContainer.style.display = 'none';
+            gradeContainer.style.display = 'none';
+            
+            if (facultyIdUrl && facultyIdUrl.trim().length > 0) {
+                document.getElementById('details-faculty-id-img').src = facultyIdUrl;
+                facultyIdContainer.style.display = 'block';
+            } else {
+                facultyIdContainer.style.display = 'none';
+            }
+        } else {
+            lrnContainer.style.display = 'block';
+            document.getElementById('details-lrn').innerText = lrn || 'None';
+            gradeContainer.style.display = 'block';
+            if (facultyIdContainer) facultyIdContainer.style.display = 'none';
+        }
+        
+        document.getElementById('details-modal').style.display = 'flex';
+    }
+
+    function openContentDetailsModal(type, title, author, category, date, desc, mediaUrl, approveUrl, denyUrl) {
+        document.getElementById('content-details-modal-title').innerText = type + ' Details';
+        document.getElementById('content-details-title').innerText = title;
+        document.getElementById('content-details-author').innerText = author;
+        document.getElementById('content-details-category').innerText = category;
+        document.getElementById('content-details-date').innerText = date;
+        document.getElementById('content-details-desc').innerText = desc || 'No description provided.';
+        
+        const mediaContainer = document.getElementById('content-media-container');
+        mediaContainer.innerHTML = ''; 
+        
+        if (mediaUrl && mediaUrl !== 'None' && mediaUrl !== '') {
+            mediaContainer.style.display = 'flex';
+            if (type === 'Video') {
+                mediaContainer.innerHTML = `<video controls style="width: 100%; max-height: 400px; outline: none;"><source src="${mediaUrl}" type="video/mp4">Your browser does not support the video tag.</video>`;
+            } else if (type === 'Flipbook') {
+                mediaContainer.innerHTML = `
+                    <div id="pdf-flipbook-container" style="padding: 10px; position: relative; width: 100%;">
+                        <div id="loading-book" style="text-align: center; padding: 40px 20px; color: var(--gray);">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">⏳</div>
+                            <h3 style="font-family: 'Fredoka One', cursive; margin:0;">Loading Flipbook...</h3>
+                        </div>
+                        <div id="book-nav" style="display:none; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <button id="btn-prev" class="viewer-link secondary" style="cursor: pointer; padding: 6px 12px; border:none; border-radius: 20px; background:var(--yellow); color:var(--dark); font-weight:bold; font-family:'Fredoka One', cursive;">⬅ Back</button>
+                            <span style="font-family: 'Fredoka One', cursive; color: #fff; font-size: 1rem;">Flipbook</span>
+                            <button id="btn-next" class="viewer-link secondary" style="cursor: pointer; padding: 6px 12px; border:none; border-radius: 20px; background:var(--green); color:var(--white); font-weight:bold; font-family:'Fredoka One', cursive;">Next ➡</button>
+                        </div>
+                        <div id="book-wrapper" style="display:none; justify-content: center; background: #2d3748; border-radius: 8px; padding: 20px; min-height: 400px;">
+                            <div id="book" style="touch-action: none;"></div>
+                        </div>
+                    </div>
+                `;
+                loadFlipbook(mediaUrl);
+            }
+        } else {
+            mediaContainer.style.display = 'none';
+        }
+        if (approveUrl && denyUrl) {
+            document.getElementById('modal-approve-btn').onclick = function() {
+                closeContentDetailsModal();
+                openActionModal(approveUrl, 'Approve ' + type + '?', '✅', 'You are about to approve the ' + type.toLowerCase() + ' &quot;<strong>' + title + '</strong>&quot;.', 'Yes, Approve!', false);
+            };
+            document.getElementById('modal-deny-btn').onclick = function() {
+                closeContentDetailsModal();
+                openActionModal(denyUrl, 'Deny ' + type + '?', '🚫', 'You are about to deny the ' + type.toLowerCase() + ' &quot;<strong>' + title + '</strong>&quot;.', 'Yes, Deny!', true);
+            };
+            document.getElementById('content-modal-actions').style.display = 'flex';
+        } else {
+            document.getElementById('content-modal-actions').style.display = 'none';
+        }
+        
+        document.getElementById('content-details-modal').style.display = 'flex';
+    }
+
+    function closeContentDetailsModal() {
+        if (currentPageFlip) {
+            currentPageFlip.destroy();
+            currentPageFlip = null;
+        }
+        document.getElementById('content-media-container').innerHTML = '';
+        document.getElementById('content-details-modal').style.display = 'none';
+    }
+    function openActionModal(url, title, icon, message, btnText, isDestructive) {
+        document.getElementById('action-modal-form').action = url;
+        document.getElementById('action-modal-title').innerText = title;
+        document.getElementById('action-modal-text').innerHTML = message;
+        
+        let iconHtml = icon;
+        if (icon === '✅') {
+            iconHtml = '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 11 15 16 9"></polyline></svg>';
+        } else if (icon === '🚫') {
+            iconHtml = '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15.53" y1="8.47" x2="8.47" y2="15.53"></line><line x1="8.47" y1="8.47" x2="15.53" y2="15.53"></line></svg>';
+        } else if (icon === '🗑️') {
+            iconHtml = '<svg width="64" height="64" viewBox="0 0 448 512" fill="currentColor"><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128zM160 224v192c0 8.8-7.2 16-16 16s-16-7.2-16-16V224c0-8.8 7.2-16 16-16s16 7.2 16 16zm96 0v192c0 8.8-7.2 16-16 16s-16-7.2-16-16V224c0-8.8 7.2-16 16-16s16 7.2 16 16zm96 0v192c0 8.8-7.2 16-16 16s-16-7.2-16-16V224c0-8.8 7.2-16 16-16s16 7.2 16 16z"/></svg>';
+        } else if (icon === '↩️') {
+            iconHtml = '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>';
+        }
+        document.getElementById('action-modal-icon').innerHTML = iconHtml;
+        
+        const btn = document.getElementById('action-modal-btn');
+        btn.innerText = btnText;
+        
+        const box = document.getElementById('action-modal-box');
+        const iconDiv = document.getElementById('action-modal-icon');
+        
+        if (isDestructive) {
+            box.style.borderColor = 'var(--pink)';
+            document.getElementById('action-modal-title').style.color = 'var(--pink)';
+            iconDiv.style.color = 'var(--pink)';
+            btn.style.background = 'var(--pink)';
+            btn.style.boxShadow = '0 4px 0 #d84b7a';
+        } else {
+            box.style.borderColor = 'var(--green)';
+            document.getElementById('action-modal-title').style.color = 'var(--green)';
+            iconDiv.style.color = 'var(--green)';
+            btn.style.background = 'var(--green)';
+            btn.style.boxShadow = '0 4px 0 #27ae60';
+        }
+        
+        document.getElementById('action-modal').style.display = 'flex';
+    }
+
+    // Tasks JS
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    async function createTask() {
+        const input = document.getElementById('new-task-input');
+        const title = input.value.trim();
+        if (!title) return;
+
+        try {
+            const response = await fetch('/api/tasks/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ title: title })
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                input.value = '';
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function updateTask(taskId, field, value) {
+        const bodyData = {};
+        bodyData[field] = value;
+        try {
+            const response = await fetch(`/api/tasks/${taskId}/update/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(bodyData)
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                if (field === 'status') {
+                    const selectEl = document.querySelector(`.task-card[data-task-id="${taskId}"] .task-status-select`);
+                    if (value === 'Working on it') {
+                        selectEl.style.backgroundColor = '#fde047';
+                        selectEl.style.color = '#854d0e';
+                    } else if (value === 'Stuck') {
+                        selectEl.style.backgroundColor = '#fbcfe8';
+                        selectEl.style.color = '#9d174d';
+                    } else if (value === 'Done') {
+                        selectEl.style.backgroundColor = '#bbf7d0';
+                        selectEl.style.color = '#166534';
+                        location.reload();
+                    } else {
+                        selectEl.style.backgroundColor = '#e2e8f0';
+                        selectEl.style.color = '#334155';
+                    }
+                    
+                    const isCompletedGroup = selectEl.closest('#completed-tasks-container');
+                    if (isCompletedGroup && value !== 'Done') {
+                        location.reload();
+                    }
+                }
+            } else {
+                alert('Error updating task');
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function deleteTask(taskId) {
+        if (!confirm('Are you sure you want to delete this task?')) return;
+        try {
+            const response = await fetch(`/api/tasks/${taskId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                const card = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+                if (card) card.remove();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function showSection(name) {
+        const sectionId = 'section-' + name;
+        const targetSection = document.getElementById(sectionId);
+        if (!targetSection) return;
+        document.querySelectorAll('.db-section').forEach(s => s.style.display = 'none');
+        document.querySelectorAll('.db-sidebar-item').forEach(i => i.classList.remove('active'));
+        targetSection.style.display = 'block';
+        const item = document.querySelector('.db-sidebar-item[data-section="' + name + '"]');
+        if (item) item.classList.add('active');
+        window.location.hash = sectionId;
+    }
+
+    // Initialize section immediately to prevent flash
+    showSection(window.location.hash.replace('#section-', '') || 'overview');
+    
+    // Support browser back/forward buttons
+    window.addEventListener('hashchange', () => {
+        showSection(window.location.hash.replace('#section-', '') || 'overview');
+    });
+
+    let currentPageFlip = null;
+
+    async function loadFlipbook(url) {
+        if (typeof pdfjsLib === 'undefined' || typeof St === 'undefined') {
+            document.getElementById('loading-book').innerHTML = "<p style='color:red;'>Failed to load required libraries.</p>";
+            return;
+        }
+        
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        
+        const bookContainer = document.getElementById('book');
+        const loadingBook = document.getElementById('loading-book');
+        const bookWrapper = document.getElementById('book-wrapper');
+        const bookNav = document.getElementById('book-nav');
+
+        try {
+            const pdf = await pdfjsLib.getDocument(url).promise;
+            const numPages = pdf.numPages;
+
+            const page1 = await pdf.getPage(1);
+            const v1 = page1.getViewport({ scale: 1 });
+
+            const isMobile = window.innerWidth <= 768;
+            const targetHeight = isMobile ? 300 : 350; 
+            const scale = targetHeight / v1.height;
+            const targetWidth = v1.width * scale;
+
+            const canvases = {};
+
+            for (let i = 1; i <= numPages; i++) {
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'my-page';
+                pageDiv.style.backgroundColor = 'white';
+                pageDiv.style.overflow = 'hidden';
+                pageDiv.style.boxShadow = (i % 2 === 0)
+                    ? 'inset -7px 0 30px -7px rgba(0,0,0,0.1)'
+                    : 'inset 7px 0 30px -7px rgba(0,0,0,0.1)';
+
+                const canvas = document.createElement('canvas');
+                canvas.height = targetHeight;
+                canvas.width = targetWidth;
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+
+                pageDiv.appendChild(canvas);
+                bookContainer.appendChild(pageDiv);
+
+                canvases[i] = canvas;
+            }
+
+            currentPageFlip = new St.PageFlip(bookContainer, {
+                width: targetWidth,
+                height: targetHeight,
+                size: "fixed",
+                showCover: true,
+                drawShadow: true,
+                maxShadowOpacity: 0.5,
+                usePortrait: true,
+                mobileScrollSupport: false
+            });
+
+            loadingBook.style.display = 'none';
+            bookWrapper.style.display = 'flex';
+            bookNav.style.display = 'flex';
+
+            currentPageFlip.loadFromHTML(document.querySelectorAll('.my-page'));
+
+            document.getElementById('btn-prev').addEventListener('click', () => {
+                if (currentPageFlip) currentPageFlip.flipPrev();
+            });
+            document.getElementById('btn-next').addEventListener('click', () => {
+                if (currentPageFlip) currentPageFlip.flipNext();
+            });
+
+            async function renderPagesInBackground() {
+                for (let i = 1; i <= numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: scale });
+                    const ctx = canvases[i].getContext('2d');
+                    await page.render({
+                        canvasContext: ctx,
+                        viewport: viewport
+                    }).promise;
+                }
+            }
+
+            renderPagesInBackground();
+
+        } catch (err) {
+            console.error('Failed to load flipbook:', err);
+            loadingBook.innerHTML = "<p style='color:red;'>Failed to load book animation. Make sure the PDF is supported.</p>";
+        }
+    }
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://unpkg.com/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 {% endblock %}

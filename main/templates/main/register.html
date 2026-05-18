@@ -15,7 +15,7 @@
 
     <!-- Main Auth Container -->
     <div class="auth-box" style="background-image: url('{% static 'images/progressive-image.jpg' %}');">
-        
+
         <!-- Left Side: Welcome Text -->
         <div class="auth-box-left">
             <div class="auth-welcome-text">
@@ -35,36 +35,69 @@
                 <h2 class="auth-card-title">Register</h2>
 
                 {% if messages %}
-                    <ul class="messages">
-                        {% for message in messages %}
-                            <li>{{ message }}</li>
-                        {% endfor %}
-                    </ul>
+                <ul class="messages">
+                    {% for message in messages %}
+                    <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
                 {% endif %}
 
                 <!-- Register Form -->
-                <form method="POST" action="{% url 'register' %}">
+                <form method="POST" action="{% url 'register' %}" onsubmit="return validateForm(event)">
                     {% csrf_token %}
-                    <div class="form-group">
-                        <label>Full Name</label>
-                        <input type="text" name="full_name" placeholder="" autocomplete="off" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" name="first_name" value="{{ form_data.first_name|default:'' }}" placeholder="" autocomplete="off" required oninput="validateName(this, 'fn-warning')">
+                            <small id="fn-warning" style="position: absolute; bottom: -14px; left: 4px; color: #e65100; font-size: 0.65rem; display: none; font-weight: bold; white-space: nowrap;">Please enter valid letters only.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" name="last_name" value="{{ form_data.last_name|default:'' }}" placeholder="" autocomplete="off" required oninput="validateName(this, 'ln-warning')">
+                            <small id="ln-warning" style="position: absolute; bottom: -14px; left: 4px; color: #e65100; font-size: 0.65rem; display: none; font-weight: bold; white-space: nowrap;">Please enter valid letters only.</small>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Email Address</label>
-                        <input type="email" name="email" placeholder="" autocomplete="off" required>
+                        <input type="email" name="email" value="{{ form_data.email|default:'' }}" placeholder="" autocomplete="off" required onblur="validateEmail(this, 'email-warning')" oninput="validateEmail(this, 'email-warning')">
+                        <small id="email-warning" style="position: absolute; bottom: -14px; left: 4px; color: #e65100; font-size: 0.65rem; display: none; font-weight: bold; white-space: nowrap;">Please provide a valid @gmail.com address.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Grade level</label>
+                        <select name="grade_level" required style="width: 100%; padding: 12px 15px; border: 2px solid transparent; border-radius: 12px; background: #eef8f1; font-size: 0.95rem; color: #2d3748; outline: none; transition: all 0.3s ease; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%232d3748%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1rem top 50%; background-size: 0.65rem auto;">
+                            <option value="" disabled {% if not form_data.grade_level %}selected{% endif %}>Select Grade Level</option>
+                            <option value="Grade 1" {% if form_data.grade_level == 'Grade 1' %}selected{% endif %}>Grade 1</option>
+                            <option value="Grade 2" {% if form_data.grade_level == 'Grade 2' %}selected{% endif %}>Grade 2</option>
+                            <option value="Grade 3" {% if form_data.grade_level == 'Grade 3' %}selected{% endif %}>Grade 3</option>
+                            <option value="Grade 4" {% if form_data.grade_level == 'Grade 4' %}selected{% endif %}>Grade 4</option>
+                            <option value="Grade 5" {% if form_data.grade_level == 'Grade 5' %}selected{% endif %}>Grade 5</option>
+                            <option value="Grade 6" {% if form_data.grade_level == 'Grade 6' %}selected{% endif %}>Grade 6</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>LRN Number</label>
+                        <input type="text" name="lrn_number" value="{{ form_data.lrn_number|default:'' }}" placeholder="12-digit LRN" pattern="\d{12}" title="LRN must be exactly 12 digits" maxlength="12" minlength="12" autocomplete="off" required>
                     </div>
                     <div class="form-group">
                         <label>Username</label>
-                        <input type="text" name="username" placeholder="" autocomplete="off" required>
+                        <input type="text" name="username" value="{{ form_data.username|default:'' }}" placeholder="" autocomplete="off" required>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Password</label>
                             <div class="password-field-wrapper">
                                 <input type="password" name="password1" id="password1" placeholder="••••••••" required>
-                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password1', this)">
+                                <button type="button" class="toggle-password"
+                                    onclick="togglePasswordVisibility('password1', this)">
                                     <!-- Initially Eye-Off (Slashed) because password is hidden -->
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="eye-off-icon">
+                                        <path
+                                            d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                                        </path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
                                 </button>
                             </div>
                         </div>
@@ -72,17 +105,31 @@
                             <label>Confirm</label>
                             <div class="password-field-wrapper">
                                 <input type="password" name="password2" id="password2" placeholder="••••••••" required>
-                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password2', this)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                <button type="button" class="toggle-password"
+                                    onclick="togglePasswordVisibility('password2', this)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="eye-off-icon">
+                                        <path
+                                            d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                                        </path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn-auth">Register</button>
+                    <small style="color: #718096; font-size: 0.8rem; display: block; margin-top: -10px; margin-bottom: 15px;">Note: Password must use a combination of a-z, underscore (_), and numbers.</small>
+                    
+                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" style="margin-bottom: 15px; display: flex; justify-content: center;"></div>
+                    
+                    <button type="submit" class="btn-auth" style="margin-top: 15px;">Register</button>
 
                     <div style="text-align: center; margin-top: 20px; font-size: 0.9rem;">
                         <p style="color: #666; margin-bottom: 8px;">Want to share your lessons?</p>
-                        <a href="{% url 'teacher_register' %}" style="color: var(--green-dark); font-weight: 800; text-decoration: none;">Sign up as a teacher</a>
+                        <a href="{% url 'teacher_register' %}"
+                            style="color: var(--green-dark); font-weight: 800; text-decoration: none;">Sign up as a
+                            teacher</a>
                     </div>
                 </form>
 
@@ -93,23 +140,189 @@
         </div>
     </div>
 </div>
+
+<!-- Privacy Policy Modal -->
+<style>
+    #btn-agree:disabled {
+        background: #a0aec0 !important;
+        cursor: not-allowed !important;
+    }
+    @keyframes fadeInOverlay {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes slideUpModal {
+        from { transform: translateY(100px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .privacy-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        animation: fadeInOverlay 0.3s ease-out forwards;
+    }
+    .privacy-modal {
+        background: #fff;
+        padding: 25px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        animation: slideUpModal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+</style>
+<div id="privacyModal" class="privacy-overlay">
+    <div class="privacy-modal">
+        <h2 style="margin-top: 0; color: var(--green-dark, #2f855a); font-size: 1.5rem; margin-bottom: 15px;">Data Privacy Act of 2012</h2>
+        <div class="modal-body" id="modal-terms" onscroll="checkModalScroll(this)" style="max-height: 200px; overflow-y: auto; border: 2px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; color: #4a5568; line-height: 1.6;">
+            <p style="margin-top: 0;"><strong>Republic Act No. 10173</strong>, also known as the <em>Data Privacy Act of 2012</em>, aims to protect personal data in information and communications systems both in the government and the private sector.</p>
+            <p>By registering, you consent to the collection, processing, and storage of your personal data as outlined by the law.</p>
+            <p>The information collected will be used exclusively for providing access to our educational platform and its relevant features.</p>
+            <p>Your data is kept highly secure and will not be shared with unauthorized third parties without your explicit and documented consent.</p>
+            <p>You have the right to access, correct, or request the deletion of your personal data at any time in accordance with the law.</p>
+            <p style="margin-bottom: 0; color: #e65100; font-weight: bold;"><em>Please scroll to the bottom to enable the button.</em></p>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn-cancel" onclick="closeModal()" style="background: #e2e8f0; color: #4a5568; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.95rem;">Cancel</button>
+            <button type="button" class="btn-agree" id="btn-agree" disabled onclick="agreeAndSubmit()" style="background: var(--green-base, #48bb78); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.95rem;">I Agree & Register</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-function togglePasswordVisibility(fieldId, button) {
-    const passwordInput = document.getElementById(fieldId);
-    if (!passwordInput) return;
-    
-    if (passwordInput.type === 'password') {
-        // Show password, switch to Eye icon
-        passwordInput.type = 'text';
-        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
-    } else {
-        // Hide password, switch to Eye-Off (Slashed) icon
-        passwordInput.type = 'password';
-        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+    function validateName(input, warningId) {
+        const originalValue = input.value;
+        // Allow letters, spaces, and hyphens. Strip everything else including digits.
+        const sanitizedValue = originalValue.replace(/[^A-Za-z\s-]/g, '');
+        const warningEl = document.getElementById(warningId);
+        
+        if (originalValue !== sanitizedValue) {
+            input.value = sanitizedValue;
+            warningEl.style.display = 'block';
+            
+            // Hide the warning after 3 seconds
+            setTimeout(() => {
+                warningEl.style.display = 'none';
+            }, 3000);
+        }
     }
-}
+
+    function validateEmail(input, warningId) {
+        const value = input.value.toLowerCase();
+        const warningEl = document.getElementById(warningId);
+        if (value && !value.endsWith('@gmail.com')) {
+            warningEl.style.display = 'block';
+            input.classList.add('input-error');
+            return false;
+        } else {
+            warningEl.style.display = 'none';
+            input.classList.remove('input-error');
+            return true;
+        }
+    }
+
+    let isPrivacyAgreed = false;
+
+    function validateForm(event) {
+        const emailInput = document.querySelector('input[name="email"]');
+        let isValid = true;
+        if (emailInput && emailInput.value) {
+            isValid = validateEmail(emailInput, 'email-warning');
+        }
+        
+        var response = grecaptcha.getResponse();
+        if(response.length == 0) {
+            alert("Please complete the CAPTCHA to prove you are human.");
+            isValid = false;
+        }
+        
+        if (!isValid) return false;
+
+        if (!isPrivacyAgreed) {
+            if (event) event.preventDefault();
+            document.getElementById('privacyModal').style.display = 'flex';
+            return false;
+        }
+        
+        return true;
+    }
+
+    function checkModalScroll(element) {
+        if (element.scrollHeight - Math.round(element.scrollTop) <= element.clientHeight + 2) {
+            document.getElementById('btn-agree').disabled = false;
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('privacyModal').style.display = 'none';
+    }
+
+    function agreeAndSubmit() {
+        isPrivacyAgreed = true;
+        document.getElementById('privacyModal').style.display = 'none';
+        document.querySelector('form').submit();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const emailInput = document.querySelector('input[name="email"]');
+        if (emailInput && emailInput.value) {
+            validateEmail(emailInput, 'email-warning');
+        }
+        
+        const termsEl = document.getElementById('modal-terms');
+        if (termsEl && (termsEl.scrollHeight <= termsEl.clientHeight + 2)) {
+            document.getElementById('btn-agree').disabled = false;
+        }
+        
+        // Highlight fields with errors
+        const errorMessages = document.querySelectorAll('.messages li');
+        errorMessages.forEach(msg => {
+            const text = msg.innerText.toLowerCase();
+            if (text.includes('gmail account is already registered') || text.includes('valid @gmail.com')) {
+                if (emailInput) emailInput.classList.add('input-error');
+            }
+            if (text.includes('username already taken')) {
+                const usernameInput = document.querySelector('input[name="username"]');
+                if (usernameInput) usernameInput.classList.add('input-error');
+            }
+            if (text.includes('lrn number')) {
+                const lrnInput = document.querySelector('input[name="lrn_number"]');
+                if (lrnInput) lrnInput.classList.add('input-error');
+            }
+            if (text.includes('password') || text.includes('passwords do not match')) {
+                const pass1 = document.querySelector('input[name="password1"]');
+                const pass2 = document.querySelector('input[name="password2"]');
+                if (pass1) pass1.classList.add('input-error');
+                if (pass2) pass2.classList.add('input-error');
+            }
+        });
+    });
+
+    function togglePasswordVisibility(fieldId, button) {
+        const passwordInput = document.getElementById(fieldId);
+        if (!passwordInput) return;
+
+        if (passwordInput.type === 'password') {
+            // Show password, switch to Eye icon
+            passwordInput.type = 'text';
+            button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+        } else {
+            // Hide password, switch to Eye-Off (Slashed) icon
+            passwordInput.type = 'password';
+            button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+        }
+    }
 </script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endblock %}

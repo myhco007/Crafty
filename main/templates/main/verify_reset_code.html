@@ -1,0 +1,60 @@
+{% extends 'main/base.html' %}
+{% block title %}- Verify Code{% endblock %}
+{% load static %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="blob blob-pink"></div>
+    <div class="blob blob-green"></div>
+    <div class="blob blob-blue"></div>
+
+    <div class="auth-box" style="background-image: url('{% static 'images/progressive-image.jpg' %}');">
+        <div class="auth-box-left">
+            <div class="auth-welcome-text">
+                <h1>Verify Code</h1>
+                <p>Check your email inbox for the 6-digit security code.</p>
+            </div>
+        </div>
+
+        <div class="auth-box-right">
+            <div class="auth-card">
+                <div class="auth-logo">
+                    <div class="auth-logo-text">Crafty Kids</div>
+                    <p class="auth-card-welcome">Security Check</p>
+                </div>
+
+                <h2 class="auth-card-title">Enter Code</h2>
+                <p style="text-align: center; color: var(--gray); margin-bottom: 20px; font-size: 0.95rem;">
+                    We sent a 6-digit code to <strong>{{ email }}</strong>.
+                </p>
+
+                {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                    <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                <form method="POST" action="{% url 'verify_reset_code' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="code">6-Digit Code</label>
+                        <input type="text" name="code" id="code" placeholder="XXXXXX" maxlength="6" style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;" required>
+                    </div>
+
+                    <button type="submit" class="btn-auth">Verify Code</button>
+                </form>
+
+                <div class="auth-back" style="margin-top: 20px;">
+                    <a href="{% url 'forgot_password' %}">Didn't receive the code? Try again</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

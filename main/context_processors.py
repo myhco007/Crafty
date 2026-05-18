@@ -13,16 +13,18 @@ def notifications_processor(request):
     if not is_super_admin(request.user):
         qs = qs.exclude(title__icontains='Pending').exclude(title__icontains='Registration')
     
-    last_seen_str = request.session.get('last_seen_notifications')
-    
-    if last_seen_str:
-        try:
-            last_seen = parse_datetime(last_seen_str)
-            if last_seen and not is_aware(last_seen):
-                last_seen = make_aware(last_seen, get_current_timezone())
-            unread_count = qs.filter(created_at__gt=last_seen).count()
-        except Exception:
-            unread_count = qs.count()
+    if not request.user.is_authenticated:
+        return {
+            'has_unread_notifications': False,
+            'unread_notifications_count': 0
+        }
+
+    last_seen = None
+    if hasattr(request.user, 'profile') and request.user.profile.last_seen_notifications:
+        last_seen = request.user.profile.last_seen_notifications
+        
+    if last_seen:
+        unread_count = qs.filter(created_at__gt=last_seen).count()
     else:
         # If they've never seen notifications, they have unread if any exist
         unread_count = qs.count()

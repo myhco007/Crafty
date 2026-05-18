@@ -1,25 +1,455 @@
 {% extends 'main/base.html' %}
-{% block title %}- Announcement{% endblock %}
-{% block content %}
-<div style="max-width: 900px; margin: 40px auto; padding: 20px;">
-    <h1 style="color: var(--green-dark); margin-bottom: 10px;">🥳 Announcement</h1>
-    <p style="color: var(--gray); margin-bottom: 40px; font-size: 1.1rem; font-weight: 600;">Stay up-to-date with the latest news, updates, and DIY activities from CraftyKids!</p>
+{% block title %}- Announcements{% endblock %}
 
-    <div style="display: flex; flex-direction: column; gap: 24px;">
+{% block page_css %}
+<style>
+
+    .announcement-header-section {
+        background-color: #f0f7f1;
+        padding: 50px 20px;
+        text-align: left;
+    }
+
+    .header-content {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .header-title {
+        font-family: 'Fredoka One', cursive;
+        color: var(--green-dark, #135c34);
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .header-subtitle {
+        color: var(--green, #23aa5c);
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 25px;
+    }
+
+    .filter-pills {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .filter-pill {
+        padding: 8px 20px;
+        border-radius: 30px;
+        font-weight: bold;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid var(--green, #23aa5c);
+        background-color: white;
+        color: var(--green, #23aa5c);
+    }
+
+    .filter-pill.active {
+        background-color: var(--green-dark, #1a7d43);
+        color: white;
+        border-color: var(--green-dark, #1a7d43);
+    }
+
+    .filter-pill:hover {
+        background-color: var(--green, #23aa5c);
+        color: white;
+    }
+
+    .announcement-list-section {
+        background-color: transparent;
+        padding: 40px 20px;
+        min-height: 500px;
+    }
+
+    .announcements-container {
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .announcement-card {
+        background-color: var(--white, #ffffff);
+        border: 1px solid #edf2f7;
+        border-radius: 12px;
+        padding: 25px 30px;
+        position: relative;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        display: none;
+    }
+
+    .announcement-card::before {
+        content: '';
+        position: absolute;
+        left: 30px;
+        top: 25px;
+        bottom: 25px;
+        width: 4px;
+        background-color: var(--green, #23aa5c);
+        border-radius: 2px;
+    }
+
+    .card-content-wrapper {
+        padding-left: 25px;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .badge.update {
+        background-color: #e5f5e9;
+        color: var(--green-dark, #1a7d43);
+    }
+
+    .badge.event {
+        background-color: #f3f0ff;
+        color: #6a4cff;
+    }
+
+    .badge.activity {
+        background-color: #fff0f5;
+        color: var(--pink, #ff6b9e);
+    }
+
+    .card-date {
+        color: #aaaaaa;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .card-title {
+        color: var(--dark, #2d3748);
+        font-size: 1.4rem;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+
+    .card-body {
+        color: var(--gray, #718096);
+        line-height: 1.6;
+        font-size: 1rem;
+        margin-bottom: 20px;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        transition: all 0.3s ease;
+    }
+
+    .card-body.expanded {
+        -webkit-line-clamp: unset;
+        display: block;
+    }
+
+    .card-footer {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .btn-read-more {
+        background: transparent;
+        border: 1px solid var(--green, #23aa5c);
+        color: var(--green, #23aa5c);
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-read-more:hover {
+        background-color: var(--green, #23aa5c);
+        color: white;
+    }
+
+    .view-count {
+        color: #888888;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .load-more-container {
+        text-align: center;
+        margin-top: 40px;
+        color: #888888;
+        font-size: 0.95rem;
+    }
+
+    .btn-load-more {
+        background: transparent;
+        border: none;
+        color: var(--green, #23aa5c);
+        font-weight: bold;
+        cursor: pointer;
+        margin-left: 5px;
+    }
+
+    .btn-load-more:hover {
+        text-decoration: underline;
+    }
+
+    .icon-down {
+        display: block;
+        margin: 15px auto 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #edf2f7;
+        color: var(--dark, #2d3748);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .icon-down:hover {
+        background-color: #e2e8f0;
+        color: var(--green, #23aa5c);
+    }
+
+    .no-results {
+        text-align: center;
+        color: var(--gray, #718096);
+        padding: 40px;
+        background: var(--white, #ffffff);
+        border: 1px solid #edf2f7;
+        border-radius: 12px;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="announcement-header-section">
+    <div class="header-content">
+        <h1 class="header-title">
+            <span style="font-size: 3rem;">📢</span> Announcements
+        </h1>
+        <p class="header-subtitle">Stay up-to-date with the latest news, updates, and DIY activities from CraftyKids!
+        </p>
+
+        <div class="filter-pills">
+            <div class="filter-pill active" onclick="filterAnnouncements('All', this)">All</div>
+            <div class="filter-pill" onclick="filterAnnouncements('Update', this)">Updates</div>
+            <div class="filter-pill" onclick="filterAnnouncements('Activity', this)">Activities</div>
+            <div class="filter-pill" onclick="filterAnnouncements('Event', this)">Events</div>
+        </div>
+    </div>
+</div>
+
+<div class="announcement-list-section">
+    <div class="announcements-container" id="announcements-list">
         {% for ann in announcements %}
-        <div style="background: var(--white); padding: 30px; border-radius: var(--radius); box-shadow: var(--shadow); border-left: 6px solid var(--green);">
-            <h2 style="color: var(--dark); font-size: 1.5rem; margin-bottom: 8px; font-family: 'Fredoka One', cursive;">{{ ann.title }}</h2>
-            <p style="font-size: 0.9rem; color: #888; font-weight: 700; margin-bottom: 20px;">🗓️ Posted on {{ ann.created_at|date:"F j, Y, g:i A" }}</p>
-            <div style="line-height: 1.7; color: var(--dark); font-size: 1.05rem;">
-                {{ ann.content|linebreaks }}
+        <div class="announcement-card" data-category="{{ ann.category }}">
+            <div class="card-content-wrapper">
+                <div class="card-header">
+                    <div class="badge {{ ann.category|lower }}">
+                        {% if ann.category == 'Update' %}📌{% elif ann.category == 'Event' %}🎉{% elif ann.category ==
+                        'Activity' %}🎨{% endif %}
+                        {{ ann.category }}
+                    </div>
+                    <div class="card-date">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        {{ ann.created_at|date:"M j, Y • g:i A" }}
+                    </div>
+                </div>
+                <h2 class="card-title">{{ ann.title }}</h2>
+                <div class="card-body" id="body-{{ ann.id }}">
+                    {{ ann.content|linebreaks }}
+                </div>
+                <div class="card-footer">
+                    <button class="btn-read-more" id="btn-read-{{ ann.id }}" onclick="toggleReadMore({{ ann.id }})">Read
+                        more</button>
+                    {% if request.user.profile.role == 'SUPER_ADMIN' %}
+                    <div class="view-count" id="views-{{ ann.id }}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <span>{{ ann.views }} views</span>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
         {% empty %}
-        <div style="text-align: center; padding: 60px; background: var(--white); border-radius: var(--radius); color: var(--gray); box-shadow: var(--shadow);">
-            <h3 style="font-family: 'Fredoka One', cursive; margin-bottom:10px;">No announcement at this time.</h3>
+        <div
+            style="text-align: center; color: var(--gray, #718096); padding: 40px; background: var(--white, #ffffff); border: 1px solid #edf2f7; border-radius: 12px;">
+            <h3 style="font-family: 'Fredoka One', cursive; margin-bottom:10px; color: var(--dark, #2d3748);">No
+                announcement at this time.</h3>
             <p>Check back later for exciting updates and news!</p>
         </div>
         {% endfor %}
+
+        <div class="no-results" id="no-results">
+            <h3 style="font-family: 'Fredoka One', cursive; margin-bottom:10px; color: var(--dark, #2d3748);">No
+                announcements found.</h3>
+            <p>Try selecting a different filter.</p>
+        </div>
     </div>
+
+    {% if announcements %}
+    <div class="load-more-container" id="load-more-container">
+        Showing <span id="visible-count">0</span> of <span id="total-count">0</span> announcements · <button
+            class="btn-load-more" onclick="loadMore()">Load more</button>
+        <div class="icon-down" onclick="loadMore()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <polyline points="19 12 12 19 5 12"></polyline>
+            </svg>
+        </div>
+    </div>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentFilter = 'All';
+    let visibleLimit = 5;
+    const incrementStep = 5;
+
+    function updateDisplay() {
+        const cards = document.querySelectorAll('.announcement-card');
+        let visibleCount = 0;
+        let totalMatching = 0;
+
+        cards.forEach(card => {
+            const category = card.getAttribute('data-category');
+            if (currentFilter === 'All' || category === currentFilter) {
+                totalMatching++;
+                if (visibleCount < visibleLimit) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const noResults = document.getElementById('no-results');
+        const loadMoreContainer = document.getElementById('load-more-container');
+
+        if (totalMatching === 0) {
+            if (noResults) noResults.style.display = 'block';
+            if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+        } else {
+            if (noResults) noResults.style.display = 'none';
+            if (loadMoreContainer) {
+                document.getElementById('visible-count').innerText = visibleCount;
+                document.getElementById('total-count').innerText = totalMatching;
+
+                if (visibleCount >= totalMatching) {
+                    loadMoreContainer.style.display = 'none';
+                } else {
+                    loadMoreContainer.style.display = 'block';
+                }
+            }
+        }
+    }
+
+    function filterAnnouncements(category, element) {
+        currentFilter = category;
+        visibleLimit = 5;
+
+        document.querySelectorAll('.filter-pill').forEach(pill => {
+            pill.classList.remove('active');
+        });
+        element.classList.add('active');
+
+        updateDisplay();
+    }
+
+    function loadMore() {
+        visibleLimit += incrementStep;
+        updateDisplay();
+    }
+
+    function toggleReadMore(id) {
+        const body = document.getElementById('body-' + id);
+        const btn = document.getElementById('btn-read-' + id);
+        const isExpanded = body.classList.contains('expanded');
+
+        if (!isExpanded) {
+            body.classList.add('expanded');
+            btn.innerText = 'Show less';
+
+            fetch(`/announcements/${id}/increment-view/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const viewsElement = document.querySelector(`#views-${id} span`);
+                        if (viewsElement) {
+                            viewsElement.innerText = data.views + ' views';
+                        }
+                    }
+                });
+        } else {
+            body.classList.remove('expanded');
+            btn.innerText = 'Read more';
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateDisplay();
+    });
+</script>
 {% endblock %}

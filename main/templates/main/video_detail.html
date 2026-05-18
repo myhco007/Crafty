@@ -12,8 +12,8 @@
         <div class="video-player-wrap">
             {% if video.video_file %}
             <video controls playsinline preload="metadata" class="main-player"
-                   poster="{% if video.thumbnail %}{{ video.thumbnail.url }}{% endif %}"
-                   controlsList="nodownload" disablePictureInPicture>
+                poster="{% if video.thumbnail %}{{ video.thumbnail.url }}{% endif %}" controlsList="nodownload"
+                disablePictureInPicture>
                 <source src="{{ video.video_file.url }}">
                 Your browser does not support the video tag.
             </video>
@@ -32,11 +32,13 @@
                 </div>
                 <div class="video-actions">
                     {% if user.is_authenticated %}
-                    <form id="video-like-form" data-url="{% url 'video_like' video.pk %}" method="POST" style="display:inline;">
+                    <form id="video-like-form" data-url="{% url 'video_like' video.pk %}" method="POST"
+                        style="display:inline;">
                         {% csrf_token %}
                         <button type="submit" id="like-btn" class="like-btn {% if has_liked %}active{% endif %}">
                             <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                <path
+                                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                             </svg>
                             <span id="like-count">{{ video.liked_by.count }}</span>
                         </button>
@@ -44,7 +46,8 @@
                     {% else %}
                     <div class="like-btn disabled" title="Login to like" onclick="showLoginPopup()">
                         <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style="opacity:0.5;">
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                            <path
+                                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                         </svg>
                         <span>{{ video.liked_by.count }}</span>
                     </div>
@@ -62,9 +65,12 @@
             {% if not user.is_authenticated %}
             <div class="login-notice-box">
                 <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
                 </svg>
-                <span>You need to <a href="{% url 'login' %}" style="color:#000; font-weight:bold; text-decoration:underline;">Log in</a> first before interacting (liking or commenting).</span>
+                <span>You need to <a href="{% url 'login' %}"
+                        style="color:#000; font-weight:bold; text-decoration:underline;">Log in</a> first before
+                    interacting (liking or commenting).</span>
             </div>
             {% endif %}
 
@@ -98,9 +104,12 @@
                         <div class="avatar-circle">{{ comment.name|slice:":1"|upper }}</div>
                     </div>
                     <div class="comment-content">
-                        <div class="comment-header">
+                        <div class="comment-header" style="display: flex; align-items: center; gap: 10px;">
                             <span class="comment-author">{{ comment.name }}</span>
                             <span class="comment-date">{{ comment.created_at|timesince }} ago</span>
+                            {% if request.user.is_authenticated and request.user == comment.user or request.user.profile.role == 'SUPER_ADMIN' %}
+                            <a href="{% url 'video_comment_delete' comment.pk %}" class="delete-comment-btn">Delete</a>
+                            {% endif %}
                         </div>
                         <p class="comment-text">{{ comment.text }}</p>
                     </div>
@@ -119,33 +128,70 @@
 </div>
 
 <script>
-// Like form AJAX
-document.getElementById('video-like-form')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const form = this;
-    const url = form.dataset.url;
-    const csrftoken = form.querySelector('[name=csrfmiddlewaretoken]').value;
-    const likeBtn = document.getElementById('like-btn');
-    const likeCount = document.getElementById('like-count');
+    // Like form AJAX
+    document.getElementById('video-like-form')?.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const form = this;
+        const url = form.dataset.url;
+        const csrftoken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+        const likeBtn = document.getElementById('like-btn');
+        const likeCount = document.getElementById('like-count');
 
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrftoken,
-            'X-Requested-With': 'XMLHttpRequest',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.liked) {
-            likeBtn.classList.add('active');
-        } else {
-            likeBtn.classList.remove('active');
-        }
-        likeCount.textContent = data.count;
-    })
-    .catch(error => console.error('Like error:', error));
-});
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.liked) {
+                    likeBtn.classList.add('active');
+                    confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    });
+                } else {
+                    likeBtn.classList.remove('active');
+                }
+                likeCount.textContent = data.count;
+            })
+            .catch(error => console.error('Like error:', error));
+    });
+
+    // Video Completion Tracking
+    {% if user.is_authenticated %}
+    const videoElement = document.querySelector('.main-player');
+    if (videoElement) {
+        videoElement.addEventListener('ended', function() {
+            fetch("{% url 'mark_completed' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ 'video_id': '{{ video.id }}' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
+                    // Provide a nice soft notification
+                    const toast = document.createElement('div');
+                    toast.innerText = '🌟 Activity Complete! A sticker was added to your calendar.';
+                    toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#4ade80; color:#064e3b; padding:15px 25px; border-radius:12px; font-weight:bold; box-shadow:0 4px 6px rgba(0,0,0,0.1); z-index:9999; animation: slideIn 0.5s ease-out;';
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 5000);
+                }
+            })
+            .catch(err => console.error('Error recording completion:', err));
+        });
+    }
+    {% endif %}
+
 </script>
 
 {% endblock %}

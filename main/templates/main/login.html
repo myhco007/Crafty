@@ -42,8 +42,11 @@
                 </ul>
                 {% endif %}
 
-                <form method="POST" action="{% url 'login' %}">
+                <form method="POST" action="{% url 'login' %}" onsubmit="return validateRecaptcha()">
                     {% csrf_token %}
+                    {% if request.GET.next %}
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                    {% endif %}
                     <div class="form-group">
                         <label for="username">Username</label>
                         <input type="text" name="username" id="username" placeholder="Enter username" autocomplete="off"
@@ -66,14 +69,18 @@
                                 </svg>
                             </button>
                         </div>
-                        <a href="#" class="forgot-link">Forgot Password?</a>
+                        <a href="{% url 'forgot_password' %}" class="forgot-link">Forgot Password?</a>
                     </div>
 
+                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" style="margin-bottom: 15px; display: flex; justify-content: center;"></div>
+
                     <button type="submit" class="btn-auth">Login</button>
-                    
+
                     <div style="text-align: center; margin-top: 20px; font-size: 0.9rem;">
                         <p style="color: #666; margin-bottom: 8px;">Are you an educator?</p>
-                        <a href="{% url 'teacher_login' %}" style="color: var(--green-dark); font-weight: 800; text-decoration: none;">Log in as a teacher here</a>
+                        <a href="{% url 'teacher_login' %}"
+                            style="color: var(--green-dark); font-weight: 800; text-decoration: none;">Log in as a
+                            teacher here</a>
                     </div>
                 </form>
 
@@ -103,5 +110,15 @@
             button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
         }
     }
+
+    function validateRecaptcha() {
+        var response = grecaptcha.getResponse();
+        if(response.length == 0) {
+            alert("Please complete the CAPTCHA to prove you are human.");
+            return false;
+        }
+        return true;
+    }
 </script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endblock %}

@@ -3,6 +3,25 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+GRADE_CHOICES = [
+    ('All Grades', 'All Grades'),
+    ('Grade 1', 'Grade 1'),
+    ('Grade 2', 'Grade 2'),
+    ('Grade 3', 'Grade 3'),
+    ('Grade 4', 'Grade 4'),
+    ('Grade 5', 'Grade 5'),
+    ('Grade 6', 'Grade 6'),
+]
+
+STUDENT_GRADE_CHOICES = [
+    ('Grade 1', 'Grade 1'),
+    ('Grade 2', 'Grade 2'),
+    ('Grade 3', 'Grade 3'),
+    ('Grade 4', 'Grade 4'),
+    ('Grade 5', 'Grade 5'),
+    ('Grade 6', 'Grade 6'),
+]
+
 class UserProfile(models.Model):
     ROLES = [
         ('SUPER_ADMIN', 'Main Admin'),
@@ -13,6 +32,25 @@ class UserProfile(models.Model):
     role = models.CharField(max_length=20, choices=ROLES, default='CLIENT')
     profile_picture = models.ImageField(upload_to='avatars/', null=True, blank=True)
     is_approved = models.BooleanField(default=False)  # For teacher approval
+    is_archived = models.BooleanField(default=False)  # For soft deleting users
+    lrn_number = models.CharField(max_length=12, blank=True, null=True)
+    grade_level = models.CharField(max_length=20, choices=GRADE_CHOICES, blank=True, null=True)
+    pending_grade = models.CharField(max_length=20, choices=STUDENT_GRADE_CHOICES, blank=True, null=True)
+    grade_change_cooldown = models.DateTimeField(null=True, blank=True)
+    last_seen_notifications = models.DateTimeField(null=True, blank=True)
+    faculty_id_image = models.ImageField(upload_to='faculty_ids/', null=True, blank=True)
+
+    # Expanded Profile Fields
+    GENDER_CHOICES = [
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Other', 'Other'),
+        ('Prefer not to say', 'Prefer not to say'),
+    ]
+    gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    bio = models.TextField(blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.role}"
@@ -38,17 +76,6 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
-
-
-GRADE_CHOICES = [
-    ('All Grades', 'All Grades'),
-    ('Grade 1', 'Grade 1'),
-    ('Grade 2', 'Grade 2'),
-    ('Grade 3', 'Grade 3'),
-    ('Grade 4', 'Grade 4'),
-    ('Grade 5', 'Grade 5'),
-    ('Grade 6', 'Grade 6'),
-]
 
 
 CRAFT_CHOICES = [
@@ -96,7 +123,6 @@ class Flipbook(models.Model):
     cover_image = models.ImageField(upload_to='flipbooks/', blank=True, null=True)
     pdf_file = models.FileField(upload_to='flipbook_pdfs/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    heyzine_url = models.URLField(max_length=500, blank=True, null=True)
     liked_by = models.ManyToManyField(User, related_name='liked_flipbooks', blank=True)
     is_archived = models.BooleanField(default=False)
     
@@ -109,14 +135,22 @@ class Flipbook(models.Model):
 
 
 class Announcement(models.Model):
+    CATEGORY_CHOICES = [
+        ('Update', 'Update'),
+        ('Activity', 'Activity'),
+        ('Event', 'Event'),
+    ]
     title = models.CharField(max_length=200)
     content = models.TextField()
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='Update')
+    views = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     # New Fields
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_announcements')
     is_approved = models.BooleanField(default=True) # Default True for existing content
+    is_archived = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-created_at']
@@ -179,11 +213,12 @@ class AuditLog(models.Model):
         return self.message
 
 
-class Comment(models.Model):
+class VideoComment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='video_comments')
     name = models.CharField(max_length=100, default='Anonymous')
     text = models.TextField()
-    video = models.ForeignKey(AnimationVideo, on_delete=models.CASCADE, null=True, blank=True, related_name='comments')
-    flipbook = models.ForeignKey(Flipbook, on_delete=models.CASCADE, null=True, blank=True, related_name='comments')
+    video = models.ForeignKey(AnimationVideo, on_delete=models.CASCADE, related_name='comments')
+    is_archived = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -191,3 +226,85 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.name}: {self.text[:20]}"
+
+
+class FlipbookComment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='flipbook_comments')
+    name = models.CharField(max_length=100, default='Anonymous')
+    text = models.TextField()
+    flipbook = models.ForeignKey(Flipbook, on_delete=models.CASCADE, related_name='comments')
+    is_archived = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name}: {self.text[:20]}"
+
+class StudentActivity(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activities')
+    video = models.ForeignKey('AnimationVideo', on_delete=models.CASCADE, null=True, blank=True)
+    flipbook = models.ForeignKey('Flipbook', on_delete=models.CASCADE, null=True, blank=True)
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-completed_at']
+
+    def __str__(self):
+        return f"{self.user.username} completed activity on {self.completed_at}"
+
+
+class CalendarEvent(models.Model):
+    EVENT_TYPES = [
+        ('Event', 'Event'),
+        ('Holiday', 'Holiday'),
+        ('Lesson Plan', 'Lesson Plan'),
+        ('Module', 'Module'),
+        ('Other', 'Other'),
+    ]
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    date = models.DateField()
+    event_type = models.CharField(max_length=20, choices=EVENT_TYPES, default='Event')
+    image = models.ImageField(upload_to='events/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_events')
+    is_archived = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['date']
+
+    def __str__(self):
+        return f"{self.title} ({self.date})"
+
+
+class TeacherTask(models.Model):
+    STATUS_CHOICES = [
+        ('To Do', 'To Do'),
+        ('Working on it', 'Working on it'),
+        ('Stuck', 'Stuck'),
+        ('Done', 'Done'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
+    title = models.CharField(max_length=255)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='To Do')
+    due_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return self.title
+
+class PasswordResetCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reset_codes')
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.code}"
