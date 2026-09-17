@@ -83,9 +83,16 @@ urlpatterns = [
     path('dashboard/calendar/create/', views.calendar_event_create, name='calendar_event_create'),
     path('dashboard/calendar/<int:pk>/edit/', views.calendar_event_edit, name='calendar_event_edit'),
     path('dashboard/calendar/<int:pk>/delete/', views.calendar_event_delete, name='calendar_event_delete'),
+    path('dashboard/calendar/<int:pk>/restore/', views.calendar_event_restore, name='calendar_event_restore'),
+    path('dashboard/calendar/<int:pk>/permanent_delete/', views.calendar_event_permanent_delete, name='calendar_event_permanent_delete'),
     
     # Teacher Tasks API
     path('api/tasks/create/', views.task_create_api, name='task_create_api'),
     path('api/tasks/<int:task_id>/update/', views.task_update_api, name='task_update_api'),
     path('api/tasks/<int:task_id>/delete/', views.task_delete_api, name='task_delete_api'),
+    
+    # Bulk Action
+    path('dashboard/archive/bulk-action/', views.bulk_archive_action, name='bulk_archive_action'),
+    path('dashboard/approve/bulk-action/', views.bulk_approval_action, name='bulk_approval_action'),
+    path('dashboard/announcements/bulk-archive/', views.bulk_archive_announcements, name='bulk_archive_announcements'),
 ]

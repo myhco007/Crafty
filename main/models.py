@@ -34,6 +34,7 @@ class UserProfile(models.Model):
     is_approved = models.BooleanField(default=False)  # For teacher approval
     is_archived = models.BooleanField(default=False)  # For soft deleting users
     lrn_number = models.CharField(max_length=12, blank=True, null=True)
+    section = models.CharField(max_length=50, blank=True, null=True)
     grade_level = models.CharField(max_length=20, choices=GRADE_CHOICES, blank=True, null=True)
     pending_grade = models.CharField(max_length=20, choices=STUDENT_GRADE_CHOICES, blank=True, null=True)
     grade_change_cooldown = models.DateTimeField(null=True, blank=True)
@@ -139,6 +140,7 @@ class Announcement(models.Model):
         ('Update', 'Update'),
         ('Activity', 'Activity'),
         ('Event', 'Event'),
+        ('Holiday', 'Holiday'),
     ]
     title = models.CharField(max_length=200)
     content = models.TextField()
@@ -151,6 +153,9 @@ class Announcement(models.Model):
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_announcements')
     is_approved = models.BooleanField(default=True) # Default True for existing content
     is_archived = models.BooleanField(default=False)
+    viewed_by = models.ManyToManyField(User, related_name='viewed_announcements', blank=True)
+    target_audience = models.CharField(max_length=20, choices=[('Student', 'Student'), ('Teacher', 'Teacher')], default='Student')
+    grade = models.CharField(max_length=20, choices=GRADE_CHOICES, default='All Grades')
 
     class Meta:
         ordering = ['-created_at']
@@ -168,6 +173,7 @@ class Notification(models.Model):
     
     # Optional: target specific user (e.g. Super Admin)
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
+    target_audience = models.CharField(max_length=20, choices=[('All', 'All'), ('Teacher', 'Teacher')], default='All')
 
     class Meta:
         ordering = ['-created_at']
@@ -262,6 +268,10 @@ class CalendarEvent(models.Model):
         ('Lesson Plan', 'Lesson Plan'),
         ('Module', 'Module'),
         ('Other', 'Other'),
+        ('Todo', 'Todo'),
+        ('Working On', 'Working On'),
+        ('Stuck', 'Stuck'),
+        ('Done', 'Done'),
     ]
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)

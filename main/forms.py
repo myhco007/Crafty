@@ -24,7 +24,7 @@ class FlipbookForm(forms.ModelForm):
 class AnnouncementForm(forms.ModelForm):
     class Meta:
         model = Announcement
-        fields = ['title', 'content', 'category', 'is_active']
+        fields = ['title', 'content', 'category', 'target_audience', 'grade', 'is_active']
 
 from django.contrib.auth.models import User
 from .models import UserProfile
@@ -55,3 +55,17 @@ class CalendarEventForm(forms.ModelForm):
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if self.user and hasattr(self.user, 'profile'):
+            if self.user.profile.role == 'TEACHER':
+                self.fields['event_type'].choices = [
+                    ('Todo', 'Todo'),
+                    ('Working On', 'Working On'),
+                    ('Stuck', 'Stuck'),
+                    ('Done', 'Done'),
+                ]
+            elif self.user.profile.role == 'SUPER_ADMIN':
+                self.fields['event_type'].choices = [c for c in CalendarEvent.EVENT_TYPES if c[0] not in ['Lesson Plan', 'Module']]

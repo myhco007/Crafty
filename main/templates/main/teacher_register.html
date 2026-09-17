@@ -63,6 +63,18 @@
                         <small id="email-warning" style="position: absolute; bottom: -14px; left: 4px; color: #e65100; font-size: 0.65rem; display: none; font-weight: bold; white-space: nowrap;">Please provide a valid @gmail.com address.</small>
                     </div>
                     <div class="form-group">
+                        <label>Grade Level Taught</label>
+                        <select name="grade_level" required style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: var(--radius); font-size: 1rem; color: #4a5568; outline: none;">
+                            <option value="" disabled selected>Select Grade Level</option>
+                            <option value="Grade 1">Grade 1</option>
+                            <option value="Grade 2">Grade 2</option>
+                            <option value="Grade 3">Grade 3</option>
+                            <option value="Grade 4">Grade 4</option>
+                            <option value="Grade 5">Grade 5</option>
+                            <option value="Grade 6">Grade 6</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>Username</label>
                         <input type="text" name="username" value="{{ form_data.username|default:'' }}" placeholder="Choose username" autocomplete="off" required>
                     </div>

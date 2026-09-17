@@ -87,6 +87,102 @@
             flex-direction: column;
         }
     }
+    
+    /* Calendar Modal Styles */
+    .calendar-modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(5px);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    
+    .calendar-modal-backdrop.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    
+    .calendar-modal-content {
+        background: white;
+        width: 100%;
+        max-width: 500px;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        transform: translateY(100vh);
+        transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+        position: relative;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .calendar-modal-backdrop.show .calendar-modal-content {
+        transform: translateY(0);
+    }
+    
+    .calendar-modal-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #f1f5f9;
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+    
+    .calendar-modal-close:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+    
+    .calendar-modal-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        display: none;
+    }
+    
+    .calendar-modal-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .calendar-modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 15px;
+    }
+    
+    .calendar-modal-desc {
+        color: #475569;
+        line-height: 1.6;
+        font-size: 1rem;
+    }
 </style>
 
 <!-- FullCalendar Core -->
@@ -139,8 +235,30 @@
     </div>
 </div>
 
+<!-- Calendar Event Modal -->
+<div class="calendar-modal-backdrop" id="calendarEventModal">
+    <div class="calendar-modal-content" onclick="event.stopPropagation()">
+        <button class="calendar-modal-close" onclick="closeCalendarModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        <img src="" alt="Event Image" class="calendar-modal-image" id="calendarModalImg">
+        <span class="calendar-modal-badge" id="calendarModalBadge"></span>
+        <h2 class="calendar-modal-title" id="calendarModalTitle"></h2>
+        <div class="calendar-modal-desc" id="calendarModalDesc"></div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Move modal to body to prevent stacking context issues with position:fixed
+        var modalEl = document.getElementById('calendarEventModal');
+        if (modalEl) {
+            document.body.appendChild(modalEl);
+        }
+
         var calendarEl = document.getElementById('calendar');
         
         // Parse the events JSON passed from Django view
@@ -152,7 +270,11 @@
                 start: ev.start,
                 allDay: true,
                 classNames: ['fc-event-' + ev.type],
-                extendedProps: { type: ev.type }
+                extendedProps: { 
+                    type: ev.type,
+                    description: ev.description,
+                    image_url: ev.image_url
+                }
             };
         });
 
@@ -191,16 +313,56 @@
             },
             eventClick: function(info) {
                 var type = info.event.extendedProps.type;
-                var calendarEventTypes = ['holiday', 'event', 'lesson plan', 'module', 'other'];
-                if (calendarEventTypes.includes(type)) {
-                    alert(info.event.title);
-                } else {
-                    alert("Activity completed: " + info.event.title);
-                }
+                var description = info.event.extendedProps.description;
+                var imageUrl = info.event.extendedProps.image_url;
+                
+                openCalendarModal(info.event.title, type, description, imageUrl);
             }
         });
         
         calendar.render();
+    });
+
+    function openCalendarModal(title, type, description, imageUrl) {
+        document.getElementById('calendarModalTitle').textContent = title;
+        document.getElementById('calendarModalDesc').textContent = description || 'No description provided.';
+        
+        var badge = document.getElementById('calendarModalBadge');
+        badge.textContent = type;
+        
+        var colors = {
+            'video': { bg: '#dbeafe', color: '#1d4ed8' },
+            'flipbook': { bg: '#fce7f3', color: '#be185d' },
+            'holiday': { bg: '#fef08a', color: '#854d0e' },
+            'event': { bg: '#e0e7ff', color: '#4338ca' },
+            'lesson plan': { bg: '#dcfce7', color: '#15803d' },
+            'module': { bg: '#ffedd5', color: '#c2410c' },
+            'other': { bg: '#f1f5f9', color: '#475569' },
+            'task': { bg: '#fee2e2', color: '#b91c1c' }
+        };
+        
+        var style = colors[type.toLowerCase()] || colors['other'];
+        badge.style.backgroundColor = style.bg;
+        badge.style.color = style.color;
+        
+        var img = document.getElementById('calendarModalImg');
+        if (imageUrl) {
+            img.src = imageUrl;
+            img.style.display = 'block';
+        } else {
+            img.style.display = 'none';
+        }
+        
+        document.getElementById('calendarEventModal').classList.add('show');
+    }
+    
+    function closeCalendarModal() {
+        document.getElementById('calendarEventModal').classList.remove('show');
+    }
+    
+    // Close on click outside
+    document.getElementById('calendarEventModal').addEventListener('click', function() {
+        closeCalendarModal();
     });
 </script>
 {% endblock %}

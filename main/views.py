@@ -4,6 +4,8 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.urls import reverse
+from django.core.mail import send_mail
 from .audit import log_audit_event
 from .models import AnimationVideo, AuditLog, Flipbook, Category, Announcement, Notification, VideoComment, FlipbookComment, UserProfile, StudentActivity, CalendarEvent, TeacherTask, PasswordResetCode
 from .forms import AnimationVideoForm, FlipbookForm, AnnouncementForm, UserUpdateForm, UserProfileUpdateForm, CalendarEventForm
@@ -542,6 +544,7 @@ def register_view(request):
         email      = request.POST.get('email')
         lrn_number = request.POST.get('lrn_number')
         grade_level = request.POST.get('grade_level')
+        section    = request.POST.get('section')
         username   = request.POST.get('username')
         password1  = request.POST.get('password1')
         password2  = request.POST.get('password2')
@@ -560,6 +563,8 @@ def register_view(request):
             messages.error(request, 'LRN Number must be exactly 12 digits.')
         elif UserProfile.objects.filter(lrn_number=lrn_number).exists():
             messages.error(request, 'This LRN Number is already registered by another user. Please use a different one.')
+        elif not section or not re.match(r'^[1-3]$', section):
+            messages.error(request, 'Section must be a single number from 1 to 3.')
         elif not verify_recaptcha(request):
             messages.error(request, 'CAPTCHA verification failed. Please prove you are human.')
         else:
@@ -572,6 +577,11 @@ def register_view(request):
             user.profile.lrn_number = lrn_number
             if grade_level:
                 user.profile.grade_level = grade_level
+            if section:
+                # Combine grade level number with section number (e.g. "Grade 1" & "3" -> "1-3")
+                grade_match = re.search(r'\d+', grade_level) if grade_level else None
+                grade_num = grade_match.group() if grade_match else '1'
+                user.profile.section = f"{grade_num}-{section}"
             user.profile.save()
             
             # Profile defaults to CLIENT, which is correct here
@@ -591,6 +601,24 @@ def register_view(request):
                 link_url="/dashboard/#section-pending"
             )
             
+            # Send Email Notification to Student
+            subject = "Registration Submitted - CraftyKids"
+            website_link = request.build_absolute_uri('/')
+            message_body = (
+                f"Hello {first_name} {last_name},\n\n"
+                f"Thank you for registering on CraftyKids!\n\n"
+                f"We have successfully received your student registration request. "
+                f"Please note that all new accounts require approval by the Main Admin "
+                f"before you can log in. We will send you an email once your account has been reviewed.\n\n"
+                f"You can visit our website here: {website_link}\n\n"
+                f"Thank you,\n"
+                f"CraftyKids Team"
+            )
+            try:
+                send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [email])
+            except Exception as e:
+                print(f"Failed to send student registration email: {e}")
+            
             messages.success(request, 'Registration successful! Please wait for the Main Admin to approve your account. We will send you an email if your account was approved, or denied.')
             return redirect('login')
             
@@ -607,6 +635,7 @@ def teacher_register_view(request):
         username   = request.POST.get('username')
         password1  = request.POST.get('password1')
         password2  = request.POST.get('password2')
+        grade_level = request.POST.get('grade_level')
 
         if password1 != password2:
             messages.error(request, 'Passwords do not match.')
@@ -630,6 +659,9 @@ def teacher_register_view(request):
             user.profile.role = 'TEACHER'
             user.profile.is_approved = False
             
+            if grade_level:
+                user.profile.grade_level = grade_level
+            
             faculty_id = request.FILES.get('faculty_id')
             if faculty_id:
                 user.profile.faculty_id_image = faculty_id
@@ -646,6 +678,24 @@ def teacher_register_view(request):
                 icon="User",
                 link_url="/dashboard/#section-users"
             )
+            
+            # Send Email Notification to Teacher
+            subject = "Registration Submitted - CraftyKids"
+            website_link = request.build_absolute_uri('/')
+            message_body = (
+                f"Hello {first_name} {last_name},\n\n"
+                f"Thank you for registering on CraftyKids!\n\n"
+                f"We have successfully received your teacher registration request. "
+                f"Please note that all new teacher accounts require approval by the Main Admin "
+                f"before you can log in. We will send you an email once your account has been reviewed.\n\n"
+                f"You can visit our website here: {website_link}\n\n"
+                f"Thank you,\n"
+                f"CraftyKids Team"
+            )
+            try:
+                send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [email])
+            except Exception as e:
+                print(f"Failed to send teacher registration email: {e}")
             
             messages.success(request, 'Registration successful! Please wait for the Main Admin to approve your account. We will send you an email if your account was approved, or denied.')
             return redirect('login')
@@ -698,6 +748,118 @@ def dashboard(request):
             'calendar_events':  CalendarEvent.objects.filter(is_archived=False).order_by('date'),
             'archived_events':  CalendarEvent.objects.filter(is_archived=True).order_by('date'),
         }
+
+        # Pre-group pending items by dynamic student sections/grades for vertical Kanban columns
+        pending_users_by_grade = {}
+        for u in context['pending_users']:
+            if u.profile.role == 'TEACHER':
+                if u.profile.grade_level:
+                    group_name = f"Teacher {u.profile.grade_level}"
+                else:
+                    group_name = 'Teachers'
+            elif u.profile.section:
+                group_name = u.profile.section
+            elif u.profile.grade_level:
+                group_name = u.profile.grade_level
+            else:
+                group_name = 'Others'
+                
+            if group_name not in pending_users_by_grade:
+                pending_users_by_grade[group_name] = []
+            pending_users_by_grade[group_name].append(u)
+            
+        def get_group_sort_key(group_name):
+            if group_name == 'Teachers':
+                return (999, 'Teachers')
+            if group_name.startswith('Teacher Grade'):
+                import re
+                match = re.search(r'\d+', group_name)
+                num = int(match.group()) if match else 0
+                return (100 + num, group_name)
+            import re
+            match = re.search(r'\d+', group_name)
+            if match:
+                num = int(match.group())
+                return (num, group_name)
+            return (500, group_name)
+            
+        pending_users_by_grade = dict(sorted(pending_users_by_grade.items(), key=lambda x: get_group_sort_key(x[0])))
+
+        pending_grade_users_by_grade = {
+            'Grade 1': [],
+            'Grade 2': [],
+            'Grade 3': [],
+            'Grade 4': [],
+            'Grade 5': [],
+            'Grade 6': [],
+        }
+        for u in context['pending_grade_users']:
+            p_grade = u.profile.pending_grade
+            if p_grade in pending_grade_users_by_grade:
+                pending_grade_users_by_grade[p_grade].append(u)
+            else:
+                if 'Others' not in pending_grade_users_by_grade:
+                    pending_grade_users_by_grade['Others'] = []
+                pending_grade_users_by_grade['Others'].append(u)
+
+        pending_videos_by_grade = {
+            'Grade 1': [],
+            'Grade 2': [],
+            'Grade 3': [],
+            'Grade 4': [],
+            'Grade 5': [],
+            'Grade 6': [],
+        }
+        for v in context['pending_videos']:
+            v_grade = v.grade
+            if v_grade in pending_videos_by_grade:
+                pending_videos_by_grade[v_grade].append(v)
+            else:
+                if 'All Grades & Others' not in pending_videos_by_grade:
+                    pending_videos_by_grade['All Grades & Others'] = []
+                pending_videos_by_grade['All Grades & Others'].append(v)
+
+        pending_flipbooks_by_grade = {
+            'Grade 1': [],
+            'Grade 2': [],
+            'Grade 3': [],
+            'Grade 4': [],
+            'Grade 5': [],
+            'Grade 6': [],
+        }
+        for f in context['pending_flipbooks']:
+            f_grade = f.grade
+            if f_grade in pending_flipbooks_by_grade:
+                pending_flipbooks_by_grade[f_grade].append(f)
+            else:
+                if 'All Grades & Others' not in pending_flipbooks_by_grade:
+                    pending_flipbooks_by_grade['All Grades & Others'] = []
+                pending_flipbooks_by_grade['All Grades & Others'].append(f)
+
+        # Group announcements by grade
+        announcements_by_grade = {
+            'All Grades': [],
+            'Grade 1': [],
+            'Grade 2': [],
+            'Grade 3': [],
+            'Grade 4': [],
+            'Grade 5': [],
+            'Grade 6': [],
+        }
+        for ann in context['announcements']:
+            a_grade = ann.grade
+            if a_grade in announcements_by_grade:
+                announcements_by_grade[a_grade].append(ann)
+            else:
+                announcements_by_grade['All Grades'].append(ann)
+
+        context.update({
+            'pending_users_by_grade': pending_users_by_grade,
+            'pending_grade_users_by_grade': pending_grade_users_by_grade,
+            'pending_videos_by_grade': pending_videos_by_grade,
+            'pending_flipbooks_by_grade': pending_flipbooks_by_grade,
+            'announcements_by_grade': announcements_by_grade,
+        })
     else: # TEACHER
         context = {
             'role': 'TEACHER',
@@ -784,6 +946,23 @@ def approve_user(request, pk):
         if hasattr(user, 'profile') and user.profile.role == 'TEACHER':
             user.is_staff = True
         user.save()
+        
+        # Send Email Notification to the Approved User
+        if user.email:
+            subject = "Account Approved - CraftyKids"
+            login_link = request.build_absolute_uri(reverse('login'))
+            message_body = (
+                f"Hello {user.first_name or user.username},\n\n"
+                f"Great news! Your account on CraftyKids has been approved by the Main Admin.\n\n"
+                f"You can now log in to your account and explore all our features:\n"
+                f"{login_link}\n\n"
+                f"Thank you,\n"
+                f"CraftyKids Team"
+            )
+            try:
+                send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user.email])
+            except Exception as e:
+                print(f"Failed to send approval email: {e}")
         
         log_audit_event(request, 'approve', user, {'source': 'dashboard'}, target_label=user.username)
         messages.success(request, f'{role_display} {user.username} approved!')
@@ -978,7 +1157,20 @@ def explore_subjects(request):
 # Announcements CRUD
 
 def announcement_list(request):
-    announcements = Announcement.objects.filter(is_active=True, is_archived=False).order_by('-created_at')
+    announcements = Announcement.objects.filter(is_active=True, is_archived=False)
+    
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        profile = request.user.profile
+        if profile.role == 'CLIENT':
+            from django.db.models import Q
+            grade_filter = Q(grade='All Grades')
+            if profile.grade_level:
+                grade_filter |= Q(grade=profile.grade_level)
+            announcements = announcements.filter(target_audience='Student').filter(grade_filter)
+    else:
+        announcements = announcements.filter(target_audience='Student', grade='All Grades')
+        
+    announcements = announcements.order_by('-created_at')
     return render(request, 'main/announcement_list.html', {'announcements': announcements})
 
 
@@ -1157,6 +1349,282 @@ def calendar_event_delete(request, pk):
         messages.success(request, 'Calendar Event/Holiday archived successfully!')
         return redirect('/dashboard/#section-calendar')
     return render(request, 'main/confirm_delete.html', {'object': event})
+
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def calendar_event_restore(request, pk):
+    event = get_object_or_404(CalendarEvent, pk=pk)
+    event.is_archived = False
+    event.save()
+    log_audit_event(request, 'restore', event, {'source': 'dashboard'})
+    messages.success(request, 'Calendar Event restored successfully!')
+    return redirect('/dashboard/#section-archive')
+
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def calendar_event_permanent_delete(request, pk):
+    event = get_object_or_404(CalendarEvent, pk=pk)
+    if request.method == 'POST':
+        log_audit_event(request, 'delete', event, {'source': 'dashboard'})
+        event.delete()
+        messages.success(request, 'Calendar Event permanently deleted!')
+        return redirect('/dashboard/#section-archive')
+    return render(request, 'main/confirm_delete.html', {'object': event, 'permanent': True})
+
+@login_required(login_url='login')
+def bulk_archive_action(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST is allowed'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        action = data.get('action')
+        model_type = data.get('model_type')
+        ids = data.get('ids', [])
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': f'Invalid request data: {str(e)}'}, status=400)
+    
+    if not action or not model_type or not ids:
+        return JsonResponse({'status': 'error', 'message': 'Missing action, model_type, or ids'}, status=400)
+        
+    if action not in ['restore', 'delete']:
+        return JsonResponse({'status': 'error', 'message': 'Invalid action'}, status=400)
+        
+    is_admin = is_super_admin(request.user)
+    is_staff_teacher = is_staff_or_teacher(request.user)
+    
+    if not is_staff_teacher and not is_admin:
+        return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
+        
+    count = 0
+    errors = []
+    
+    for pk in ids:
+        try:
+            if model_type == 'video':
+                video = get_object_or_404(AnimationVideo, pk=pk)
+                if not is_admin and video.author != request.user:
+                    errors.append(f"Permission denied for Video ID {pk}")
+                    continue
+                if action == 'restore':
+                    video.is_archived = False
+                    video.save()
+                    log_audit_event(request, 'restore', video, {'source': 'dashboard', 'bulk': True})
+                elif action == 'delete':
+                    log_audit_event(request, 'delete', video, {'source': 'dashboard', 'bulk': True})
+                    video.delete()
+                    
+            elif model_type == 'flipbook':
+                flipbook = get_object_or_404(Flipbook, pk=pk)
+                if not is_admin and flipbook.author != request.user:
+                    errors.append(f"Permission denied for Flipbook ID {pk}")
+                    continue
+                if action == 'restore':
+                    flipbook.is_archived = False
+                    flipbook.save()
+                    log_audit_event(request, 'restore', flipbook, {'source': 'dashboard', 'bulk': True})
+                elif action == 'delete':
+                    log_audit_event(request, 'delete', flipbook, {'source': 'dashboard', 'bulk': True})
+                    flipbook.delete()
+                    
+            elif model_type == 'announcement':
+                if not is_admin:
+                    errors.append(f"Permission denied for Announcement ID {pk}")
+                    continue
+                announcement = get_object_or_404(Announcement, pk=pk)
+                if action == 'restore':
+                    announcement.is_archived = False
+                    announcement.save()
+                    log_audit_event(request, 'restore', announcement, {'source': 'dashboard', 'bulk': True})
+                elif action == 'delete':
+                    log_audit_event(request, 'delete', announcement, {'source': 'dashboard', 'bulk': True})
+                    announcement.delete()
+                    
+            elif model_type == 'user':
+                if not is_admin:
+                    errors.append(f"Permission denied for User ID {pk}")
+                    continue
+                if request.user.pk == pk and action == 'delete':
+                    errors.append("You cannot delete your own account")
+                    continue
+                user = get_object_or_404(User, pk=pk)
+                if action == 'restore':
+                    if hasattr(user, 'profile'):
+                        user.profile.is_archived = False
+                        user.profile.save()
+                    user.is_active = True
+                    user.save()
+                    log_audit_event(request, 'restore', user, {'source': 'dashboard', 'bulk': True}, target_label=user.username)
+                elif action == 'delete':
+                    log_audit_event(request, 'delete', user, {'source': 'dashboard', 'bulk': True}, target_label=user.username)
+                    user.delete()
+                    
+            elif model_type == 'calendar':
+                if not is_staff_teacher and not is_admin:
+                    errors.append(f"Permission denied for Calendar Event ID {pk}")
+                    continue
+                event = get_object_or_404(CalendarEvent, pk=pk)
+                if action == 'restore':
+                    event.is_archived = False
+                    event.save()
+                    log_audit_event(request, 'restore', event, {'source': 'dashboard', 'bulk': True})
+                elif action == 'delete':
+                    log_audit_event(request, 'delete', event, {'source': 'dashboard', 'bulk': True})
+                    event.delete()
+            else:
+                return JsonResponse({'status': 'error', 'message': f'Unknown model type: {model_type}'}, status=400)
+                
+            count += 1
+        except Exception as ex:
+            errors.append(f"Error processing {model_type} ID {pk}: {str(ex)}")
+            
+    if errors and count == 0:
+        return JsonResponse({'status': 'error', 'message': "; ".join(errors)}, status=400)
+    
+    action_label = "restored" if action == 'restore' else "permanently deleted"
+    msg = f"Successfully {action_label} {count} item(s)."
+    if errors:
+        msg += " Warnings: " + "; ".join(errors)
+    return JsonResponse({'status': 'success', 'message': msg})
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def bulk_approval_action(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST is allowed'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        action = data.get('action')
+        model_type = data.get('model_type')
+        ids = data.get('ids', [])
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': f'Invalid request data: {str(e)}'}, status=400)
+    
+    if not action or not model_type or not ids:
+        return JsonResponse({'status': 'error', 'message': 'Missing action, model_type, or ids'}, status=400)
+        
+    if action not in ['approve', 'deny']:
+        return JsonResponse({'status': 'error', 'message': 'Invalid action'}, status=400)
+        
+    count = 0
+    errors = []
+    
+    for pk in ids:
+        try:
+            if model_type == 'user':
+                user = get_object_or_404(User, pk=pk)
+                role_display = user.profile.get_role_display() if hasattr(user, 'profile') else 'User'
+                if action == 'approve':
+                    if hasattr(user, 'profile'):
+                        user.profile.is_approved = True
+                        user.profile.save()
+                    if hasattr(user, 'profile') and user.profile.role == 'TEACHER':
+                        user.is_staff = True
+                    user.save()
+                    
+                    if user.email:
+                        subject = "Account Approved - CraftyKids"
+                        login_link = request.build_absolute_uri(reverse('login'))
+                        message_body = (
+                            f"Hello {user.first_name or user.username},\n\n"
+                            f"Great news! Your account on CraftyKids has been approved by the Main Admin.\n\n"
+                            f"You can now log in to your account and explore all our features:\n"
+                            f"{login_link}\n\n"
+                            f"Thank you,\n"
+                            f"CraftyKids Team"
+                        )
+                        try:
+                            send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user.email])
+                        except Exception as em:
+                            print(f"Failed to send approval email: {em}")
+                    
+                    log_audit_event(request, 'approve', user, {'source': 'dashboard', 'bulk': True}, target_label=user.username)
+                    
+                elif action == 'deny':
+                    username = user.username
+                    if hasattr(user, 'profile'):
+                        user.profile.is_archived = True
+                        user.profile.save()
+                    user.is_active = False
+                    user.save()
+                    log_audit_event(request, 'archive', user, {'source': 'dashboard', 'bulk': True}, target_label=username)
+                    
+            elif model_type == 'grade':
+                user = get_object_or_404(User, pk=pk)
+                if action == 'approve':
+                    if hasattr(user, 'profile') and user.profile.pending_grade:
+                        user.profile.grade_level = user.profile.pending_grade
+                        user.profile.pending_grade = None
+                        user.profile.save()
+                        log_audit_event(request, 'approve_grade', user, {'source': 'dashboard', 'bulk': True}, target_label=user.username)
+                elif action == 'deny':
+                    if hasattr(user, 'profile'):
+                        user.profile.pending_grade = None
+                        user.profile.save()
+                        log_audit_event(request, 'reject_grade', user, {'source': 'dashboard', 'bulk': True}, target_label=user.username)
+                        
+            elif model_type == 'video':
+                video = get_object_or_404(AnimationVideo, pk=pk)
+                if action == 'approve':
+                    AnimationVideo.objects.filter(pk=pk).update(is_approved=True)
+                    log_audit_event(request, 'approve', video, {'source': 'dashboard', 'bulk': True})
+                elif action == 'deny':
+                    log_audit_event(request, 'delete', video, {'source': 'dashboard', 'bulk': True})
+                    video.delete()
+                    
+            elif model_type == 'flipbook':
+                flipbook = get_object_or_404(Flipbook, pk=pk)
+                if action == 'approve':
+                    Flipbook.objects.filter(pk=pk).update(is_approved=True)
+                    log_audit_event(request, 'approve', flipbook, {'source': 'dashboard', 'bulk': True})
+                elif action == 'deny':
+                    log_audit_event(request, 'delete', flipbook, {'source': 'dashboard', 'bulk': True})
+                    flipbook.delete()
+            else:
+                errors.append(f"Unknown model type: {model_type}")
+                continue
+                
+            count += 1
+        except Exception as ex:
+            errors.append(f"Error processing {model_type} ID {pk}: {str(ex)}")
+            
+    if errors and count == 0:
+        return JsonResponse({'status': 'error', 'message': "; ".join(errors)}, status=400)
+        
+    action_label = "approved" if action == 'approve' else "denied"
+    msg = f"Successfully {action_label} {count} item(s)."
+    if errors:
+        msg += " Warnings: " + "; ".join(errors)
+    return JsonResponse({'status': 'success', 'message': msg})
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def bulk_archive_announcements(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST is allowed'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        ids = data.get('ids', [])
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': f'Invalid request data: {str(e)}'}, status=400)
+    
+    if not ids:
+        return JsonResponse({'status': 'error', 'message': 'No announcements selected'}, status=400)
+        
+    count = 0
+    for pk in ids:
+        try:
+            announcement = get_object_or_404(Announcement, pk=pk)
+            announcement.is_archived = True
+            announcement.save()
+            log_audit_event(request, 'archive', announcement, {'source': 'dashboard', 'bulk': True})
+            count += 1
+        except Exception:
+            pass
+            
+    return JsonResponse({'status': 'success', 'message': f'Successfully archived {count} announcement(s).'})
 
 # Teacher Tasks API
 from django.views.decorators.http import require_POST

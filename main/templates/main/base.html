@@ -28,9 +28,16 @@
 
     <!-- NAVBAR -->
     <nav class="navbar">
-        <div class="nav-inner">
+        <div class="nav-inner" style="position: relative;">
             <a href="{% url 'home' %}" class="nav-logo">CraftyKids</a>
-            <div class="nav-links">
+            <button id="mobile-nav-toggle" class="mobile-nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" onclick="toggleMobileNav(event)" hidden style="display: none; position: absolute; top: 50%; right: 16px; transform: translateY(-50%); z-index: 1200;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <div id="desktop-nav-links" class="nav-links" hidden>
                 <a href="{% url 'home' %}"
                     class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
                 <a href="{% url 'about' %}"
@@ -50,7 +57,7 @@
                     class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">My Profile</a>
                 {% endif %}
             </div>
-            <div class="nav-right">
+            <div id="desktop-nav-right" class="nav-right" hidden>
                 {% if user.is_authenticated %}
                 <a href="{% url 'notifications' %}" class="nav-notif" style="position: relative; display: inline-flex; align-items: center;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
@@ -100,6 +107,7 @@
                 <a href="{% url 'register' %}" class="btn-register">Register</a>
                 {% endif %}
             </div>
+            <div id="mobile-nav-panel" class="mobile-nav-panel" hidden style="display: none; position: absolute; top: calc(100% + 10px); right: 16px; left: auto; width: 220px; background: rgba(249, 251, 249, 0.98); border: 1px solid #dff3e4; border-radius: 20px; box-shadow: 0 18px 40px rgba(19, 63, 35, 0.12); padding: 14px; z-index: 1100;"></div>
         </div>
     </nav>
 
@@ -134,6 +142,102 @@
     </div>
 
     <script>
+        function getMobileNavMarkup() {
+            return `
+                <div class="mobile-nav-links" style="display: flex; flex-direction: column; gap: 8px; align-items: stretch;">
+                    <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" style="display: flex; justify-content: flex-start; align-items: center; min-height: 44px; padding: 10px 14px; text-align: left; border-radius: 14px; background: #f3fbf5;">Home</a>
+                    <a href="{% url 'about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}" style="display: flex; justify-content: flex-start; align-items: center; min-height: 44px; padding: 10px 14px; text-align: left; border-radius: 14px; background: #f3fbf5;">About</a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'announcement_list' %}" class="nav-link {% if request.resolver_match.url_name == 'announcement_list' %}active{% endif %}" style="display: flex; justify-content: flex-start; align-items: center; min-height: 44px; padding: 10px 14px; text-align: left; border-radius: 14px; background: #f3fbf5;">Announcement</a>
+                    {% endif %}
+                    {% if user.is_authenticated and user.is_staff or user.profile.role == 'TEACHER' %}
+                    <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" style="display: flex; justify-content: flex-start; align-items: center; min-height: 44px; padding: 10px 14px; text-align: left; border-radius: 14px; background: #f3fbf5;">Dashboard</a>
+                    {% endif %}
+                    {% if user.is_authenticated and user.profile.role == 'CLIENT' %}
+                    <a href="{% url 'calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'calendar' %}active{% endif %}" style="display: flex; justify-content: flex-start; align-items: center; min-height: 44px; padding: 10px 14px; text-align: left; border-radius: 14px; background: #f3fbf5;">My Calendar</a>
+                    <a href="{% url 'profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" style="display: flex; justify-content: flex-start; align-items: center; min-height: 44px; padding: 10px 14px; text-align: left; border-radius: 14px; background: #f3fbf5;">My Profile</a>
+                    {% endif %}
+                </div>
+                <div class="mobile-nav-actions" style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e6f4ea;">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'notifications' %}" class="mobile-nav-action-link" style="display: flex; justify-content: flex-start; align-items: center; min-height: 44px; padding: 10px 14px; text-align: left; border-radius: 14px; background: #f3fbf5; text-decoration: none; color: var(--dark);">Notifications{% if unread_notifications_count %} ({{ unread_notifications_count }}){% endif %}</a>
+                    <a href="{% url 'profile' %}" class="mobile-nav-action-link" style="display: flex; justify-content: flex-start; align-items: center; min-height: 44px; padding: 10px 14px; text-align: left; border-radius: 14px; background: #f3fbf5; text-decoration: none; color: var(--dark);">Edit Profile</a>
+                    <a href="{% url 'logout' %}" onclick="localStorage.removeItem('theme');" class="mobile-nav-action-link mobile-nav-action-danger" style="display: flex; justify-content: flex-start; align-items: center; min-height: 44px; padding: 10px 14px; text-align: left; border-radius: 14px; background: #fff3f7; text-decoration: none; color: var(--pink);">Logout</a>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn-login" style="display: flex; justify-content: center; align-items: center; min-height: 44px;">Login</a>
+                    <a href="{% url 'register' %}" class="btn-register" style="display: flex; justify-content: center; align-items: center; min-height: 44px;">Register</a>
+                    {% endif %}
+                </div>
+            `;
+        }
+
+        function applyResponsiveNav() {
+            const isMobile = window.innerWidth <= 900;
+            const desktopLinks = document.getElementById('desktop-nav-links');
+            const desktopRight = document.getElementById('desktop-nav-right');
+            const mobileToggle = document.getElementById('mobile-nav-toggle');
+            const mobilePanel = document.getElementById('mobile-nav-panel');
+
+            if (!desktopLinks || !desktopRight || !mobileToggle || !mobilePanel) return;
+
+            if (!desktopLinks.dataset.desktopMarkup) {
+                desktopLinks.dataset.desktopMarkup = desktopLinks.innerHTML;
+            }
+            if (!desktopRight.dataset.desktopMarkup) {
+                desktopRight.dataset.desktopMarkup = desktopRight.innerHTML;
+            }
+
+            if (isMobile) {
+                desktopLinks.innerHTML = '';
+                desktopRight.innerHTML = '';
+                desktopLinks.hidden = true;
+                desktopRight.hidden = true;
+                mobileToggle.style.display = 'inline-flex';
+                mobileToggle.hidden = false;
+                mobileToggle.style.position = 'absolute';
+                mobileToggle.style.top = '50%';
+                mobileToggle.style.right = window.innerWidth <= 640 ? '16px' : '18px';
+                mobileToggle.style.transform = 'translateY(-50%)';
+                mobilePanel.classList.remove('show');
+                mobilePanel.hidden = true;
+                mobilePanel.style.display = 'none';
+                mobilePanel.innerHTML = '';
+                delete mobilePanel.dataset.ready;
+                mobileToggle.setAttribute('aria-expanded', 'false');
+            } else {
+                if (!desktopLinks.innerHTML.trim()) {
+                    desktopLinks.innerHTML = desktopLinks.dataset.desktopMarkup || '';
+                }
+                if (!desktopRight.innerHTML.trim()) {
+                    desktopRight.innerHTML = desktopRight.dataset.desktopMarkup || '';
+                }
+                desktopLinks.hidden = false;
+                desktopRight.hidden = false;
+                desktopLinks.style.display = 'flex';
+                desktopRight.style.display = 'flex';
+                mobileToggle.style.display = 'none';
+                mobileToggle.hidden = true;
+                mobilePanel.classList.remove('show');
+                mobilePanel.hidden = true;
+                mobilePanel.style.display = 'none';
+                mobileToggle.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        function toggleMobileNav(e) {
+            e.stopPropagation();
+            const panel = document.getElementById('mobile-nav-panel');
+            const button = e.currentTarget;
+            const isOpen = panel.classList.toggle('show');
+            if (isOpen && !panel.dataset.ready) {
+                panel.innerHTML = getMobileNavMarkup();
+                panel.dataset.ready = 'true';
+            }
+            panel.hidden = !isOpen;
+            button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            panel.style.display = isOpen ? 'block' : 'none';
+        }
+
         function toggleNavDropdown(e) {
             e.stopPropagation();
             const dropdown = document.getElementById('nav-dropdown');
@@ -151,7 +255,21 @@
             if (dropdown && dropdown.classList.contains('show') && !e.target.closest('.nav-menu-container')) {
                 dropdown.classList.remove('show');
             }
+
+            const mobilePanel = document.getElementById('mobile-nav-panel');
+            const mobileButton = document.querySelector('.mobile-nav-toggle');
+            if (mobilePanel && mobilePanel.classList.contains('show') && !e.target.closest('.mobile-nav-panel') && !e.target.closest('.mobile-nav-toggle')) {
+                mobilePanel.classList.remove('show');
+                mobilePanel.hidden = true;
+                mobilePanel.style.display = 'none';
+                if (mobileButton) {
+                    mobileButton.setAttribute('aria-expanded', 'false');
+                }
+            }
         });
+
+        window.addEventListener('resize', applyResponsiveNav);
+        document.addEventListener('DOMContentLoaded', applyResponsiveNav);
 
         // Prevent copying, cutting, and dragging of content globally (except in inputs and textareas)
         const isEditable = (target) => {

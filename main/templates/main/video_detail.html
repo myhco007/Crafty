@@ -84,7 +84,17 @@
                 <form action="{% url 'video_comment' video.pk %}" method="POST" class="comment-form">
                     {% csrf_token %}
                     <input type="hidden" name="name" value="{{ user.get_full_name|default:user.username }}">
-                    <textarea name="text" placeholder="Add a comment..." required class="comment-textarea"></textarea>
+                    {% if user.profile.grade_level in 'Grade 1,Grade 2,Grade 3' %}
+                        <select name="text" required class="comment-textarea" style="appearance: auto; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit;">
+                            <option value="" disabled selected>Select a comment...</option>
+                            <option value="Great job! I really enjoyed working on this.">Great job! I really enjoyed working on this.</option>
+                            <option value="I am so proud of my hard work today!">I am so proud of my hard work today!</option>
+                            <option value="I had a lot of fun learning this new skill.">I had a lot of fun learning this new skill.</option>
+                            <option value="I tried my best and didn’t give up!">I tried my best and didn’t give up!</option>
+                        </select>
+                    {% else %}
+                        <textarea name="text" placeholder="Add a comment..." required class="comment-textarea"></textarea>
+                    {% endif %}
                     <div class="comment-form-actions">
                         <button type="submit" class="comment-submit-btn">Comment</button>
                     </div>

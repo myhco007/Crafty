@@ -75,6 +75,10 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label>Section</label>
+                        <input type="text" name="section" value="{{ form_data.section|default:'' }}" placeholder="e.g., 1-3" pattern="[1-3]" title="Section must be a single number from 1 to 3." maxlength="1" oninput="this.value=this.value.replace(/[^1-3]/g,'')" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
                         <label>LRN Number</label>
                         <input type="text" name="lrn_number" value="{{ form_data.lrn_number|default:'' }}" placeholder="12-digit LRN" pattern="\d{12}" title="LRN must be exactly 12 digits" maxlength="12" minlength="12" autocomplete="off" required>
                     </div>
@@ -86,7 +90,7 @@
                         <div class="form-group">
                             <label>Password</label>
                             <div class="password-field-wrapper">
-                                <input type="password" name="password1" id="password1" placeholder="••••••••" required>
+                                <input type="password" name="password1" id="password1" placeholder="••••••••" oninput="validatePasswordComplexity(this)" required>
                                 <button type="button" class="toggle-password"
                                     onclick="togglePasswordVisibility('password1', this)">
                                     <!-- Initially Eye-Off (Slashed) because password is hidden -->
@@ -119,7 +123,7 @@
                             </div>
                         </div>
                     </div>
-                    <small style="color: #718096; font-size: 0.8rem; display: block; margin-top: -10px; margin-bottom: 15px;">Note: Password must use a combination of a-z, underscore (_), and numbers.</small>
+                    <small id="password-note" style="color: #718096; font-size: 0.8rem; display: block; margin-top: -10px; margin-bottom: 15px; transition: color 0.3s ease, font-weight 0.3s ease;">Note: Password must use a combination of a-z, underscore (_), and numbers.</small>
                     
                     <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" style="margin-bottom: 15px; display: flex; justify-content: center;"></div>
                     
@@ -201,6 +205,30 @@
 
 {% block scripts %}
 <script>
+    function validatePasswordComplexity(input) {
+        const val = input.value;
+        const noteEl = document.getElementById('password-note');
+        if (!noteEl) return;
+        
+        if (!val) {
+            noteEl.style.color = '#718096';
+            noteEl.style.fontWeight = 'normal';
+            return;
+        }
+        
+        const hasLetter = /[a-zA-Z]/.test(val);
+        const hasNumber = /[0-9]/.test(val);
+        const hasUnderscore = /_/.test(val);
+        
+        if (!hasLetter || !hasNumber || !hasUnderscore) {
+            noteEl.style.color = '#e65100';
+            noteEl.style.fontWeight = 'bold';
+        } else {
+            noteEl.style.color = '#2f855a';
+            noteEl.style.fontWeight = 'bold';
+        }
+    }
+
     function validateName(input, warningId) {
         const originalValue = input.value;
         // Allow letters, spaces, and hyphens. Strip everything else including digits.
@@ -300,11 +328,22 @@
                 const lrnInput = document.querySelector('input[name="lrn_number"]');
                 if (lrnInput) lrnInput.classList.add('input-error');
             }
+            if (text.includes('section')) {
+                const sectionInput = document.querySelector('input[name="section"]');
+                if (sectionInput) sectionInput.classList.add('input-error');
+            }
             if (text.includes('password') || text.includes('passwords do not match')) {
                 const pass1 = document.querySelector('input[name="password1"]');
                 const pass2 = document.querySelector('input[name="password2"]');
                 if (pass1) pass1.classList.add('input-error');
                 if (pass2) pass2.classList.add('input-error');
+                if (text.includes('combination of letters') || text.includes('password must contain a combination')) {
+                    const note = document.getElementById('password-note');
+                    if (note) {
+                        note.style.color = '#e65100';
+                        note.style.fontWeight = 'bold';
+                    }
+                }
             }
         });
     });
