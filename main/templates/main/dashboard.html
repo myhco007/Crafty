@@ -1,2947 +1,6035 @@
 {% extends 'main/base.html' %}
+
 {% load static %}
+
 {% block title %}- Dashboard{% endblock %}
+
 {% block page_css %}
+
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
 <style>
+
     .pending-badge {
+
         background: #fff3e0;
+
         color: #e65100;
+
         padding: 2px 8px;
+
         border-radius: 4px;
+
         font-size: 0.7rem;
+
         font-weight: 800;
+
     }
+
+
 
     .approve-btn {
+
         background: #e8faf0;
+
         color: #2ecc71;
+
         border: none;
+
         padding: 4px 10px;
+
         border-radius: 6px;
+
         cursor: pointer;
+
         font-weight: 800;
+
         font-size: 0.75rem;
+
         text-decoration: none;
+
         display: inline-block;
+
     }
+
+
 
     .reject-btn {
+
         background: #ffebee;
+
         color: #e53935;
+
         border: none;
+
         padding: 4px 10px;
+
         border-radius: 6px;
+
         cursor: pointer;
+
         font-weight: 800;
+
         font-size: 0.75rem;
+
         text-decoration: none;
+
         display: inline-block;
+
         margin-left: 5px;
+
     }
+
+
 
     /* Kanban Board, Columns & Tab Switching Styling */
+
     .pending-tabs-container {
+
         display: flex;
+
         gap: 12px;
+
         margin-bottom: 24px;
+
         border-bottom: 2px dashed rgba(46, 204, 113, 0.15);
+
         padding-bottom: 12px;
+
         flex-wrap: wrap;
+
     }
+
     .pending-tab-btn {
+
         background: rgba(255, 255, 255, 0.5);
+
         border: 2px solid transparent;
+
         color: #7f8c8d;
+
         padding: 8px 18px;
+
         border-radius: 50px;
+
         font-family: 'Fredoka One', cursive;
+
         font-size: 0.95rem;
+
         cursor: pointer;
+
         display: flex;
+
         align-items: center;
+
         gap: 8px;
+
         transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
     }
+
     .pending-tab-btn:hover {
+
         background: rgba(255, 255, 255, 0.8);
+
         transform: translateY(-2px);
+
     }
+
     .pending-tab-btn.active {
+
         background: #e8faf0;
+
         border-color: #2ecc71;
+
         color: #27ae60;
+
         box-shadow: 0 4px 12px rgba(46, 204, 113, 0.15);
+
     }
+
     .pending-tab-badge {
+
         background: #7f8c8d;
+
         color: white;
+
         font-size: 0.72rem;
+
         padding: 2px 8px;
+
         border-radius: 20px;
+
         font-weight: bold;
+
         transition: background 0.3s;
+
     }
+
     .pending-tab-btn.active .pending-tab-badge {
+
         background: #27ae60;
+
     }
+
+
 
     .kanban-board {
+
         display: flex;
+
         gap: 16px;
+
         overflow-x: auto;
+
         padding-bottom: 16px;
+
         margin-bottom: 24px;
+
         align-items: flex-start;
+
     }
+
     .kanban-column {
+
         flex: 0 0 270px;
+
         min-width: 270px;
+
         background: rgba(255, 255, 255, 0.55);
+
         backdrop-filter: blur(10px);
+
         border: 1.5px solid rgba(46, 204, 113, 0.15);
+
         border-radius: 16px;
+
         padding: 12px;
+
         display: flex;
+
         flex-direction: column;
+
         max-height: 550px;
+
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+
         transition: all 0.3s;
+
     }
+
     .kanban-column:hover {
+
         border-color: rgba(46, 204, 113, 0.4);
+
         background: rgba(255, 255, 255, 0.85);
+
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+
     }
+
     .kanban-column-header {
+
         display: flex;
+
         justify-content: space-between;
+
         align-items: center;
+
         margin-bottom: 12px;
+
         border-bottom: 1.5px dashed rgba(0, 0, 0, 0.05);
+
         padding-bottom: 6px;
+
     }
+
     .kanban-column-title {
+
         font-family: 'Fredoka One', cursive;
+
         font-size: 0.95rem;
+
         color: var(--green-dark);
+
         margin: 0;
+
     }
+
     .kanban-column-count {
+
         background: var(--green);
+
         color: white;
+
         font-size: 0.72rem;
+
         padding: 1px 8px;
+
         border-radius: 10px;
+
         font-weight: 800;
+
     }
+
     .kanban-column-body {
+
         display: flex;
+
         flex-direction: column;
+
         gap: 8px;
+
         overflow-y: auto;
+
         flex-grow: 1;
+
         padding-right: 2px;
+
         min-height: 100px;
+
     }
+
+
 
     /* Kanban Card Checkbox integration */
+
     .card-checkbox-container {
+
         display: flex;
+
         align-items: center;
+
         gap: 6px;
+
         margin-bottom: 0;
+
     }
+
     .card-checkbox {
+
         width: 14px;
+
         height: 14px;
+
         accent-color: var(--green);
+
         cursor: pointer;
+
         margin: 0;
+
     }
+
+
 
     /* Compact Approval Cards styling */
+
     .compact-approval-card {
+
         background: white;
+
         border-radius: 12px;
+
         padding: 10px;
+
         border: 1.5px solid #f0f0f0;
+
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+
         display: flex;
+
         flex-direction: column;
+
         gap: 6px;
+
         transition: all 0.2s ease-in-out;
+
         box-sizing: border-box;
+
     }
+
     .compact-approval-card:hover {
+
         transform: translateY(-2px);
+
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+
         border-color: #ffd93d;
+
     }
+
     .compact-approval-card-title {
+
         font-size: 0.9rem;
+
         font-weight: 800;
+
         color: var(--dark);
+
         margin: 2px 0 0;
+
         white-space: nowrap;
+
         overflow: hidden;
+
         text-overflow: ellipsis;
+
     }
+
     .compact-approval-card-meta {
+
         font-size: 0.75rem;
+
         color: var(--gray);
+
         line-height: 1.25;
+
     }
+
     .compact-approval-card-actions {
+
         display: flex;
+
         gap: 4px;
+
         margin-top: 4px;
+
         padding-top: 6px;
+
         border-top: 1px solid #f9f9f9;
+
         width: 100%;
+
         box-sizing: border-box;
+
     }
+
     
+
     /* Compact buttons inside card */
+
     .compact-btn {
+
         font-size: 0.72rem;
+
         font-weight: bold;
+
         padding: 4px 6px;
+
         border-radius: 6px;
+
         cursor: pointer;
+
         text-decoration: none;
+
         text-align: center;
+
         transition: all 0.2s;
+
         border: none;
+
         flex: 1;
+
         display: inline-block;
+
     }
+
     .compact-btn-details {
+
         background: #f1f5f9;
+
         color: #475569;
+
         border: 1px solid #e2e8f0;
+
     }
+
     .compact-btn-details:hover {
+
         background: #e2e8f0;
+
     }
+
     .compact-btn-approve {
+
         background: #d1fae5;
+
         color: #065f46;
+
     }
+
     .compact-btn-approve:hover {
+
         background: #a7f3d0;
+
     }
+
     .compact-btn-deny {
+
         background: #fee2e2;
+
         color: #991b1b;
+
     }
+
     .compact-btn-deny:hover {
+
         background: #fecaca;
+
     }
+
+
 
     /* Bulk action bar styling */
+
     .bulk-action-bar {
+
         background: rgba(255, 255, 255, 0.95);
+
         backdrop-filter: blur(10px);
+
         border: 2px dashed var(--green);
+
         padding: 10px 18px;
+
         border-radius: 16px;
+
         box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+
         margin-bottom: 16px;
+
         display: none;
+
         align-items: center;
+
         justify-content: space-between;
+
         position: sticky;
+
         top: 20px;
+
         z-index: 100;
+
         animation: slideUpFade 0.3s ease-out forwards;
+
     }
+
+
 
 @keyframes fadeInOverlay {
+
     from { opacity: 0; }
+
     to { opacity: 1; }
+
 }
+
 @keyframes slideUpFade {
+
     0% {
+
         opacity: 0;
+
         transform: translateY(50px) scale(0.95);
+
     }
+
     100% {
+
         opacity: 1;
+
         transform: translateY(0) scale(1);
+
     }
+
 }
+
 .modal-overlay {
+
     position: fixed;
+
     top: 0; left: 0; width: 100vw; height: 100vh;
+
     background: rgba(230, 242, 230, 0.6);
+
     backdrop-filter: blur(8px);
+
     display: none;
+
     align-items: center;
+
     justify-content: center;
+
     z-index: 9999;
+
     animation: fadeInOverlay 0.3s ease-out forwards;
+
 }
+
 .confirm-box {
+
     max-width: 500px;
+
     background: var(--white);
+
     padding: 40px;
+
     border-radius: var(--radius);
+
     text-align: center;
+
     box-shadow: var(--shadow);
+
     border: 2px dashed var(--green);
+
     animation: slideUpFade 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
 }
+
 .confirm-title {
+
     font-family: 'Fredoka One', cursive;
+
     font-size: 1.8rem;
+
     margin-bottom: 10px;
+
 }
+
 .confirm-text {
+
     font-size: 1.1rem;
+
     color: var(--gray);
+
     margin-bottom: 30px;
+
 }
+
 .confirm-actions {
+
     display: flex;
+
     justify-content: center;
+
     gap: 16px;
+
 }
+
 .btn-action {
+
     color: var(--white);
+
     font-family: 'Fredoka One', cursive;
+
     padding: 12px 24px;
+
     border-radius: 20px;
+
     border: none;
+
     cursor: pointer;
+
     font-size: 1.1rem;
+
     transition: transform 0.2s, box-shadow 0.2s;
+
 }
+
 .btn-action:hover {
+
     transform: translateY(2px);
+
 }
+
 .btn-cancel {
+
     background: #f1f1f1;
+
     color: var(--gray);
+
     font-weight: 800;
+
     text-decoration: none;
+
     padding: 12px 24px;
+
     border-radius: 20px;
+
     border: none;
+
     cursor: pointer;
+
     transition: background 0.2s, color 0.2s;
+
 }
+
 .btn-cancel:hover {
+
     background: #e0e0e0;
+
     color: var(--dark);
+
 }
+
 /* Tasks Styles */
+
 .task-group {
+
     background: #fff;
+
     border-radius: 16px;
+
     padding: 16px;
+
     border: 2px solid #f1f5f9;
+
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+
 }
+
 .task-card {
+
     display: flex;
+
     align-items: center;
+
     padding: 12px;
+
     border-bottom: 1px solid #f1f5f9;
+
     gap: 12px;
+
 }
+
 .task-card:last-child {
+
     border-bottom: none;
+
 }
+
 .task-card:hover {
+
     background-color: #f8fafc;
+
     border-radius: 8px;
+
 }
+
 .task-title {
+
     flex-grow: 1;
+
 }
+
 .task-title-input {
+
     width: 100%;
+
     border: none;
+
     background: transparent;
+
     font-size: 1rem;
+
     font-family: inherit;
+
     color: var(--dark);
+
     padding: 4px 8px;
+
     border-radius: 6px;
+
     transition: background 0.2s;
+
 }
+
 .task-title-input:hover, .task-title-input:focus {
+
     background: #fff;
+
     box-shadow: 0 0 0 2px #e2e8f0;
+
     outline: none;
+
 }
+
 .task-status {
+
     width: 160px;
+
 }
+
 .task-status-select {
+
     width: 100%;
+
     padding: 8px 12px;
+
     border-radius: 20px;
+
     border: none;
+
     font-weight: 700;
+
     font-family: inherit;
+
     font-size: 0.9rem;
+
     cursor: pointer;
+
     text-align: center;
+
     appearance: none;
+
     outline: none;
+
 }
+
 .task-due-date {
+
     width: 140px;
+
 }
+
 .task-date-input {
+
     width: 100%;
+
     padding: 8px;
+
     border: 1px solid #e2e8f0;
+
     border-radius: 8px;
+
     font-family: inherit;
+
     color: var(--gray);
+
     outline: none;
+
 }
+
 .task-actions {
+
     width: 40px;
+
     text-align: right;
+
 }
+
 .task-del-btn {
+
     background: transparent;
+
     border: none;
+
     color: #cbd5e1;
+
     font-size: 1.5rem;
+
     cursor: pointer;
+
     transition: color 0.2s;
+
 }
+
 .task-del-btn:hover {
+
     color: var(--pink);
+
 }
+
 .task-add-row {
+
     display: flex;
+
     gap: 12px;
+
     padding: 12px;
+
     margin-top: 8px;
+
 }
+
 #new-task-input {
+
     flex-grow: 1;
+
     padding: 12px 16px;
+
     border: 2px dashed #cbd5e1;
+
     border-radius: 12px;
+
     font-family: inherit;
+
     font-size: 1rem;
+
     outline: none;
+
     transition: border-color 0.2s;
+
 }
+
 #new-task-input:focus {
+
     border-color: var(--green);
+
 }
+
+
 
 /* Calendar Modal Styles */
+
 .calendar-modal-backdrop {
+
     position: fixed;
+
     top: 0;
+
     left: 0;
+
     width: 100vw;
+
     height: 100vh;
+
     background: rgba(0, 0, 0, 0.4);
+
     backdrop-filter: blur(5px);
+
     z-index: 1000;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     opacity: 0;
+
     pointer-events: none;
+
     transition: opacity 0.3s ease;
+
 }
+
+
 
 .calendar-modal-backdrop.show {
+
     opacity: 1;
+
     pointer-events: auto;
+
 }
+
+
 
 .calendar-modal-content {
+
     background: white;
+
     width: 100%;
+
     max-width: 500px;
+
     border-radius: 20px;
+
     padding: 30px;
+
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+
     transform: translateY(100vh);
+
     transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+
     position: relative;
+
     max-height: 80vh;
+
     overflow-y: auto;
+
 }
+
+
 
 .calendar-modal-backdrop.show .calendar-modal-content {
+
     transform: translateY(0);
+
 }
+
+
 
 .calendar-modal-close {
+
     position: absolute;
+
     top: 20px;
+
     right: 20px;
+
     background: #f1f5f9;
+
     border: none;
+
     border-radius: 50%;
+
     width: 32px;
+
     height: 32px;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     cursor: pointer;
+
     color: #64748b;
+
     transition: all 0.2s;
+
 }
+
+
 
 .calendar-modal-close:hover {
+
     background: #e2e8f0;
+
     color: #0f172a;
+
 }
+
+
 
 .calendar-modal-image {
+
     width: 100%;
+
     height: 200px;
+
     object-fit: cover;
+
     border-radius: 12px;
+
     margin-bottom: 20px;
+
     display: none;
+
 }
+
+
 
 .calendar-modal-badge {
+
     display: inline-block;
+
     padding: 4px 10px;
+
     border-radius: 20px;
+
     font-size: 0.8rem;
+
     font-weight: 600;
+
     margin-bottom: 12px;
+
     text-transform: uppercase;
+
     letter-spacing: 0.5px;
+
 }
+
+
 
 .calendar-modal-title {
+
     font-size: 1.5rem;
+
     font-weight: 700;
+
     color: #1e293b;
+
     margin-bottom: 15px;
+
 }
 
+
+
 .calendar-modal-desc {
+
     color: #475569;
+
     line-height: 1.6;
+
     font-size: 1rem;
+
 }
+
 </style>
+
 {% endblock %}
+
 {% block content %}
+
+
 
 <div class="db-wrap">
 
+
+
     <!-- SIDEBAR -->
+
     <div class="db-sidebar">
+
         <div class="db-sidebar-logo">CraftyKids</div>
+
         <div class="db-sidebar-section">Main</div>
+
         <a href="#section-overview" data-section="overview" class="db-sidebar-item active"
+
             onclick="showSection('overview'); return false;">Dashboard</a>
+
         {% if role == 'SUPER_ADMIN' %}
+
         <a href="#section-pending" data-section="pending" class="db-sidebar-item"
+
             onclick="showSection('pending'); return false;">
+
             Pending Approvals
+
             {% if pending_users or pending_videos or pending_flipbooks or pending_grade_users %}
+
             <span style="background: #e65100; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 5px; font-weight: bold;">!</span>
+
             {% endif %}
+
         </a>
+
         <a href="#section-announcements" data-section="announcements" class="db-sidebar-item"
+
             onclick="showSection('announcements'); return false;">Announcement</a>
+
         {% endif %}
+
+
 
         <div class="db-sidebar-section">Content</div>
+
         <a href="#section-videos" data-section="videos" class="db-sidebar-item"
+
             onclick="showSection('videos'); return false;">Videos</a>
+
         <a href="#section-flipbooks" data-section="flipbooks" class="db-sidebar-item"
+
             onclick="showSection('flipbooks'); return false;">Flipbooks</a>
+
         <a href="#section-calendar" data-section="calendar" class="db-sidebar-item"
+
             onclick="showSection('calendar'); return false;">Calendar</a>
+
         {% if role == 'TEACHER' %}
+
         <a href="#section-tasks" data-section="tasks" class="db-sidebar-item"
+
             onclick="showSection('tasks'); return false;">Tasks</a>
+
         {% endif %}
+
         {% if role == 'SUPER_ADMIN' %}
+
         <div class="db-sidebar-section">Manage</div>
+
         <a href="#section-users" data-section="users" class="db-sidebar-item"
+
             onclick="showSection('users'); return false;">Accounts</a>
 
+
+
         <a href="#section-audit" data-section="audit" class="db-sidebar-item"
+
             onclick="showSection('audit'); return false;">Audit Log</a>
+
         {% endif %}
+
         <a href="#section-archive" data-section="archive" class="db-sidebar-item"
+
             onclick="showSection('archive'); return false;">Archive</a>
+
     </div>
 
+
+
     <!-- MAIN CONTENT -->
+
     <div class="db-main">
 
+
+
         <!-- Messages -->
+
         <!-- Messages -->
+
         {% if messages %}
+
             {% for message in messages %}
+
                 {% if message.tags == 'success' or 'success' in message.tags %}
+
                 <!-- PREMIUM SUCCESS POPUP MODAL (Blur Background) -->
+
                 <style>
+
                 @keyframes fadeInOverlay {
+
                     from { opacity: 0; }
+
                     to { opacity: 1; }
+
                 }
+
                 @keyframes slideUpFade {
+
                     0% {
+
                         opacity: 0;
+
                         transform: translateY(50px) scale(0.95);
+
                     }
+
                     100% {
+
                         opacity: 1;
+
                         transform: translateY(0) scale(1);
+
                     }
+
                 }
+
                 </style>
+
                 <div id="operation-success-modal" class="modal-overlay" style="display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(230, 242, 230, 0.6); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; animation: fadeInOverlay 0.3s ease-out forwards;">
+
                     <div class="confirm-box" style="background: var(--white); padding: 40px; border-radius: var(--radius); text-align: center; box-shadow: var(--shadow); border: 2px dashed var(--green); max-width: 450px; width: 90%; animation: slideUpFade 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">
+
                         <div style="margin-bottom: 20px;">
+
                             <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+
                                 <circle cx="12" cy="12" r="12" fill="var(--green, #4CAF50)"/>
+
                                 <path d="M7 12.5l3 3 7-7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
                             </svg>
+
                         </div>
+
                         <h1 style="font-family: 'Fredoka One', cursive; color: var(--green-dark); font-size: 1.8rem; margin-bottom: 15px;">Success!</h1>
+
                         <p style="font-size: 1.05rem; font-weight: 700; color: #4a5568; margin-bottom: 25px; line-height: 1.6;">{{ message }}</p>
+
                         <div style="display: flex; justify-content: center;">
+
                             <button type="button" onclick="document.getElementById('operation-success-modal').style.display='none'; if(typeof confetti !== 'undefined'){ confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }" class="btn-auth" style="padding: 10px 40px; border-radius: 20px; font-weight: bold; cursor: pointer; border: none; background: var(--green); color: white; font-size: 1.1rem; box-shadow: 0 4px 0 var(--green-dark); width: auto;">Awesome!</button>
+
                         </div>
+
                     </div>
+
                 </div>
+
                 <script>
+
                     document.addEventListener('DOMContentLoaded', () => {
+
                         if (typeof confetti !== 'undefined') {
+
                             confetti({
+
                                 particleCount: 150,
+
                                 spread: 80,
+
                                 origin: { y: 0.6 }
+
                             });
+
                         } else {
+
                             // dynamically load confetti if missing
+
                             let script = document.createElement('script');
+
                             script.src = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js";
+
                             script.onload = function() {
+
                                 confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+
                             };
+
                             document.head.appendChild(script);
+
                         }
+
                     });
+
                 </script>
+
                 {% else %}
+
                 <ul class="messages">
+
                     <li class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</li>
+
                 </ul>
+
                 {% endif %}
+
             {% endfor %}
+
         {% endif %}
+
+
 
         <!-- OVERVIEW SECTION -->
+
         <div id="section-overview" class="db-section" style="display:none;">
+
             <div class="db-header">
+
                 <div>
+
                     <div class="db-page-badge">{{ role_display }} Dashboard</div>
+
                     <h1 class="db-title"><span id="dynamic-greeting">Welcome back</span>, {{ request.user.first_name|default:request.user.username }}!</h1>
+
                     <p class="db-sub">
+
                         Here's what's happening on CraftyKids today. &nbsp;|&nbsp; 
+
                         <span style="color: var(--pink); font-weight: bold;">🕒 <span id="live-dashboard-clock"></span></span>
+
                     </p>
+
                 </div>
 
+
+
             </div>
+
+
 
             {% if role == 'SUPER_ADMIN' %}
+
             
+
             {% if pending_users or pending_videos or pending_flipbooks or pending_grade_users %}
+
             <div class="pending-banner">
+
                 <div class="pending-banner-content">
+
                     <span class="pending-icon">⚠️</span>
+
                     <div class="pending-text">
+
                         <strong>Needs Attention</strong>
+
                         <span>You have pending items waiting for your review.</span>
+
                     </div>
+
                 </div>
+
                 <a href="#section-pending" onclick="showSection('pending'); return false;" class="pending-action-btn">Review Now</a>
+
             </div>
+
             {% endif %}
+
+
 
             <div class="metro-container">
+
                 <div class="metro-grid">
+
                     <a class="metro-tile bg-green" href="#section-flipbooks"
+
                         onclick="showSection('flipbooks'); return false;">
+
                         <div class="metro-icon">
+
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60">
+
                                 <path d="M32 54 Q20 50 10 52 L10 14 Q20 12 32 16 Z" fill="#5b9bd5" rx="2" />
+
                                 <path d="M32 54 Q44 50 54 52 L54 14 Q44 12 32 16 Z" fill="#3a7bc8" />
+
                                 <rect x="30" y="14" width="4" height="40" fill="#2563a8" />
+
                                 <ellipse cx="32" cy="55" rx="22" ry="3" fill="rgba(0,0,0,0.15)" />
+
                             </svg>
+
                         </div>
+
                         <div class="metro-text">Flipbooks<br><small style="font-size:0.75rem; font-weight: normal;">{{ total_flipbooks }} items</small></div>
+
                     </a>
+
                     <a class="metro-tile bg-teal" href="#section-videos"
+
                         onclick="showSection('videos'); return false;">
+
                         <div class="metro-icon">
+
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60">
+
                                 <circle cx="32" cy="32" r="30" fill="#fff" fill-opacity="0.2"/>
+
                                 <path d="M24 18 L46 32 L24 46 Z" fill="#fff"/>
+
                             </svg>
+
                         </div>
+
                         <div class="metro-text">Videos<br><small style="font-size:0.75rem; font-weight: normal;">{{ total_videos }} items</small></div>
+
                     </a>
+
                     <a class="metro-tile bg-pink" href="#section-announcements"
+
                         onclick="showSection('announcements'); return false;">
+
                         <div class="metro-icon">
+
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="50" height="50">
+
                                 <path d="M12 24 L52 24 L52 48 C52 52.4 48.4 56 44 56 L20 56 C15.6 56 12 52.4 12 48 Z" fill="#fff" fill-opacity="0.3"/>
+
                                 <path d="M12 24 L52 24 L32 8 Z" fill="#fff"/>
+
                                 <circle cx="32" cy="40" r="4" fill="#fff"/>
+
                             </svg>
+
                         </div>
+
                         <div class="metro-text">Announcements</div>
+
                     </a>
+
                     <a class="metro-tile bg-blue" href="#section-users" onclick="showSection('users'); return false;">
+
                         <div class="metro-icon">
+
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="50" height="50">
+
                                 <circle cx="32" cy="20" r="12" fill="#fff"/>
+
                                 <path d="M10 56 C10 40 54 40 54 56 Z" fill="#fff"/>
+
                             </svg>
+
                         </div>
+
                         <div class="metro-text">Accounts<br><small
+
                                 style="font-size:0.75rem; font-weight: normal;">{{ total_users }} users</small></div>
+
                     </a>
+
+
 
                     <a class="metro-tile bg-purple" href="#section-audit" onclick="showSection('audit'); return false;">
+
                         <div class="metro-icon"
+
                             style="display: flex; align-items: center; justify-content: center; line-height: 1;">
+
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60"
+
                                 style="display: block;">
+
                                 <defs>
+
                                     <linearGradient id="magnifierGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+
                                         <stop offset="0%" style="stop-color:#00d2ff;stop-opacity:1" />
+
                                         <stop offset="100%" style="stop-color:#3a7bc8;stop-opacity:1" />
+
                                     </linearGradient>
+
                                 </defs>
+
                                 <circle cx="28" cy="28" r="18" stroke="url(#magnifierGradient)" stroke-width="6"
+
                                     fill="none" />
+
                                 <line x1="42" y1="42" x2="54" y2="54" stroke="url(#magnifierGradient)" stroke-width="8"
+
                                     stroke-linecap="round" />
+
                                 <circle cx="22" cy="22" r="5" fill="white" fill-opacity="0.3" />
+
                             </svg>
+
                         </div>
+
                         <div class="metro-text">Audit Log</div>
+
                     </a>
+
                     <a class="metro-tile bg-red" href="#section-archive"
+
                         onclick="showSection('archive'); return false;">
+
                         <div class="metro-icon">
+
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="45" height="45">
+
                                 <path d="M16 16 L48 16 L44 56 L20 56 Z" fill="#fff" fill-opacity="0.3"/>
+
                                 <rect x="12" y="8" width="40" height="8" rx="2" fill="#fff"/>
+
                                 <rect x="28" y="4" width="8" height="4" fill="#fff"/>
+
                             </svg>
+
                         </div>
+
                         <div class="metro-text">Archive</div>
+
                     </a>
+
                 </div>
+
                 <div class="metro-calendar">
+
                     <div id="cal-header" class="cal-header"></div>
+
                     <div id="cal-grid" class="cal-grid">
+
                         <div class="cal-day-name">Sun</div>
+
                         <div class="cal-day-name">Mon</div>
+
                         <div class="cal-day-name">Tue</div>
+
                         <div class="cal-day-name">Wed</div>
+
                         <div class="cal-day-name">Thu</div>
+
                         <div class="cal-day-name">Fri</div>
+
                         <div class="cal-day-name">Sat</div>
+
                     </div>
+
                     <div style="margin-top: 24px; font-size: 0.8rem; color: var(--gray); text-align: center;">Notice
+
                         Board</div>
+
                 </div>
+
             </div>
+
             {% else %}
+
             <!-- Teacher Overview -->
+
             <div class="metro-container" style="margin-bottom: 32px;">
+
                 <div style="flex: 1;">
+
                     <div class="db-stats" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+
                         <div class="db-stat">
+
                             <div class="db-stat-top">
+
                                 <span class="db-stat-lbl">My Videos</span>
+
                                 <div class="db-stat-ico ico-v">🎬</div>
+
                             </div>
+
                             <div class="db-stat-num">{{ my_videos|length }}</div>
+
                         </div>
+
                         <div class="db-stat">
+
                             <div class="db-stat-top">
+
                                 <span class="db-stat-lbl">My Flipbooks</span>
+
                                 <div class="db-stat-ico ico-f">📖</div>
+
                             </div>
+
                             <div class="db-stat-num">{{ my_flipbooks|length }}</div>
+
                         </div>
+
                     </div>
+
                 </div>
+
                 
+
                 <div class="metro-calendar">
+
                     <div id="cal-header" class="cal-header"></div>
+
                     <div id="cal-grid" class="cal-grid">
+
                         <div class="cal-day-name">Sun</div>
+
                         <div class="cal-day-name">Mon</div>
+
                         <div class="cal-day-name">Tue</div>
+
                         <div class="cal-day-name">Wed</div>
+
                         <div class="cal-day-name">Thu</div>
+
                         <div class="cal-day-name">Fri</div>
+
                         <div class="cal-day-name">Sat</div>
+
                     </div>
+
                     <div style="margin-top: 24px; font-size: 0.8rem; color: var(--gray); text-align: center;">Notice
+
                         Board</div>
+
                 </div>
+
             </div>
+
+
 
             <div class="db-header" style="margin-top: 32px;">
+
                 <h2 class="db-title" style="font-size: 1.4rem;">My Videos</h2>
+
             </div>
+
             <div class="grid-cards">
+
                 {% for v in my_videos %}
+
                 <div class="content-card">
+
                     <div class="content-card-thumbnail">
+
                         {% if v.thumbnail %}
+
                         <img src="{{ v.thumbnail.url }}" alt="Thumbnail">
+
                         {% else %}
+
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+
                         {% endif %}
+
                     </div>
+
                     <div class="content-card-header">
+
                         <div class="content-card-title">{{ v.title|truncatechars:20 }}</div>
+
                         {% if v.is_approved %}
+
                             <span class="db-badge green">Approved</span>
+
                         {% else %}
+
                             <span class="pending-badge">Pending</span>
+
                         {% endif %}
+
                     </div>
+
                 </div>
+
                 {% empty %}
+
                 <div class="empty-state-card">
+
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+
                     <div class="empty-state-title">No Videos Yet</div>
+
                     <div class="empty-state-desc">You haven't uploaded any videos. Once you do, they will appear here!</div>
+
                 </div>
+
                 {% endfor %}
+
             </div>
+
+
 
             <div class="db-header" style="margin-top: 48px;">
+
                 <h2 class="db-title" style="font-size: 1.4rem;">My Flipbooks</h2>
+
             </div>
+
             <div class="grid-cards">
+
                 {% for f in my_flipbooks %}
+
                 <div class="content-card">
+
                     <div class="content-card-thumbnail">
+
                         {% if f.thumbnail %}
+
                         <img src="{{ f.thumbnail.url }}" alt="Thumbnail">
+
                         {% else %}
+
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+
                         {% endif %}
+
                     </div>
+
                     <div class="content-card-header">
+
                         <div class="content-card-title">{{ f.title|truncatechars:20 }}</div>
+
                         {% if f.is_approved %}
+
                             <span class="db-badge green">Approved</span>
+
                         {% else %}
+
                             <span class="pending-badge">Pending</span>
+
                         {% endif %}
+
                     </div>
+
                 </div>
+
                 {% empty %}
+
                 <div class="empty-state-card">
+
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+
                     <div class="empty-state-title">No Flipbooks Yet</div>
+
                     <div class="empty-state-desc">You haven't uploaded any flipbooks. Create your first one to see it here!</div>
+
                 </div>
+
                 {% endfor %}
+
             </div>
+
             {% endif %}
+
         </div>
+
+
 
         <!-- PENDING APPROVALS SECTION -->
+
         {% if role == 'SUPER_ADMIN' %}
+
         <div id="section-pending" class="db-section" style="display:none;">
+
             <div class="db-header">
+
                 <div>
+
                     <div class="db-page-badge">Main</div>
+
                     <h1 class="db-title">Pending Approvals</h1>
+
                     <p class="db-sub">Review and approve pending accounts and content.</p>
+
                 </div>
+
             </div>
+
             
+
             {% if not pending_users and not pending_videos and not pending_flipbooks and not pending_grade_users %}
+
             <div class="empty-state-card">
+
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+
                 <div class="empty-state-title">All Caught Up!</div>
+
                 <div class="empty-state-desc">There are no pending approvals at the moment.</div>
+
             </div>
+
             {% else %}
+
             
+
             <!-- Sleek Glassmorphic Sub-tabs Switcher -->
+
             <div class="pending-tabs-container">
+
                 <button class="pending-tab-btn active" data-tab="accounts" onclick="switchPendingSubTab('accounts')">
+
                     Accounts <span class="pending-tab-badge" id="badge-accounts">{{ pending_users|length }}</span>
+
                 </button>
+
                 <button class="pending-tab-btn" data-tab="grades" onclick="switchPendingSubTab('grades')">
+
                     Grade Changes <span class="pending-tab-badge" id="badge-grades">{{ pending_grade_users|length }}</span>
+
                 </button>
+
                 <button class="pending-tab-btn" data-tab="videos" onclick="switchPendingSubTab('videos')">
+
                     Videos <span class="pending-tab-badge" id="badge-videos">{{ pending_videos|length }}</span>
+
                 </button>
+
                 <button class="pending-tab-btn" data-tab="flipbooks" onclick="switchPendingSubTab('flipbooks')">
+
                     Flipbooks <span class="pending-tab-badge" id="badge-flipbooks">{{ pending_flipbooks|length }}</span>
+
                 </button>
+
             </div>
+
+
 
             <!-- ACCOUNTS SUBTAB -->
+
             <div id="pending-subtab-accounts" class="pending-subtab-content" style="display: none;">
+
                 <div class="kanban-board">
+
                     {% for column_title, column_users in pending_users_by_grade.items %}
+
                     <div class="kanban-column">
+
                         <div class="kanban-column-header">
+
                             <h4 class="kanban-column-title">{{ column_title }}</h4>
+
                             <span class="kanban-column-count">{{ column_users|length }}</span>
+
                         </div>
+
                         <div class="kanban-column-body" style="padding: 10px 0;">
+
                             {% if column_users %}
+
                             <div class="compact-approval-card" style="padding: 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.02); min-height: 160px;">
+
                                 <div style="font-size: 2.2rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); margin-bottom: 5px;">📁</div>
+
                                 <div style="font-size: 1rem; font-weight: 800; color: #1a202c;">
+
                                     {% if 'Teacher' in column_title %}
+
                                         {{ column_title }}
+
                                     {% else %}
+
                                         Section {{ column_title }}
+
                                     {% endif %}
+
                                 </div>
+
                                 <div style="font-size: 0.8rem; color: #718096; font-weight: 600;">
+
                                     <span style="background: #e2e8f0; color: #4a5568; padding: 2px 7px; border-radius: 12px; font-weight: 700; font-size: 0.75rem; margin-right: 4px;">{{ column_users|length }}</span> pending
+
                                 </div>
+
                                 <button onclick="openSectionModal('{{ column_title|slugify }}')" class="compact-btn compact-btn-details" style="padding: 8px 16px; width: 100%; font-weight: 800; border-radius: 12px; display: flex; justify-content: center; gap: 6px; border: 1px solid #cbd5e0; background: #fff; cursor: pointer; transition: all 0.2s;">
+
                                     View Details
+
                                 </button>
+
                             </div>
+
                             {% else %}
+
                             <div style="text-align: center; padding: 20px; color: #a0aec0; font-size: 0.75rem; border: 1.5px dashed rgba(0,0,0,0.05); border-radius: 12px; background: rgba(0,0,0,0.01);">
+
                                 Empty
+
                             </div>
+
                             {% endif %}
+
                         </div>
+
                     </div>
+
+
 
                     {% if column_users %}
+
                     <!-- MODAL for Section Details -->
+
                     <div id="section-modal-{{ column_title|slugify }}" class="modal-overlay" onclick="closeSectionModal('{{ column_title|slugify }}')">
+
                         <div class="confirm-box" onclick="event.stopPropagation()" style="max-width: 650px; width: 90%; border-radius: 20px; text-align: left; padding: 25px; border-top: 5px solid #10b981;">
+
                             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
+
                                 <div style="display: flex; align-items: center; gap: 12px;">
+
                                     <span style="font-size: 1.8rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">📁</span>
+
                                     <div>
+
                                         <h2 style="font-size: 1.25rem; font-weight: 800; color: #1a202c; margin: 0;">
+
                                             {% if 'Teacher' in column_title %}
+
                                                 {{ column_title }} Pending Approvals
+
                                             {% else %}
+
                                                 Section {{ column_title }} Pending Approvals
+
                                             {% endif %}
+
                                         </h2>
+
                                         <p style="font-size: 0.8rem; color: #718096; margin: 0;">Review and manage accounts for this classroom.</p>
+
                                     </div>
+
                                 </div>
+
                                 <button onclick="closeSectionModal('{{ column_title|slugify }}')" style="background: none; border: none; font-size: 1.5rem; color: #a0aec0; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#4a5568'" onmouseout="this.style.color='#a0aec0'">&times;</button>
+
                             </div>
+
                             
+
                             <!-- Toolbar inside modal -->
+
                             <div style="background: #f7fafc; padding: 12px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; border: 1px solid #edf2f7;">
+
                                 <div style="display: flex; align-items: center; gap: 8px;">
+
                                     <input type="checkbox" id="select-all-{{ column_title|slugify }}" onchange="toggleSelectAllModal('{{ column_title|slugify }}', this.checked)" style="width: 18px; height: 18px; cursor: pointer; border-radius: 4px; border: 1px solid #cbd5e0;">
+
                                     <label for="select-all-{{ column_title|slugify }}" style="font-size: 0.85rem; font-weight: 700; color: #4a5568; cursor: pointer; user-select: none;">Select All That Applies</label>
+
                                 </div>
+
                                 <div style="display: flex; gap: 8px;">
+
                                     <button onclick="triggerBulkActionModal('{{ column_title|slugify }}', 'approve')" class="compact-btn compact-btn-approve" style="padding: 7px 14px; border-radius: 8px; font-weight: bold; margin: 0; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; border: 1px solid #a7f3d0; background: #ecfdf5; color: #047857;">Approve Selected</button>
+
                                     <button onclick="triggerBulkActionModal('{{ column_title|slugify }}', 'deny')" class="compact-btn compact-btn-deny" style="padding: 7px 14px; border-radius: 8px; font-weight: bold; margin: 0; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; border: 1px solid #fecaca; background: #fff5f5; color: #b91c1c;">Cancel Selected</button>
+
                                 </div>
+
                             </div>
+
                             
+
                             <!-- Student rows -->
+
                             <div style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
+
                                 {% for pending_user in column_users %}
+
                                 <div class="compact-approval-card" style="display: flex; align-items: center; justify-content: space-between; flex-direction: row; gap: 15px; margin: 0; padding: 12px 15px; background: #fff; border: 1px solid #edf2f7; box-shadow: 0 2px 4px rgba(0,0,0,0.01);">
+
                                     <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+
                                         <input type="checkbox" class="card-checkbox modal-checkbox-{{ column_title|slugify }}" value="{{ pending_user.pk }}" style="width: 18px; height: 18px; cursor: pointer; border-radius: 4px;">
+
                                         <div style="min-width: 0; flex: 1;">
+
                                             <div style="font-weight: 800; color: #2d3748; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ pending_user.username }}">
+
                                                 {{ pending_user.username }}
+
                                             </div>
+
                                             <div style="font-size: 0.75rem; color: #718096; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+
                                                 By: {{ pending_user.get_full_name|default:pending_user.username }}
+
                                             </div>
+
                                             {% if pending_user.profile.lrn_number %}
+
                                             <div style="font-size: 0.7rem; color: #718096; margin-top: 1px;">
+
                                                 LRN: <span style="font-family: monospace; font-weight: 600; color: #4a5568;">{{ pending_user.profile.lrn_number }}</span>
+
                                             </div>
+
                                             {% endif %}
+
                                             <div style="font-size: 0.7rem; color: #a0aec0; margin-top: 2px;">
+
                                                 Joined: {{ pending_user.date_joined|date:'M d, Y h:i A' }}
+
                                             </div>
+
                                         </div>
+
                                     </div>
+
                                     
+
                                     <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
+
                                         <button onclick="openDetailsModal('{{ pending_user.username|escapejs }}', '{{ pending_user.profile.grade_level|default:'Not specified'|escapejs }}', '{{ pending_user.date_joined|date:'M d, Y h:i A'|escapejs }}', '{{ pending_user.profile.lrn_number|default:''|escapejs }}', '{{ pending_user.profile.role|escapejs }}', '{{ pending_user.email|escapejs }}', '{% if pending_user.profile.faculty_id_image %}{{ pending_user.profile.faculty_id_image.url|escapejs }}{% endif %}', '{{ pending_user.profile.section|default:''|escapejs }}')" class="compact-btn compact-btn-details" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; cursor: pointer;">Details</button>
+
                                         <a href="javascript:void(0)" onclick="openActionModal('{% url "approve_user" pending_user.pk %}', 'Approve Account?', '✅', 'You are about to approve the account for &quot;<strong>{{ pending_user.username }}</strong>&quot;.', 'Yes, Approve!', false)" class="compact-btn compact-btn-approve" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; text-decoration: none;">Approve</a>
+
                                         <a href="javascript:void(0)" onclick="openActionModal('{% url "reject_user" pending_user.pk %}', 'Cancel Registration Request?', '🚫', 'You are about to cancel the registration request for &quot;<strong>{{ pending_user.username }}</strong>&quot;.', 'Yes, Cancel Request!', true)" class="compact-btn compact-btn-deny" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; text-decoration: none;">Cancel</a>
+
                                     </div>
+
                                 </div>
+
                                 {% endfor %}
+
                             </div>
+
                         </div>
+
                     </div>
+
                     {% endif %}
+
                     {% endfor %}
+
                 </div>
+
             </div>
+
+
 
             <!-- GRADE CHANGES SUBTAB -->
+
             <div id="pending-subtab-grades" class="pending-subtab-content" style="display: none;">
+
                 <!-- Bulk Action Bar -->
+
                 <div class="bulk-action-bar" id="bulk-action-grade">
+
                     <div style="display: flex; align-items: center; gap: 15px;">
+
                         <span style="font-weight: 800; color: #4a5568; font-size: 1rem;"><span id="selected-count-grade">0</span> selected</span>
+
                         <button onclick="selectAllInSection('grade', true)" style="background: transparent; border: 1px solid #cbd5e0; color: #4a5568; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">Select All</button>
+
                         <button onclick="selectAllInSection('grade', false)" style="background: transparent; border: 1px solid #cbd5e0; color: #4a5568; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">Deselect All</button>
+
                     </div>
+
                     <div style="display: flex; gap: 8px;">
+
                         <button onclick="triggerBulkAction('grade', 'approve')" class="approve-btn" style="margin: 0; padding: 8px 16px; border-radius: 12px; font-size: 0.9rem;">Approve Selected</button>
+
                         <button onclick="triggerBulkAction('grade', 'deny')" class="reject-btn" style="margin: 0; padding: 8px 16px; border-radius: 12px; font-size: 0.9rem; margin-left: 0;">Deny Selected</button>
+
                     </div>
+
                 </div>
 
+
+
                 <div class="kanban-board">
+
                     {% for column_title, column_users in pending_grade_users_by_grade.items %}
+
                     <div class="kanban-column">
+
                         <div class="kanban-column-header">
+
                             <h4 class="kanban-column-title">{{ column_title }}</h4>
+
                             <span class="kanban-column-count">{{ column_users|length }}</span>
+
                         </div>
+
                         <div class="kanban-column-body">
+
                             {% for pending_user in column_users %}
+
                             <div class="compact-approval-card">
+
                                 <div class="card-checkbox-container">
+
                                     <input type="checkbox" class="card-checkbox grade-checkbox" value="{{ pending_user.pk }}" onchange="updateSelectedCount('grade')">
+
                                     <span class="pending-badge" style="background: #e0f2fe; color: #0369a1;">Grade Change</span>
+
                                 </div>
+
                                 <div class="compact-approval-card-title" title="{{ pending_user.username }}">{{ pending_user.username }}</div>
+
                                 <div class="compact-approval-card-meta">Current: {{ pending_user.profile.grade_level|default:"None" }}</div>
+
                                 <div class="compact-approval-card-meta" style="color: #d97706; font-weight: bold;">Req: {{ pending_user.profile.pending_grade }}</div>
+
                                 <div class="compact-approval-card-actions">
+
                                     <button onclick="openDetailsModal('{{ pending_user.username|escapejs }}', '{{ pending_user.profile.grade_level|default:'Not specified'|escapejs }}', '{{ pending_user.date_joined|date:'M d, Y h:i A'|escapejs }}', '{{ pending_user.profile.lrn_number|default:''|escapejs }}', '{{ pending_user.profile.role|escapejs }}', '{{ pending_user.email|escapejs }}', '{% if pending_user.profile.faculty_id_image %}{{ pending_user.profile.faculty_id_image.url|escapejs }}{% endif %}', '{{ pending_user.profile.section|default:''|escapejs }}')" class="compact-btn compact-btn-details">Details</button>
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url "approve_grade" pending_user.pk %}', 'Approve Grade Change?', '✅', 'Approve grade change to <strong>{{ pending_user.profile.pending_grade }}</strong> for &quot;<strong>{{ pending_user.username }}</strong>&quot;?', 'Yes, Approve!', false)" class="compact-btn compact-btn-approve">Approve</a>
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url "reject_grade" pending_user.pk %}', 'Reject Grade Change?', '🚫', 'Reject grade change request for &quot;<strong>{{ pending_user.username }}</strong>&quot;?', 'Yes, Reject!', true)" class="compact-btn compact-btn-deny">Reject</a>
+
                                 </div>
+
                             </div>
+
                             {% empty %}
+
                             <div style="text-align: center; padding: 12px; color: #a0aec0; font-size: 0.75rem; border: 1.5px dashed rgba(0,0,0,0.03); border-radius: 8px;">
+
                                 Empty
+
                             </div>
+
                             {% endfor %}
+
                         </div>
+
                     </div>
+
                     {% endfor %}
+
                 </div>
+
             </div>
+
+
 
             <!-- VIDEOS SUBTAB -->
+
             <div id="pending-subtab-videos" class="pending-subtab-content" style="display: none;">
+
                 <!-- Bulk Action Bar -->
+
                 <div class="bulk-action-bar" id="bulk-action-video">
+
                     <div style="display: flex; align-items: center; gap: 15px;">
+
                         <span style="font-weight: 800; color: #4a5568; font-size: 1rem;"><span id="selected-count-video">0</span> selected</span>
+
                         <button onclick="selectAllInSection('video', true)" style="background: transparent; border: 1px solid #cbd5e0; color: #4a5568; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">Select All</button>
+
                         <button onclick="selectAllInSection('video', false)" style="background: transparent; border: 1px solid #cbd5e0; color: #4a5568; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">Deselect All</button>
+
                     </div>
+
                     <div style="display: flex; gap: 8px;">
+
                         <button onclick="triggerBulkAction('video', 'approve')" class="approve-btn" style="margin: 0; padding: 8px 16px; border-radius: 12px; font-size: 0.9rem;">Approve Selected</button>
+
                         <button onclick="triggerBulkAction('video', 'deny')" class="reject-btn" style="margin: 0; padding: 8px 16px; border-radius: 12px; font-size: 0.9rem; margin-left: 0;">Deny Selected</button>
+
                     </div>
+
                 </div>
 
+
+
                 <div class="kanban-board">
+
                     {% for column_title, column_videos in pending_videos_by_grade.items %}
+
                     <div class="kanban-column">
+
                         <div class="kanban-column-header">
+
                             <h4 class="kanban-column-title">{{ column_title }}</h4>
+
                             <span class="kanban-column-count">{{ column_videos|length }}</span>
+
                         </div>
+
                         <div class="kanban-column-body">
+
                             {% for video in column_videos %}
+
                             <div class="compact-approval-card">
+
                                 <div class="card-checkbox-container">
+
                                     <input type="checkbox" class="card-checkbox video-checkbox" value="{{ video.pk }}" onchange="updateSelectedCount('video')">
+
                                     <span class="pending-badge" style="background: #fdf2f8; color: #9d174d;">Video</span>
+
                                 </div>
+
                                 <div class="compact-approval-card-title" title="{{ video.title }}">{{ video.title }}</div>
+
                                 <div class="compact-approval-card-meta">By: {{ video.author.username }}</div>
+
                                 <div class="compact-approval-card-meta">Grade: {{ video.grade }}</div>
+
                                 <div class="compact-approval-card-actions">
+
                                     <button onclick="openContentDetailsModal('Video', '{{ video.title|escapejs }}', '{{ video.author.username|escapejs }}', '{{ video.category.name|escapejs }}', '{{ video.created_at|date:'M d, Y h:i A'|escapejs }}', '{{ video.description|escapejs }}', '{% if video.video_file %}{{ video.video_file.url|escapejs }}{% endif %}', '{% url "approve_content" "video" video.pk %}', '{% url "video_delete" video.pk %}')" class="compact-btn compact-btn-details">Details</button>
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url "approve_content" "video" video.pk %}', 'Approve Video?', '✅', 'You are about to approve the video &quot;<strong>{{ video.title }}</strong>&quot;.', 'Yes, Approve!', false)" class="compact-btn compact-btn-approve">Approve</a>
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url "video_delete" video.pk %}', 'Deny Video?', '🚫', 'You are about to deny the video &quot;<strong>{{ video.title }}</strong>&quot;.', 'Yes, Deny!', true)" class="compact-btn compact-btn-deny">Deny</a>
+
                                 </div>
+
                             </div>
+
                             {% empty %}
+
                             <div style="text-align: center; padding: 12px; color: #a0aec0; font-size: 0.75rem; border: 1.5px dashed rgba(0,0,0,0.03); border-radius: 8px;">
+
                                 Empty
+
                             </div>
+
                             {% endfor %}
+
                         </div>
+
                     </div>
+
                     {% endfor %}
+
                 </div>
+
             </div>
+
+
 
             <!-- FLIPBOOKS SUBTAB -->
+
             <div id="pending-subtab-flipbooks" class="pending-subtab-content" style="display: none;">
+
                 <!-- Bulk Action Bar -->
+
                 <div class="bulk-action-bar" id="bulk-action-flipbook">
+
                     <div style="display: flex; align-items: center; gap: 15px;">
+
                         <span style="font-weight: 800; color: #4a5568; font-size: 1rem;"><span id="selected-count-flipbook">0</span> selected</span>
+
                         <button onclick="selectAllInSection('flipbook', true)" style="background: transparent; border: 1px solid #cbd5e0; color: #4a5568; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">Select All</button>
+
                         <button onclick="selectAllInSection('flipbook', false)" style="background: transparent; border: 1px solid #cbd5e0; color: #4a5568; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">Deselect All</button>
+
                     </div>
+
                     <div style="display: flex; gap: 8px;">
+
                         <button onclick="triggerBulkAction('flipbook', 'approve')" class="approve-btn" style="margin: 0; padding: 8px 16px; border-radius: 12px; font-size: 0.9rem;">Approve Selected</button>
+
                         <button onclick="triggerBulkAction('flipbook', 'deny')" class="reject-btn" style="margin: 0; padding: 8px 16px; border-radius: 12px; font-size: 0.9rem; margin-left: 0;">Deny Selected</button>
+
                     </div>
+
                 </div>
+
+
 
                 <div class="kanban-board">
+
                     {% for column_title, column_flipbooks in pending_flipbooks_by_grade.items %}
+
                     <div class="kanban-column">
+
                         <div class="kanban-column-header">
+
                             <h4 class="kanban-column-title">{{ column_title }}</h4>
+
                             <span class="kanban-column-count">{{ column_flipbooks|length }}</span>
+
                         </div>
+
                         <div class="kanban-column-body">
+
                             {% for flipbook in column_flipbooks %}
+
                             <div class="compact-approval-card">
+
                                 <div class="card-checkbox-container">
+
                                     <input type="checkbox" class="card-checkbox flipbook-checkbox" value="{{ flipbook.pk }}" onchange="updateSelectedCount('flipbook')">
+
                                     <span class="pending-badge" style="background: #faf5ff; color: #6b21a8;">Flipbook</span>
+
                                 </div>
+
                                 <div class="compact-approval-card-title" title="{{ flipbook.title }}">{{ flipbook.title }}</div>
+
                                 <div class="compact-approval-card-meta">By: {{ flipbook.author.username }}</div>
+
                                 <div class="compact-approval-card-meta">Grade: {{ flipbook.grade }}</div>
+
                                 <div class="compact-approval-card-actions">
+
                                     <button onclick="openContentDetailsModal('Flipbook', '{{ flipbook.title|escapejs }}', '{{ flipbook.author.username|escapejs }}', '{{ flipbook.category.name|escapejs }}', '{{ flipbook.created_at|date:'M d, Y h:i A'|escapejs }}', '{{ flipbook.description|escapejs }}', '{% if flipbook.pdf_file %}{{ flipbook.pdf_file.url|escapejs }}{% endif %}', '{% url "approve_content" "flipbook" flipbook.pk %}', '{% url "flipbook_delete" flipbook.pk %}')" class="compact-btn compact-btn-details">Details</button>
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url "approve_content" "flipbook" flipbook.pk %}', 'Approve Flipbook?', '✅', 'You are about to approve the flipbook &quot;<strong>{{ flipbook.title }}</strong>&quot;.', 'Yes, Approve!', false)" class="compact-btn compact-btn-approve">Approve</a>
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url "flipbook_delete" flipbook.pk %}', 'Deny Flipbook?', '🚫', 'You are about to deny the flipbook &quot;<strong>{{ flipbook.title }}</strong>&quot;.', 'Yes, Deny!', true)" class="compact-btn compact-btn-deny">Deny</a>
+
                                 </div>
+
                             </div>
+
                             {% empty %}
+
                             <div style="text-align: center; padding: 12px; color: #a0aec0; font-size: 0.75rem; border: 1.5px dashed rgba(0,0,0,0.03); border-radius: 8px;">
+
                                 Empty
+
                             </div>
+
                             {% endfor %}
+
                         </div>
+
                     </div>
+
                     {% endfor %}
+
                 </div>
+
             </div>
+
             {% endif %}
+
         </div>
+
         {% endif %}
+
+
 
         <!-- ANNOUNCEMENTS SECTION -->
+
         {% if role == 'SUPER_ADMIN' %}
+
         <div id="section-announcements" class="db-section" style="display:none;">
+
             <div class="db-header">
+
                 <div>
+
                     <div class="db-page-badge">Main</div>
+
                     <h1 class="db-title">Announcement</h1>
+
                     <p class="db-sub">Manage what users see across the system.</p>
+
                 </div>
+
                 <a href="{% url 'announcement_create' %}" class="db-btn teal">+ Add Announcement</a>
+
             </div>
+
             <div class="kanban-board">
+
                 {% for grade_name, grade_announcements in announcements_by_grade.items %}
+
                 <div class="kanban-column">
+
                     <div class="kanban-column-header" style="background: rgba(255, 255, 255, 0.4); border-radius: 12px; padding: 6px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1.5px solid var(--green-mid);">
+
                         <h4 class="kanban-column-title" style="margin: 0; font-family: 'Fredoka One', cursive; font-size: 0.95rem; color: var(--green-dark);">{{ grade_name }}</h4>
+
                         <span class="kanban-column-count" style="background: var(--green-dark); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold;">{{ grade_announcements|length }}</span>
+
                     </div>
+
                     <div class="kanban-column-body" style="padding: 0;">
+
                         <div class="compact-approval-card" style="padding: 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1.5px solid var(--green-mid); border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); min-height: 160px; transition: transform 0.2s, border-color 0.2s;" onmouseover="this.style.transform='scale(1.02)'; this.style.borderColor='var(--green)';" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='var(--green-mid)';">
+
                             <div style="font-size: 2.8rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); margin-bottom: 2px;">📁</div>
+
                             <div style="font-size: 1rem; font-weight: 800; color: #1a202c; font-family: 'Fredoka One', cursive;">
+
                                 {{ grade_name }} Folder
+
                             </div>
+
                             <div style="font-size: 0.8rem; color: #718096; font-weight: 600;">
+
                                 <span style="background: #e2e8f0; color: #4a5568; padding: 2px 7px; border-radius: 12px; font-weight: 700; font-size: 0.75rem; margin-right: 4px;">{{ grade_announcements|length }}</span> announcements
+
                             </div>
+
                             <button onclick="openGradeModal('{{ grade_name|slugify }}')" class="compact-btn compact-btn-details" style="padding: 8px 16px; width: 100%; font-weight: 800; border-radius: 12px; display: flex; justify-content: center; gap: 6px; border: 1px solid #cbd5e0; background: #fff; cursor: pointer; transition: all 0.2s;">
+
                                 View Folder
+
                             </button>
+
                         </div>
+
                     </div>
+
                 </div>
+
                 {% endfor %}
+
             </div>
+
+
 
             {% for grade_name, grade_announcements in announcements_by_grade.items %}
+
             <!-- Modal for Grade folder -->
+
             <div id="grade-modal-{{ grade_name|slugify }}" class="modal-overlay" onclick="closeGradeModal('{{ grade_name|slugify }}')">
+
                 <div class="confirm-box" onclick="event.stopPropagation()" style="max-width: 650px; width: 90%; border-radius: 20px; text-align: left; padding: 25px; border-top: 5px solid #2ecc71; border-style: solid; border-width: 5px 1.5px 1.5px 1.5px; border-color: #2ecc71 var(--green-mid) var(--green-mid) var(--green-mid);">
+
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
+
                         <div style="display: flex; align-items: center; gap: 12px;">
+
                             <span style="font-size: 1.8rem;">📁</span>
+
                             <div>
+
                                 <h2 style="font-size: 1.25rem; font-weight: 800; color: #1a202c; margin: 0; font-family: 'Fredoka One', cursive;">
+
                                     {{ grade_name }} Announcements
+
                                 </h2>
+
                                 <p style="font-size: 0.8rem; color: #718096; margin: 0; font-weight: 600;">Manage announcements in this grade level folder.</p>
+
                             </div>
+
                         </div>
+
                         <button onclick="closeGradeModal('{{ grade_name|slugify }}')" style="background: none; border: none; font-size: 1.5rem; color: #a0aec0; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#4a5568'" onmouseout="this.style.color='#a0aec0'">&times;</button>
+
                     </div>
+
                     
+
                     {% if grade_announcements %}
+
                     <!-- Toolbar inside modal -->
+
                     <div style="background: #f7fafc; padding: 12px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; border: 1px solid #edf2f7;">
+
                         <div style="display: flex; align-items: center; gap: 8px;">
+
                             <input type="checkbox" id="select-all-ann-{{ grade_name|slugify }}" onchange="toggleSelectAllAnnModal('{{ grade_name|slugify }}', this.checked)" style="width: 18px; height: 18px; cursor: pointer; border-radius: 4px; border: 1px solid #cbd5e0;">
+
                             <label for="select-all-ann-{{ grade_name|slugify }}" style="font-size: 0.85rem; font-weight: 700; color: #4a5568; cursor: pointer; user-select: none;">Select All That Applies</label>
+
                         </div>
+
                         <div style="display: flex; gap: 8px;">
+
                             <button onclick="triggerBulkArchiveAnnModal('{{ grade_name|slugify }}')" class="compact-btn compact-btn-deny" style="padding: 7px 14px; border-radius: 8px; font-weight: bold; margin: 0; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; border: 1px solid #fecaca; background: #fff5f5; color: #b91c1c;">Archive Selected</button>
+
                         </div>
+
                     </div>
+
                     {% endif %}
+
                     
+
                     <div style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 5px;">
+
                         {% for ann in grade_announcements %}
+
                         <div class="compact-approval-card" style="display: flex; align-items: center; justify-content: space-between; flex-direction: row; gap: 15px; margin: 0; padding: 15px; background: #fff; border: 1.5px solid var(--green-mid); border-radius: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.01);">
+
                             <input type="checkbox" class="card-checkbox ann-modal-checkbox-{{ grade_name|slugify }}" value="{{ ann.pk }}" style="width: 18px; height: 18px; cursor: pointer; border-radius: 4px; flex-shrink: 0;">
+
                             <div style="min-width: 0; flex: 1;">
+
                                 <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap;">
+
                                     <span class="db-badge {% if ann.category == 'Update' %}green{% elif ann.category == 'Event' %}teal{% elif ann.category == 'Activity' %}green{% else %}gray{% endif %}" style="font-size: 0.7rem; padding: 2px 8px;">
+
                                         {% if ann.category == 'Update' %}📌{% elif ann.category == 'Event' %}🎉{% elif ann.category == 'Activity' %}🎨{% elif ann.category == 'Holiday' %}🏖️{% endif %} {{ ann.category }}
+
                                     </span>
+
                                     <span class="db-badge gray" style="font-size: 0.7rem; padding: 2px 8px;">👥 {{ ann.target_audience }}</span>
+
                                 </div>
+
                                 <div style="font-weight: 800; color: #2d3748; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Fredoka One', cursive;" title="{{ ann.title }}">
+
                                     {{ ann.title }}
+
                                 </div>
+
                                 <div style="font-size: 0.8rem; color: #718096; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; font-weight: 600;">
+
                                     {{ ann.content }}
+
                                 </div>
+
                                 <div style="font-size: 0.7rem; color: #a0aec0; margin-top: 4px; font-weight: 700;">
+
                                     Posted: {{ ann.created_at|date:'M d, Y h:i A' }}
+
                                 </div>
+
                             </div>
+
                             
+
                             <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
+
                                 <a href="{% url 'announcement_edit' ann.pk %}" class="db-btn-e" style="padding: 8px 14px; font-size: 0.8rem; text-decoration: none;">Edit</a>
+
                                 <a href="javascript:void(0)" onclick="closeGradeModal('{{ grade_name|slugify }}'); openActionModal('{% url 'announcement_delete' ann.pk %}', 'Archive Announcement?', '🗑️', 'You are about to archive &quot;<strong>{{ ann.title|escapejs }}</strong>&quot;.', 'Yes, Archive!', true)" class="db-btn-d" style="padding: 8px 14px; font-size: 0.8rem; text-decoration: none;">Archive</a>
+
                             </div>
+
                         </div>
+
                         {% empty %}
+
                         <div style="text-align: center; padding: 30px; color: #a0aec0; font-size: 0.85rem; border: 1.5px dashed rgba(0,0,0,0.05); border-radius: 12px; background: rgba(0,0,0,0.01); font-weight: bold;">
+
                             No announcements in this folder yet.
+
                         </div>
+
                         {% endfor %}
+
                     </div>
+
                 </div>
+
             </div>
+
             {% endfor %}
+
         </div>
+
         {% endif %}
+
+
 
         <!-- VIDEOS SECTION -->
+
         <div id="section-videos" class="db-section" style="display:none;">
+
             <div class="db-header">
+
                 <div>
+
                     <div class="db-page-badge">Content</div>
+
                     <h1 class="db-title">Videos</h1>
+
                     <p class="db-sub">Manage videos here.</p>
+
                 </div>
+
                 <a href="{% url 'video_create' %}" class="db-btn teal">+ Add Video</a>
+
             </div>
+
             <div class="db-card">
+
                 <table class="db-table">
+
                     <thead>
+
                         <tr>
+
                             <th>Title</th>
-                            <th>Category</th>
-                            <th>Status</th>
-                            {% if role != 'SUPER_ADMIN' %}
-                            <th>Actions</th>
+
+                            {% if role == 'SUPER_ADMIN' %}
+
+                            <th>Uploaded By</th>
+
                             {% endif %}
+
+                            <th>Category</th>
+
+                            <th>Status</th>
+
+                            {% if role != 'SUPER_ADMIN' %}
+
+                            <th>Actions</th>
+
+                            {% endif %}
+
                         </tr>
+
                     </thead>
+
                     <tbody>
+
                         {% if role == 'SUPER_ADMIN' %}
+
                         {% for video in all_videos %}
+
                         <tr>
+
                             <td>{% if video.is_approved %}<a href="{% url 'video_detail' video.pk %}" style="color: var(--teal); font-weight: bold; text-decoration: underline;">{{ video.title }}</a>{% else %}{{ video.title }}{% endif %}</td>
-                            <td><span class="db-badge green">{{ video.category }}</span></td>
-                            <td>{% if video.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span
-                                    class="pending-badge">Pending</span>{% endif %}</td>
-                        </tr>
-                        {% empty %}<tr>
-                            <td colspan="3" class="db-empty">No videos yet.</td>
-                        </tr>{% endfor %}
-                        {% else %}
-                        {% for video in my_videos %}
-                        <tr>
-                            <td>{{ video.title }}</td>
-                            <td><span class="db-badge green">{{ video.category }}</span></td>
-                            <td>{% if video.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span
-                                    class="pending-badge">Pending</span>{% endif %}</td>
+
                             <td>
-                                {% if video.is_approved %}
-                                <div class="db-actions"><a href="{% url 'video_edit' video.pk %}"
-                                        class="db-btn-e">Edit</a><a href="javascript:void(0)" onclick="openActionModal('{% url 'video_delete' video.pk %}', 'Archive Video?', '🗑️', 'You are about to archive &quot;<strong>{{ video.title }}</strong>&quot;.', 'Yes, Archive!', true)" class="db-btn-d">Archive</a></div>
+
+                                {% if video.author %}
+
+                                <div style="display: inline-flex; align-items: center; gap: 8px;">
+
+                                    <span style="font-weight: 600; color: #2d3748;">{{ video.author.get_full_name|default:video.author.username }}</span>
+
+                                    <button type="button" onclick="openAuthorDetailsModal('{{ video.author.username|escapejs }}', '{{ video.author.first_name|escapejs }}', '{{ video.author.last_name|escapejs }}', '{{ video.author.email|default:''|escapejs }}', '{{ video.author.profile.get_role_display|escapejs }}', '{{ video.author.profile.grade_level|default:''|escapejs }}', '{{ video.author.profile.section|default:''|escapejs }}', '{{ video.author.profile.lrn_number|default:''|escapejs }}', '{{ video.author.date_joined|date:'M d, Y h:i A'|escapejs }}', '{% if video.author.profile.faculty_id_image %}{{ video.author.profile.faculty_id_image.url|escapejs }}{% endif %}')" class="compact-btn compact-btn-details" style="padding: 3px 8px; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">Info</button>
+
+                                </div>
+
                                 {% else %}
-                                -
+
+                                <span style="color: #a0aec0; font-style: italic;">Admin/System</span>
+
                                 {% endif %}
+
                             </td>
+
+                            <td><span class="db-badge green">{{ video.category }}</span></td>
+
+                            <td>{% if video.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span
+
+                                    class="pending-badge">Pending</span>{% endif %}</td>
+
                         </tr>
+
                         {% empty %}<tr>
-                            <td colspan="4" class="db-empty">You haven't uploaded any videos.</td>
+
+                            <td colspan="4" class="db-empty">No videos yet.</td>
+
                         </tr>{% endfor %}
+
+                        {% else %}
+
+                        {% for video in my_videos %}
+
+                        <tr>
+
+                            <td>{{ video.title }}</td>
+
+                            <td><span class="db-badge green">{{ video.category }}</span></td>
+
+                            <td>{% if video.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span
+
+                                    class="pending-badge">Pending</span>{% endif %}</td>
+
+                            <td>
+
+                                {% if video.is_approved %}
+
+                                <div class="db-actions"><a href="{% url 'video_edit' video.pk %}"
+
+                                        class="db-btn-e">Edit</a><a href="javascript:void(0)" onclick="openActionModal('{% url 'video_delete' video.pk %}', 'Archive Video?', '🗑️', 'You are about to archive &quot;<strong>{{ video.title }}</strong>&quot;.', 'Yes, Archive!', true)" class="db-btn-d">Archive</a></div>
+
+                                {% else %}
+
+                                -
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}<tr>
+
+                            <td colspan="4" class="db-empty">You haven't uploaded any videos.</td>
+
+                        </tr>{% endfor %}
+
                         {% endif %}
+
                     </tbody>
+
                 </table>
+
             </div>
+
         </div>
+
+
 
         <!-- FLIPBOOKS SECTION -->
+
         <div id="section-flipbooks" class="db-section" style="display:none;">
+
             <div class="db-header">
+
                 <div>
+
                     <div class="db-page-badge">Content</div>
+
                     <h1 class="db-title">Flipbooks</h1>
+
                     <p class="db-sub">Manage flipbook tutorials here.</p>
+
                 </div>
+
                 <a href="{% url 'flipbook_create' %}" class="db-btn green">+ Add Flipbook</a>
+
             </div>
+
             <div class="db-card">
+
                 <table class="db-table">
+
                     <thead>
+
                         <tr>
+
                             <th>Title</th>
+
+                            {% if role == 'SUPER_ADMIN' %}
+
+                            <th>Uploaded By</th>
+
+                            {% endif %}
+
                             <th>Category</th>
+
                             <th>Status</th>
+
                             <th>Actions</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody>
+
                         {% if role == 'SUPER_ADMIN' %}
+
                         {% for flipbook in all_flipbooks %}
+
                         <tr>
+
                             <td>{% if flipbook.is_approved %}<a href="{% url 'flipbook_detail' flipbook.pk %}" style="color: var(--teal); font-weight: bold; text-decoration: underline;">{{ flipbook.title }}</a>{% else %}{{ flipbook.title }}{% endif %}</td>
-                            <td><span class="db-badge teal">{{ flipbook.category }}</span></td>
-                            <td>{% if flipbook.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span
-                                    class="pending-badge">Pending</span>{% endif %}</td>
+
                             <td>
-                                <div class="db-actions">
-                                    <a href="{% url 'quiz_manage' flipbook.pk %}" class="db-btn-e" style="background: #8b5cf6; color: white; text-decoration: none;">Quiz 📝</a>
+
+                                {% if flipbook.author %}
+
+                                <div style="display: inline-flex; align-items: center; gap: 8px;">
+
+                                    <span style="font-weight: 600; color: #2d3748;">{{ flipbook.author.get_full_name|default:flipbook.author.username }}</span>
+
+                                    <button type="button" onclick="openAuthorDetailsModal('{{ flipbook.author.username|escapejs }}', '{{ flipbook.author.first_name|escapejs }}', '{{ flipbook.author.last_name|escapejs }}', '{{ flipbook.author.email|default:''|escapejs }}', '{{ flipbook.author.profile.get_role_display|escapejs }}', '{{ flipbook.author.profile.grade_level|default:''|escapejs }}', '{{ flipbook.author.profile.section|default:''|escapejs }}', '{{ flipbook.author.profile.lrn_number|default:''|escapejs }}', '{{ flipbook.author.date_joined|date:'M d, Y h:i A'|escapejs }}', '{% if flipbook.author.profile.faculty_id_image %}{{ flipbook.author.profile.faculty_id_image.url|escapejs }}{% endif %}')" class="compact-btn compact-btn-details" style="padding: 3px 8px; font-size: 0.72rem; border-radius: 6px; cursor: pointer;">Info</button>
+
                                 </div>
-                            </td>
-                        </tr>
-                        {% empty %}<tr>
-                            <td colspan="4" class="db-empty">No flipbooks yet.</td>
-                        </tr>{% endfor %}
-                        {% else %}
-                        {% for flipbook in my_flipbooks %}
-                        <tr>
-                            <td>{{ flipbook.title }}</td>
-                            <td><span class="db-badge teal">{{ flipbook.category }}</span></td>
-                            <td>{% if flipbook.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span
-                                    class="pending-badge">Pending</span>{% endif %}</td>
-                            <td>
-                                {% if flipbook.is_approved %}
-                                <div class="db-actions">
-                                    <a href="{% url 'quiz_manage' flipbook.pk %}" class="db-btn-e" style="background: #8b5cf6; color: white; text-decoration: none;">Quiz 📝</a>
-                                    <a href="{% url 'flipbook_edit' flipbook.pk %}" class="db-btn-e">Edit</a>
-                                    <a href="javascript:void(0)" onclick="openActionModal('{% url 'flipbook_delete' flipbook.pk %}', 'Archive Flipbook?', '🗑️', 'You are about to archive &quot;<strong>{{ flipbook.title }}</strong>&quot;.', 'Yes, Archive!', true)" class="db-btn-d">Archive</a>
-                                </div>
+
                                 {% else %}
-                                -
+
+                                <span style="color: #a0aec0; font-style: italic;">Admin/System</span>
+
                                 {% endif %}
+
                             </td>
+
+                            <td><span class="db-badge teal">{{ flipbook.category }}</span></td>
+
+                            <td>{% if flipbook.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span
+
+                                    class="pending-badge">Pending</span>{% endif %}</td>
+
+                            <td>
+
+                                <div class="db-actions">
+
+                                    <a href="{% url 'quiz_manage' flipbook.pk %}" class="db-btn-e" style="background: #8b5cf6; color: white; text-decoration: none;">Quiz 📝</a>
+
+                                </div>
+
+                            </td>
+
                         </tr>
+
                         {% empty %}<tr>
-                            <td colspan="4" class="db-empty">You haven't uploaded any flipbooks.</td>
+
+                            <td colspan="5" class="db-empty">No flipbooks yet.</td>
+
                         </tr>{% endfor %}
+
+                        {% else %}
+
+                        {% for flipbook in my_flipbooks %}
+
+                        <tr>
+
+                            <td>{{ flipbook.title }}</td>
+
+                            <td><span class="db-badge teal">{{ flipbook.category }}</span></td>
+
+                            <td>{% if flipbook.is_approved %}<span class="db-badge green">Approved</span>{% else %}<span
+
+                                    class="pending-badge">Pending</span>{% endif %}</td>
+
+                            <td>
+
+                                {% if flipbook.is_approved %}
+
+                                <div class="db-actions">
+
+                                    <a href="{% url 'quiz_manage' flipbook.pk %}" class="db-btn-e" style="background: #8b5cf6; color: white; text-decoration: none;">Quiz 📝</a>
+
+                                    <a href="{% url 'flipbook_edit' flipbook.pk %}" class="db-btn-e">Edit</a>
+
+                                    <a href="javascript:void(0)" onclick="openActionModal('{% url 'flipbook_delete' flipbook.pk %}', 'Archive Flipbook?', '🗑️', 'You are about to archive &quot;<strong>{{ flipbook.title }}</strong>&quot;.', 'Yes, Archive!', true)" class="db-btn-d">Archive</a>
+
+                                </div>
+
+                                {% else %}
+
+                                -
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}<tr>
+
+                            <td colspan="4" class="db-empty">You haven't uploaded any flipbooks.</td>
+
+                        </tr>{% endfor %}
+
                         {% endif %}
+
                     </tbody>
+
                 </table>
+
             </div>
+
         </div>
+
+
 
         <!-- CALENDAR EVENTS SECTION -->
+
         <div id="section-calendar" class="db-section" style="display:none;">
+
             <div class="db-header">
+
                 <div>
+
                     <div class="db-page-badge">Content</div>
+
                     <h1 class="db-title">Calendar</h1>
+
                     <p class="db-sub">Manage upcoming events, holidays, lesson plans, and modules.</p>
+
                 </div>
+
                 <a href="{% url 'calendar_event_create' %}" class="db-btn green">+ Add Event</a>
+
             </div>
+
             
+
             <div class="grid-cards" style="margin-top: 24px;">
+
                 {% for evt in calendar_events %}
+
                 <div class="content-card" style="border-color: {% if evt.event_type == 'Holiday' %}#fde047{% else %}#a29bfe{% endif %};">
+
                     <div class="content-card-thumbnail">
+
                         {% if evt.image %}
+
                         <img src="{{ evt.image.url }}" alt="Event Image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+
                         {% else %}
+
                         <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f8fafc; border-radius: 12px;">
+
                             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+
                         </div>
+
                         {% endif %}
+
                     </div>
+
                     <div class="content-card-header" style="flex-direction: column;">
+
                         <span class="db-badge {% if evt.event_type == 'Holiday' %}yellow{% else %}green{% endif %}" style="align-self: flex-start; margin-bottom: 8px;">{{ evt.event_type }}</span>
+
                         <div class="content-card-title">{{ evt.title }}</div>
+
                         <div class="content-card-meta">{{ evt.date|date:"M d, Y" }}</div>
+
                     </div>
+
                     {% if evt.description %}
+
                     <p style="font-size: 0.85rem; color: var(--gray); margin-top: 8px;">{{ evt.description|truncatechars:60 }}</p>
+
                     {% endif %}
+
                     <div class="content-card-actions">
+
                         <a href="{% url 'calendar_event_edit' evt.pk %}" class="db-btn-e">Edit</a>
+
                         <a href="javascript:void(0)" onclick="openActionModal('{% url 'calendar_event_delete' evt.pk %}', 'Archive Event?', '🗑️', 'You are about to archive &quot;<strong>{{ evt.title|escapejs }}</strong>&quot;.', 'Yes, Archive!', true)" class="db-btn-d">Archive</a>
+
                     </div>
+
                 </div>
+
                 {% empty %}
+
                 <div class="empty-state-card" style="grid-column: 1 / -1;">
+
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+
                     <div class="empty-state-title">No Calendar Events</div>
+
                     <div class="empty-state-desc">You haven't added any upcoming calendar events. Create one to get started!</div>
+
                 </div>
+
                 {% endfor %}
+
             </div>
+
         </div>
+
+
 
         {% if role == 'TEACHER' %}
+
         <!-- TASKS SECTION -->
+
         <div id="section-tasks" class="db-section" style="display:none;">
+
             <div class="db-header">
+
                 <div>
+
                     <div class="db-page-badge">Content</div>
+
                     <h1 class="db-title">Tasks</h1>
+
                     <p class="db-sub">Manage your personal tasks and to-dos.</p>
+
                 </div>
+
             </div>
+
             
+
             <div style="margin-top: 24px;">
+
                 <h3 style="color: var(--dark); margin-bottom: 12px; font-size: 1.2rem;">To-Do</h3>
+
                 <div class="task-group" id="todo-tasks-container">
+
                     {% for task in teacher_tasks %}
+
                     {% if task.status != 'Done' %}
+
                     <div class="task-card" data-task-id="{{ task.id }}">
+
                         <div class="task-title">
+
                             <input type="text" class="task-title-input" value="{{ task.title }}" onchange="updateTask({{ task.id }}, 'title', this.value)">
+
                         </div>
+
                         <div class="task-status">
+
                             <select class="task-status-select" onchange="updateTask({{ task.id }}, 'status', this.value)" 
+
                                     style="background-color: {% if task.status == 'Working on it' %}#fde047; color: #854d0e;{% elif task.status == 'Stuck' %}#fbcfe8; color: #9d174d;{% elif task.status == 'Done' %}#bbf7d0; color: #166534;{% else %}#e2e8f0; color: #334155;{% endif %}">
+
                                 <option value="To Do" {% if task.status == 'To Do' %}selected{% endif %}>To Do</option>
+
                                 <option value="Working on it" {% if task.status == 'Working on it' %}selected{% endif %}>Working on it</option>
+
                                 <option value="Stuck" {% if task.status == 'Stuck' %}selected{% endif %}>Stuck</option>
+
                                 <option value="Done" {% if task.status == 'Done' %}selected{% endif %}>Done</option>
+
                             </select>
+
                         </div>
+
                         <div class="task-due-date">
+
                             <input type="date" class="task-date-input" value="{{ task.due_date|date:'Y-m-d' }}" onchange="updateTask({{ task.id }}, 'due_date', this.value)">
+
                         </div>
+
                         <div class="task-actions">
+
                             <button onclick="deleteTask({{ task.id }})" class="task-del-btn" title="Delete Task">×</button>
+
                         </div>
+
                     </div>
+
                     {% endif %}
+
                     {% endfor %}
+
                     <div class="task-add-row" id="task-add-row-todo">
+
                         <input type="text" id="new-task-input" placeholder="+ Add task" onkeydown="if(event.key === 'Enter') createTask()">
+
                         <button onclick="createTask()" class="db-btn green" style="padding: 8px 16px; border-radius: 8px;">Add</button>
+
                     </div>
+
                 </div>
+
+
 
                 <h3 style="color: var(--green-dark); margin-top: 32px; margin-bottom: 12px; font-size: 1.2rem;">Completed</h3>
+
                 <div class="task-group" id="completed-tasks-container">
+
                     {% for task in teacher_tasks %}
+
                     {% if task.status == 'Done' %}
+
                     <div class="task-card" data-task-id="{{ task.id }}">
+
                         <div class="task-title">
+
                             <input type="text" class="task-title-input completed-title" value="{{ task.title }}" onchange="updateTask({{ task.id }}, 'title', this.value)" style="text-decoration: line-through; color: #94a3b8;">
+
                         </div>
+
                         <div class="task-status">
+
                             <select class="task-status-select" onchange="updateTask({{ task.id }}, 'status', this.value)" 
+
                                     style="background-color: #bbf7d0; color: #166534;">
+
                                 <option value="To Do" {% if task.status == 'To Do' %}selected{% endif %}>To Do</option>
+
                                 <option value="Working on it" {% if task.status == 'Working on it' %}selected{% endif %}>Working on it</option>
+
                                 <option value="Stuck" {% if task.status == 'Stuck' %}selected{% endif %}>Stuck</option>
+
                                 <option value="Done" {% if task.status == 'Done' %}selected{% endif %}>Done</option>
+
                             </select>
+
                         </div>
+
                         <div class="task-due-date">
+
                             <input type="date" class="task-date-input" value="{{ task.due_date|date:'Y-m-d' }}" onchange="updateTask({{ task.id }}, 'due_date', this.value)">
+
                         </div>
+
                         <div class="task-actions">
+
                             <button onclick="deleteTask({{ task.id }})" class="task-del-btn" title="Delete Task">×</button>
+
                         </div>
+
                     </div>
+
                     {% endif %}
+
                     {% endfor %}
+
                 </div>
+
             </div>
+
         </div>
+
         {% endif %}
 
+
+
         {% if role == 'SUPER_ADMIN' %}
+
         <!-- USERS SECTION -->
+
         <div id="section-users" class="db-section" style="display:none;">
+
             <div class="db-header">
+
                 <div>
+
                     <div class="db-page-badge">Manage</div>
+
                     <h1 class="db-title">Accounts</h1>
+
                     <p class="db-sub">All accounts registered on CraftyKids.</p>
+
                 </div>
+
             </div>
+
             <div class="db-card">
+
                 <table class="db-table">
+
                     <thead>
+
                         <tr>
+
                             <th>Username</th>
+
                             <th>Role</th>
+
                             <th>Email</th>
+
                             <th>Status</th>
+
                             <th>Actions</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody>
+
                         {% for u in users %}
+
                         <tr>
+
                             <td><strong>{{ u.username }}</strong></td>
+
                             <td><span class="db-badge gray">{{ u.profile.get_role_display }}</span></td>
+
                             <td>{{ u.email|default:"-" }}</td>
+
                             <td>
+
                                 {% if not u.is_active %}
+
                                 <span class="db-badge red" style="background:#f8d7da;color:#721c24;">Deactivated</span>
+
                                 {% elif not u.profile.is_approved and u.profile.role != 'SUPER_ADMIN' %}
+
                                 <span class="pending-badge">Pending</span>
+
                                 {% else %}<span class="db-badge green">Active</span>{% endif %}
+
                             </td>
+
                             <td>
+
                                 {% if u.profile.is_approved or u.profile.role == 'SUPER_ADMIN' %}
+
                                 <div class="db-actions">
+
                                     {% if request.user.pk != u.pk %}
+
                                     {% if u.is_active %}
+
                                     <button onclick="openActionModal('{% url 'toggle_user_status' u.pk %}', 'Deactivate User?', '🚫', 'You are about to deactivate the user &quot;<strong>{{ u.username }}</strong>&quot;.', 'Yes, Deactivate!', true)" class="db-btn-e" style="background:#fff3cd; color:#856404; border:none; cursor:pointer; font-family: inherit;">Deactivate</button>
+
                                     {% else %}
+
                                     <button onclick="openActionModal('{% url 'toggle_user_status' u.pk %}', 'Activate User?', '✅', 'You are about to activate the user &quot;<strong>{{ u.username }}</strong>&quot;.', 'Yes, Activate!', false)" class="db-btn-e" style="background:#d4edda; color:#155724; border:none; cursor:pointer; font-family: inherit;">Activate</button>
+
                                     {% endif %}
+
                                     <button onclick="openActionModal('{% url 'delete_user' u.pk %}', 'Archive User?', '🗑️', 'You are about to archive the user &quot;<strong>{{ u.username }}</strong>&quot;.', 'Yes, Archive!', true)" class="db-btn-d">Archive</button>
+
                                     {% endif %}
+
                                 </div>
+
                                 {% elif not u.profile.is_approved and u.profile.role != 'SUPER_ADMIN' %}
+
                                 <div class="db-actions">
+
                                     <button onclick="openActionModal('{% url 'reject_user' u.pk %}', 'Cancel Registration Request?', '🚫', 'You are about to cancel the registration request for &quot;<strong>{{ u.username }}</strong>&quot;.', 'Yes, Cancel Request!', true)" class="db-btn-d" style="background:#ffebee; color:#e53935; border:none; cursor:pointer; font-family: inherit;">Cancel Request</button>
+
                                 </div>
+
                                 {% endif %}
+
                             </td>
+
                         </tr>
+
                         {% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
+
         </div>
+
+
+
+
 
 
 
         <div id="section-audit" class="db-section" style="display:none;">
+
             <div class="db-header">
+
                 <div>
+
                     <div class="db-page-badge">Security</div>
+
                     <h1 class="db-title">Audit Log</h1>
+
                     <p class="db-sub">Track logins and changes.</p>
+
                 </div><a href="/admin/main/auditlog/" class="db-btn teal">Open in Admin</a>
+
             </div>
+
             <div class="db-card">
+
                 <table class="db-table">
+
                     <thead>
+
                         <tr>
+
                             <th>When</th>
+
                             <th>Actor</th>
+
                             <th>Action</th>
+
                             <th>Target</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody>
+
                         {% for log in recent_audit_logs %}<tr>
+
                             <td>{{ log.created_at|date:"M d, Y h:i A" }}</td>
+
                             <td>{{ log.actor.username|default:"System" }}</td>
+
                             <td>{{ log.get_action_display }}</td>
+
                             <td>{{ log.target_label }}</td>
+
                         </tr>
+
                         {% empty %}<tr>
+
                             <td colspan="4" class="db-empty">No logs.</td>
+
                         </tr>{% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
+
         </div>
+
         {% endif %}
 
+
+
         <div id="section-archive" class="db-section" style="display:none;">
+
             <div class="db-header">
+
                 <div>
+
                     <div class="db-page-badge">Manage</div>
+
                     <h1 class="db-title">Archived Files</h1>
+
                     <p class="db-sub">Monitor deleted content.</p>
+
                 </div>
+
             </div>
+
             
+
             {% if role == 'SUPER_ADMIN' %}
+
             <div class="db-card" style="margin-bottom: 20px;">
+
                 <div class="db-card-head" style="display: flex; justify-content: space-between; align-items: center;">
+
                     <h3>Archived Accounts</h3>
+
                     <div class="bulk-actions" style="display: none;" id="bulk-actions-user">
+
                         <button class="db-btn-e" style="background:#e8faf0; color:#2ecc71; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem;" onclick="submitBulkAction('table-archived-user', 'user', 'restore')">Restore Selected</button>
+
                         <button class="db-btn-d" style="background:#ffebee; color:#e53935; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem; margin-left:5px;" onclick="submitBulkAction('table-archived-user', 'user', 'delete')">Delete Selected</button>
+
                     </div>
+
                 </div>
+
                 <table class="db-table">
+
                     <thead>
+
                         <tr>
+
                             <th style="width: 40px;"><input type="checkbox" onchange="toggleSelectAll(this, 'table-archived-user')"></th>
+
                             <th>Username</th>
+
                             <th>Role</th>
+
                             <th>Archived On</th>
+
                             <th>Actions</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody id="table-archived-user">
+
                         {% for u in archived_users %}<tr>
+
                             <td><input type="checkbox" class="select-item" value="{{ u.pk }}" onchange="updateBulkActionVisibility('table-archived-user', 'bulk-actions-user')"></td>
+
                             <td>{{ u.username }}</td>
+
                             <td><span class="db-badge gray">{{ u.profile.get_role_display }}</span></td>
+
                             <td>{{ u.date_joined|date:"M d, Y" }}</td>
+
                             <td>
+
                                 <div class="db-actions">
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url 'user_restore' u.pk %}', 'Undo Archive?', '↩️', 'You are about to restore the user &quot;<strong>{{ u.username }}</strong>&quot;.', 'Yes, Restore!', false)" class="db-btn-e" style="background:#e8faf0; color:#2ecc71; text-decoration:none;">Undo Archive</a>
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url 'user_permanent_delete' u.pk %}', 'Permanently Delete?', '🗑️', 'You are about to permanently delete &quot;<strong>{{ u.username }}</strong>&quot;. This cannot be recovered.', 'Yes, Delete permanently!', true)" class="db-btn-d">Permanently delete</a>
+
                                 </div>
+
                             </td>
+
                         </tr>
+
                         {% empty %}<tr>
+
                             <td colspan="5" class="db-empty">No archived users.</td>
+
                         </tr>{% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
+
             <div class="db-card" style="margin-bottom: 20px;">
+
                 <div class="db-card-head" style="display: flex; justify-content: space-between; align-items: center;">
+
                     <h3>Archived Announcements</h3>
+
                     <div class="bulk-actions" style="display: none;" id="bulk-actions-announcement">
+
                         <button class="db-btn-e" style="background:#e8faf0; color:#2ecc71; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem;" onclick="submitBulkAction('table-archived-announcement', 'announcement', 'restore')">Restore Selected</button>
+
                         <button class="db-btn-d" style="background:#ffebee; color:#e53935; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem; margin-left:5px;" onclick="submitBulkAction('table-archived-announcement', 'announcement', 'delete')">Delete Selected</button>
+
                     </div>
+
                 </div>
+
                 <table class="db-table">
+
                     <thead>
+
                         <tr>
+
                             <th style="width: 40px;"><input type="checkbox" onchange="toggleSelectAll(this, 'table-archived-announcement')"></th>
+
                             <th>Title</th>
+
                             <th>Archived On</th>
+
                             <th>Actions</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody id="table-archived-announcement">
+
                         {% for ann in archived_announcements %}<tr>
+
                             <td><input type="checkbox" class="select-item" value="{{ ann.pk }}" onchange="updateBulkActionVisibility('table-archived-announcement', 'bulk-actions-announcement')"></td>
+
                             <td>{{ ann.title }}</td>
+
                             <td>{{ ann.created_at|date:"M d, Y" }}</td>
+
                             <td>
+
                                 <div class="db-actions">
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url 'announcement_restore' ann.pk %}', 'Undo Archive?', '↩️', 'You are about to restore the announcement &quot;<strong>{{ ann.title }}</strong>&quot;.', 'Yes, Restore!', false)" class="db-btn-e" style="background:#e8faf0; color:#2ecc71; text-decoration:none;">Undo Archive</a>
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url 'announcement_permanent_delete' ann.pk %}', 'Permanently Delete?', '🗑️', 'You are about to permanently delete &quot;<strong>{{ ann.title }}</strong>&quot;. This cannot be recovered.', 'Yes, Delete permanently!', true)" class="db-btn-d">Permanently delete</a>
+
                                 </div>
+
                             </td>
+
                         </tr>
+
                         {% empty %}<tr>
+
                             <td colspan="4" class="db-empty">No archived announcements.</td>
+
                         </tr>{% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
+
             {% endif %}
 
+
+
             <div class="db-card" style="margin-bottom: 20px;">
+
                 <div class="db-card-head" style="display: flex; justify-content: space-between; align-items: center;">
+
                     <h3>Archived Videos</h3>
+
                     <div class="bulk-actions" style="display: none;" id="bulk-actions-video">
+
                         <button class="db-btn-e" style="background:#e8faf0; color:#2ecc71; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem;" onclick="submitBulkAction('table-archived-video', 'video', 'restore')">Restore Selected</button>
+
                         <button class="db-btn-d" style="background:#ffebee; color:#e53935; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem; margin-left:5px;" onclick="submitBulkAction('table-archived-video', 'video', 'delete')">Delete Selected</button>
+
                     </div>
+
                 </div>
+
                 <table class="db-table">
+
                     <thead>
+
                         <tr>
+
                             <th style="width: 40px;"><input type="checkbox" onchange="toggleSelectAll(this, 'table-archived-video')"></th>
+
                             <th>Title</th>
+
                             <th>Archived On</th>
+
                             <th>Actions</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody id="table-archived-video">
+
                         {% for video in archived_videos %}<tr>
+
                             <td><input type="checkbox" class="select-item" value="{{ video.pk }}" onchange="updateBulkActionVisibility('table-archived-video', 'bulk-actions-video')"></td>
+
                             <td>{{ video.title }}</td>
+
                             <td>{{ video.created_at|date:"M d, Y" }}</td>
+
                             <td>
+
                                 <div class="db-actions">
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url 'video_restore' video.pk %}', 'Undo Archive?', '↩️', 'You are about to restore the video &quot;<strong>{{ video.title }}</strong>&quot;.', 'Yes, Restore!', false)" class="db-btn-e" style="background:#e8faf0; color:#2ecc71; text-decoration:none;">Undo Archive</a>
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url 'video_permanent_delete' video.pk %}', 'Permanently Delete?', '🗑️', 'You are about to permanently delete &quot;<strong>{{ video.title }}</strong>&quot;. This cannot be recovered.', 'Yes, Delete permanently!', true)" class="db-btn-d">Permanently delete</a>
+
                                 </div>
+
                             </td>
+
                         </tr>
+
                         {% empty %}<tr>
+
                             <td colspan="4" class="db-empty">No archived videos.</td>
+
                         </tr>{% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
+
             <div class="db-card">
+
                 <div class="db-card-head" style="display: flex; justify-content: space-between; align-items: center;">
+
                     <h3>Archived Flipbooks</h3>
+
                     <div class="bulk-actions" style="display: none;" id="bulk-actions-flipbook">
+
                         <button class="db-btn-e" style="background:#e8faf0; color:#2ecc71; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem;" onclick="submitBulkAction('table-archived-flipbook', 'flipbook', 'restore')">Restore Selected</button>
+
                         <button class="db-btn-d" style="background:#ffebee; color:#e53935; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem; margin-left:5px;" onclick="submitBulkAction('table-archived-flipbook', 'flipbook', 'delete')">Delete Selected</button>
+
                     </div>
+
                 </div>
+
                 <table class="db-table">
+
                     <thead>
+
                         <tr>
+
                             <th style="width: 40px;"><input type="checkbox" onchange="toggleSelectAll(this, 'table-archived-flipbook')"></th>
+
                             <th>Title</th>
+
                             <th>Archived On</th>
+
                             <th>Actions</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody id="table-archived-flipbook">
+
                         {% for flipbook in archived_flipbooks %}<tr>
+
                             <td><input type="checkbox" class="select-item" value="{{ flipbook.pk }}" onchange="updateBulkActionVisibility('table-archived-flipbook', 'bulk-actions-flipbook')"></td>
+
                             <td>{{ flipbook.title }}</td>
+
                             <td>{{ flipbook.created_at|date:"M d, Y" }}</td>
+
                             <td>
+
                                 <div class="db-actions">
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url 'flipbook_restore' flipbook.pk %}', 'Undo Archive?', '↩️', 'You are about to restore the flipbook &quot;<strong>{{ flipbook.title }}</strong>&quot;.', 'Yes, Restore!', false)" class="db-btn-e" style="background:#e8faf0; color:#2ecc71; text-decoration:none;">Undo Archive</a>
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url 'flipbook_permanent_delete' flipbook.pk %}', 'Permanently Delete?', '🗑️', 'You are about to permanently delete &quot;<strong>{{ flipbook.title }}</strong>&quot;. This cannot be recovered.', 'Yes, Delete permanently!', true)" class="db-btn-d">Permanently delete</a>
+
                                 </div>
+
                             </td>
+
                         </tr>
+
                         {% empty %}<tr>
+
                             <td colspan="4" class="db-empty">No archived flipbooks.</td>
+
                         </tr>{% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
 
+
+
             <div class="db-card" style="margin-bottom: 20px;">
+
                 <div class="db-card-head" style="display: flex; justify-content: space-between; align-items: center;">
+
                     <h3>Archived Calendar Events</h3>
+
                     <div class="bulk-actions" style="display: none;" id="bulk-actions-event">
+
                         <button class="db-btn-e" style="background:#e8faf0; color:#2ecc71; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem;" onclick="submitBulkAction('table-archived-event', 'event', 'restore')">Restore Selected</button>
+
                         <button class="db-btn-d" style="background:#ffebee; color:#e53935; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem; margin-left:5px;" onclick="submitBulkAction('table-archived-event', 'event', 'delete')">Delete Selected</button>
+
                     </div>
+
                 </div>
+
                 <table class="db-table">
+
                     <thead>
+
                         <tr>
+
                             <th style="width: 40px;"><input type="checkbox" onchange="toggleSelectAll(this, 'table-archived-event')"></th>
+
                             <th>Title</th>
+
                             <th>Date</th>
+
                             <th>Type</th>
+
                             <th>Actions</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody id="table-archived-event">
+
                         {% for event in archived_events %}<tr>
+
                             <td><input type="checkbox" class="select-item" value="{{ event.pk }}" onchange="updateBulkActionVisibility('table-archived-event', 'bulk-actions-event')"></td>
+
                             <td>{{ event.title }}</td>
+
                             <td>{{ event.date|date:"M d, Y" }}</td>
+
                             <td><span class="db-badge {% if event.event_type == 'Holiday' %}purple{% else %}green{% endif %}">{{ event.event_type }}</span></td>
+
                             <td>
+
                                 <div class="db-actions">
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url 'calendar_event_restore' event.pk %}', 'Undo Archive?', '↩️', 'You are about to restore the calendar event &quot;<strong>{{ event.title }}</strong>&quot;.', 'Yes, Restore!', false)" class="db-btn-e" style="background:#e8faf0; color:#2ecc71; text-decoration:none;">Undo Archive</a>
+
                                     <a href="javascript:void(0)" onclick="openActionModal('{% url 'calendar_event_permanent_delete' event.pk %}', 'Permanently Delete?', '🗑️', 'You are about to permanently delete &quot;<strong>{{ event.title }}</strong>&quot;. This cannot be recovered.', 'Yes, Delete permanently!', true)" class="db-btn-d">Permanently delete</a>
+
                                 </div>
+
                             </td>
+
                         </tr>
+
                         {% empty %}<tr>
+
                             <td colspan="5" class="db-empty">No archived calendar events.</td>
+
                         </tr>{% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
 
+
+
             <div class="db-card" style="margin-bottom: 20px;">
+
                 <div class="db-card-head" style="display: flex; justify-content: space-between; align-items: center;">
+
                     <h3>Archived Video Comments</h3>
+
                     <div class="bulk-actions" style="display: none;" id="bulk-actions-video_comment">
+
                         <button class="db-btn-e" style="background:#e8faf0; color:#2ecc71; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem;" onclick="submitBulkAction('table-archived-video_comment', 'video_comment', 'restore')">Restore Selected</button>
+
                         <button class="db-btn-d" style="background:#ffebee; color:#e53935; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem; margin-left:5px;" onclick="submitBulkAction('table-archived-video_comment', 'video_comment', 'delete')">Delete Selected</button>
+
                     </div>
+
                 </div>
+
                 <table class="db-table">
+
                     <thead>
+
                         <tr>
+
                             <th style="width: 40px;"><input type="checkbox" onchange="toggleSelectAll(this, 'table-archived-video_comment')"></th>
+
                             <th>User/Author</th>
+
                             <th>Comment Text</th>
+
                             <th>Video</th>
+
                             <th>Archived On</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody id="table-archived-video_comment">
+
                         {% for c in archived_video_comments %}<tr>
+
                             <td><input type="checkbox" class="select-item" value="{{ c.pk }}" onchange="updateBulkActionVisibility('table-archived-video_comment', 'bulk-actions-video_comment')"></td>
+
                             <td>{{ c.user.username|default:c.name }}</td>
+
                             <td>{{ c.text|truncatechars:50 }}</td>
+
                             <td>{{ c.video.title }}</td>
+
                             <td>{{ c.created_at|date:"M d, Y, h:i A" }}</td>
+
                         </tr>
+
                         {% empty %}<tr>
+
                             <td colspan="5" class="db-empty">No archived video comments.</td>
+
                         </tr>{% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
 
+
+
             <div class="db-card" style="margin-bottom: 20px;">
+
                 <div class="db-card-head" style="display: flex; justify-content: space-between; align-items: center;">
+
                     <h3>Archived Flipbook Comments</h3>
+
                     <div class="bulk-actions" style="display: none;" id="bulk-actions-flipbook_comment">
+
                         <button class="db-btn-e" style="background:#e8faf0; color:#2ecc71; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem;" onclick="submitBulkAction('table-archived-flipbook_comment', 'flipbook_comment', 'restore')">Restore Selected</button>
+
                         <button class="db-btn-d" style="background:#ffebee; color:#e53935; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.75rem; margin-left:5px;" onclick="submitBulkAction('table-archived-flipbook_comment', 'flipbook_comment', 'delete')">Delete Selected</button>
+
                     </div>
+
                 </div>
+
                 <table class="db-table">
+
                     <thead>
+
                         <tr>
+
                             <th style="width: 40px;"><input type="checkbox" onchange="toggleSelectAll(this, 'table-archived-flipbook_comment')"></th>
+
                             <th>User/Author</th>
+
                             <th>Comment Text</th>
+
                             <th>Flipbook</th>
+
                             <th>Archived On</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody id="table-archived-flipbook_comment">
+
                         {% for c in archived_flipbook_comments %}<tr>
+
                             <td><input type="checkbox" class="select-item" value="{{ c.pk }}" onchange="updateBulkActionVisibility('table-archived-flipbook_comment', 'bulk-actions-flipbook_comment')"></td>
+
                             <td>{{ c.user.username|default:c.name }}</td>
+
                             <td>{{ c.text|truncatechars:50 }}</td>
+
                             <td>{{ c.flipbook.title }}</td>
+
                             <td>{{ c.created_at|date:"M d, Y, h:i A" }}</td>
+
                         </tr>
+
                         {% empty %}<tr>
+
                             <td colspan="5" class="db-empty">No archived flipbook comments.</td>
+
                         </tr>{% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
+
         </div>
+
     </div>
+
 </div>
+
+
 
 <style>
+
     .cal-day {
+
         position: relative;
+
     }
+
     .cal-event-tooltip {
+
         display: none;
+
         position: absolute;
+
         bottom: 110%; 
+
         left: 50%;
+
         transform: translateX(-50%);
+
         background: #fff;
+
         border: 1px solid #e2e8f0;
+
         padding: 8px;
+
         border-radius: 6px;
+
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+
         z-index: 1000;
+
         min-width: 120px;
+
         max-width: 150px;
+
         text-align: left;
+
         pointer-events: auto;
+
     }
+
     .cal-day:hover .cal-event-tooltip {
+
         display: block;
+
     }
+
     .cal-tooltip-img {
+
         width: 100%;
+
         height: 60px;
+
         object-fit: cover;
+
         border-radius: 4px;
+
         margin-bottom: 4px;
+
     }
+
     .cal-tooltip-title {
+
         font-size: 0.8rem;
+
         font-weight: 700;
+
         color: var(--primary);
+
         line-height: 1.2;
+
         margin-bottom: 2px;
+
     }
+
     .cal-tooltip-desc {
+
         font-size: 0.7rem;
+
         color: var(--gray);
+
         line-height: 1.2;
+
         white-space: normal;
+
     }
+
 </style>
 
+
+
 <!-- Calendar Logic (Same as before) -->
+
 <script>
+
     function generateCalendar() {
+
         const now = new Date(); const year = now.getFullYear(); const month = now.getMonth(); const today = now.getDate();
+
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
         if (document.getElementById('cal-header')) document.getElementById('cal-header').textContent = `${monthNames[month]} ${year}`;
+
         const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
+
         const prevDaysInMonth = new Date(year, month, 0).getDate(); const grid = document.getElementById('cal-grid');
+
         if (!grid) return;
+
         while (grid.children.length > 7) grid.removeChild(grid.lastChild);
+
         
+
         const eventsData = JSON.parse('{{ events_json|default:"[]"|escapejs }}');
+
         
+
         for (let i = firstDay - 1; i >= 0; i--) { const d = document.createElement('div'); d.className = 'cal-day'; d.style.color = '#ccc'; d.textContent = prevDaysInMonth - i; grid.appendChild(d); }
+
         for (let i = 1; i <= daysInMonth; i++) { 
+
             const d = document.createElement('div'); 
+
             d.className = 'cal-day'; 
+
             if (i === today) d.classList.add('active'); 
+
             
+
             const currentMonthStr = String(month + 1).padStart(2, '0');
+
             const currentDayStr = String(i).padStart(2, '0');
+
             const dateStr = `${year}-${currentMonthStr}-${currentDayStr}`;
+
             
+
             d.innerHTML = `<span>${i}</span>`;
+
             
+
             const dayEvents = eventsData.filter(e => e.date === dateStr);
+
             if (dayEvents.length > 0) {
+
                 d.style.borderBottom = '3px solid var(--pink)';
+
                 d.style.cursor = 'pointer';
+
                 
+
                 const tooltip = document.createElement('div');
+
                 tooltip.className = 'cal-event-tooltip';
+
                 
+
                 dayEvents.forEach(e => {
+
                     const eDiv = document.createElement('div');
+
                     eDiv.style.marginBottom = '6px';
+
                     eDiv.style.padding = '4px';
+
                     eDiv.style.borderRadius = '4px';
+
                     eDiv.style.cursor = 'pointer';
+
                     eDiv.style.transition = 'background 0.2s';
+
                     eDiv.onmouseover = function() { eDiv.style.backgroundColor = '#f1f5f9'; };
+
                     eDiv.onmouseout = function() { eDiv.style.backgroundColor = 'transparent'; };
+
                     
+
                     eDiv.onclick = function(event) {
+
                         event.stopPropagation();
+
                         openCalendarModal(e.title, e.type, e.description, e.image_url);
+
                     };
 
+
+
                     let html = ``;
+
                     if (e.image_url) {
+
                         html += `<img src="${e.image_url}" class="cal-tooltip-img" alt="Thumbnail">`;
+
                     }
+
                     html += `<div class="cal-tooltip-title">${e.title}</div>`;
+
                     if (e.description) {
+
                         const desc = e.description.length > 50 ? e.description.substring(0, 50) + '...' : e.description;
+
                         html += `<div class="cal-tooltip-desc">${desc}</div>`;
+
                     }
+
                     eDiv.innerHTML = html;
+
                     tooltip.appendChild(eDiv);
+
                 });
+
                 
+
                 d.appendChild(tooltip);
+
             }
+
             
+
             grid.appendChild(d); 
+
         }
+
     }
+
     
+
     function updateLiveClock() {
+
         const clockElement = document.getElementById('live-dashboard-clock');
+
         const greetingElement = document.getElementById('dynamic-greeting');
+
         const now = new Date();
+
         
+
         if (clockElement) {
+
             const options = { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+
             clockElement.textContent = now.toLocaleString('en-US', options);
+
         }
+
         
+
         if (greetingElement) {
+
             const hour = now.getHours();
+
             let greeting = 'Welcome back';
+
             if (hour >= 5 && hour < 12) {
+
                 greeting = 'Good morning';
+
             } else if (hour >= 12 && hour < 18) {
+
                 greeting = 'Good afternoon';
+
             } else {
+
                 greeting = 'Good evening';
+
             }
+
             
+
             // Append emoji
+
             if (hour >= 5 && hour < 12) greeting += ' ☀️';
+
             else if (hour >= 12 && hour < 18) greeting += ' 🌤️';
+
             else greeting += ' 🌙';
+
             
+
             if (greetingElement.textContent !== greeting) {
+
                 greetingElement.textContent = greeting;
+
             }
+
         }
+
     }
+
     
+
     document.addEventListener('DOMContentLoaded', () => {
+
         // Move modal to body to prevent stacking context issues with position:fixed
+
         var modalEl = document.getElementById('calendarEventModal');
+
         if (modalEl) {
+
             document.body.appendChild(modalEl);
+
         }
+
+
 
         generateCalendar();
+
         updateLiveClock();
+
         setInterval(updateLiveClock, 1000);
+
     });
 
+
+
     function openCalendarModal(title, type, description, imageUrl) {
+
         document.getElementById('calendarModalTitle').textContent = title;
+
         document.getElementById('calendarModalDesc').textContent = description || 'No description provided.';
+
         
+
         var badge = document.getElementById('calendarModalBadge');
+
         badge.textContent = type;
+
         
+
         var colors = {
+
             'video': { bg: '#dbeafe', color: '#1d4ed8' },
+
             'flipbook': { bg: '#fce7f3', color: '#be185d' },
+
             'holiday': { bg: '#fef08a', color: '#854d0e' },
+
             'event': { bg: '#e0e7ff', color: '#4338ca' },
+
             'lesson plan': { bg: '#dcfce7', color: '#15803d' },
+
             'module': { bg: '#ffedd5', color: '#c2410c' },
+
             'other': { bg: '#f1f5f9', color: '#475569' },
+
             'task': { bg: '#fee2e2', color: '#b91c1c' }
+
         };
+
         
+
         var style = colors[type.toLowerCase()] || colors['other'];
+
         badge.style.backgroundColor = style.bg;
+
         badge.style.color = style.color;
+
         
+
         var img = document.getElementById('calendarModalImg');
+
         if (imageUrl) {
+
             img.src = imageUrl;
+
             img.style.display = 'block';
+
         } else {
+
             img.style.display = 'none';
+
         }
+
         
+
         document.getElementById('calendarEventModal').classList.add('show');
+
     }
+
     
+
     function closeCalendarModal() {
+
         document.getElementById('calendarEventModal').classList.remove('show');
+
     }
+
 </script>
 
+
+
 <!-- Calendar Event Modal -->
+
 <div class="calendar-modal-backdrop" id="calendarEventModal" onclick="closeCalendarModal()">
+
     <div class="calendar-modal-content" onclick="event.stopPropagation()">
+
         <button class="calendar-modal-close" onclick="closeCalendarModal()">
+
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+
                 <line x1="18" y1="6" x2="6" y2="18"></line>
+
                 <line x1="6" y1="6" x2="18" y2="18"></line>
+
             </svg>
+
         </button>
+
         <img src="" alt="Event Image" class="calendar-modal-image" id="calendarModalImg">
+
         <span class="calendar-modal-badge" id="calendarModalBadge"></span>
+
         <h2 class="calendar-modal-title" id="calendarModalTitle"></h2>
+
         <div class="calendar-modal-desc" id="calendarModalDesc"></div>
+
     </div>
+
 </div>
+
+
 
 <!-- ACTION MODAL (Blur Background) -->
+
 <div id="action-modal" class="modal-overlay">
+
     <div class="confirm-box" id="action-modal-box">
+
         <div id="action-modal-icon" style="font-size: 4rem; margin-bottom: 20px;"></div>
+
         <h1 id="action-modal-title" class="confirm-title"></h1>
+
         <p id="action-modal-text" class="confirm-text"></p>
+
         
+
         <form id="action-modal-form" method="POST">
+
             {% csrf_token %}
+
             <div class="confirm-actions">
+
                 <button type="button" class="btn-cancel" onclick="document.getElementById('action-modal').style.display='none'">Cancel</button>
+
                 <button type="submit" id="action-modal-btn" class="btn-action"></button>
+
             </div>
+
         </form>
+
     </div>
+
 </div>
+
+
 
 <!-- PREMIUM ALERT/MESSAGE MODAL (Blur Background) -->
+
 <div id="custom-alert-modal" class="modal-overlay">
+
     <div class="confirm-box" id="custom-alert-box" style="border-top: 5px solid #2ecc71; border-style: solid; border-width: 5px 1.5px 1.5px 1.5px; border-color: #2ecc71 var(--green-mid) var(--green-mid) var(--green-mid); max-width: 450px; width: 90%;">
+
         <div id="custom-alert-icon" style="margin-bottom: 20px;">
+
             <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+
                 <circle cx="12" cy="12" r="12" fill="var(--green, #4CAF50)"/>
+
                 <path d="M7 12.5l3 3 7-7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
             </svg>
+
         </div>
+
         <h1 id="custom-alert-title" class="confirm-title" style="font-family: 'Fredoka One', cursive; color: var(--green-dark);">Success</h1>
+
         <p id="custom-alert-text" class="confirm-text" style="font-size: 1.05rem; font-weight: 700; color: #4a5568; margin-bottom: 25px;"></p>
+
         <div class="confirm-actions" style="justify-content: center; gap: 0;">
+
             <button type="button" id="custom-alert-ok-btn" class="db-btn teal" style="padding: 10px 40px; border-radius: 20px; font-weight: bold; cursor: pointer;">OK</button>
+
         </div>
+
     </div>
+
 </div>
+
+
 
 <!-- PREMIUM CONFIRMATION MODAL (Blur Background) -->
+
 <div id="custom-confirm-modal" class="modal-overlay">
+
     <div class="confirm-box" id="custom-confirm-box" style="border-top: 5px solid var(--pink); border-style: solid; border-width: 5px 1.5px 1.5px 1.5px; border-color: var(--pink) var(--green-mid) var(--green-mid) var(--green-mid); max-width: 450px; width: 90%;">
+
         <div id="custom-confirm-icon" style="margin-bottom: 20px;"></div>
+
         <h1 id="custom-confirm-title" class="confirm-title" style="font-family: 'Fredoka One', cursive; color: var(--pink);">Permanently Delete?</h1>
+
         <p id="custom-confirm-text" class="confirm-text" style="font-size: 1.05rem; font-weight: 700; color: #4a5568; margin-bottom: 25px;"></p>
+
         <div class="confirm-actions" style="justify-content: center; gap: 16px;">
+
             <button type="button" id="custom-confirm-cancel-btn" class="btn-cancel">Cancel</button>
+
             <button type="button" id="custom-confirm-btn" class="btn-action" style="background: var(--pink); box-shadow: 0 4px 0 #d84b7a;">Yes, Delete!</button>
+
         </div>
+
     </div>
+
 </div>
 
+
+
 <div class="modal-overlay" id="details-modal">
+
     <div class="confirm-box" id="details-modal-box" style="border-color: #4a5568;">
+
         <div id="details-modal-icon" style="font-size: 3rem; margin-bottom: 10px; display: flex; justify-content: center; color: #4a5568;">
+
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+
         </div>
+
         <div class="confirm-title" id="details-modal-title" style="color: #4a5568;">Account Details</div>
+
         <div class="confirm-text" id="details-modal-text" style="text-align: left; background: #f7fafc; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+
             <p style="margin-bottom: 8px;"><strong>Username:</strong> <span id="details-username"></span></p>
+
             <p style="margin-bottom: 8px;"><strong>Email:</strong> <span id="details-email"></span></p>
+
             <p id="details-grade-container" style="margin-bottom: 8px;"><strong>Grade Level:</strong> <span id="details-grade"></span></p>
+
             <p id="details-section-container" style="margin-bottom: 8px;"><strong>Section:</strong> <span id="details-section"></span></p>
+
             <p id="details-lrn-container" style="margin-bottom: 8px;"><strong>LRN:</strong> <span id="details-lrn"></span></p>
+
             <p style="margin-bottom: 0;"><strong>Date Registered:</strong> <span id="details-date"></span></p>
+
             <p id="details-faculty-id-container" style="margin-bottom: 0; margin-top: 15px; display: none; text-align: center;">
+
                 <strong>Faculty ID:</strong><br>
+
                 <img id="details-faculty-id-img" src="" alt="Faculty ID" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-top: 10px; border: 1px solid #e2e8f0; object-fit: contain; background: white; padding: 4px;">
+
             </p>
+
         </div>
+
         <div class="confirm-actions">
+
             <button type="button" class="btn-cancel" onclick="document.getElementById('details-modal').style.display='none'">Close</button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- UPLOADER / AUTHOR DETAILS MODAL (Admin Tracking) -->
+<div class="modal-overlay" id="author-details-modal" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); z-index: 10000; align-items: center; justify-content: center;">
+    <div class="confirm-box" id="author-details-box" style="border-top: 5px solid var(--teal, #00b4d8); border-style: solid; border-width: 5px 1.5px 1.5px 1.5px; border-color: var(--teal, #00b4d8) #cbd5e0 #cbd5e0 #cbd5e0; max-width: 500px; width: 90%; background: #ffffff; border-radius: 16px; padding: 24px; position: relative; max-height: 90vh; overflow-y: auto;">
+        <!-- Close (X) button -->
+        <button type="button" onclick="closeAuthorDetailsModal()" style="position: absolute; top: 15px; right: 18px; background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #a0aec0; padding: 0; line-height: 1;">&times;</button>
+        
+        <div style="font-size: 2.5rem; margin-bottom: 10px; display: flex; justify-content: center; color: var(--teal, #00b4d8);">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </div>
+        <h2 style="font-family: 'Fredoka One', cursive; color: #2d3748; margin: 0 0 15px 0; text-align: center; font-size: 1.4rem;">Uploader Details</h2>
+        
+        <div style="text-align: left; background: #f8fafc; padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 0.95rem;">
+            <p style="margin: 0 0 8px 0;"><strong>Name:</strong> <span id="author-modal-name">-</span></p>
+            <p style="margin: 0 0 8px 0;"><strong>Username:</strong> <span id="author-modal-username" style="color: #4a5568; font-weight: 600;">-</span></p>
+            <p style="margin: 0 0 8px 0;"><strong>Role:</strong> <span id="author-modal-role" class="db-badge green" style="font-size: 0.8rem; padding: 2px 8px;">-</span></p>
+            <p style="margin: 0 0 8px 0;"><strong>Email:</strong> <span id="author-modal-email">-</span></p>
+            <p id="author-modal-grade-row" style="margin: 0 0 8px 0;"><strong>Grade Level:</strong> <span id="author-modal-grade">-</span></p>
+            <p id="author-modal-section-row" style="margin: 0 0 8px 0;"><strong>Section:</strong> <span id="author-modal-section">-</span></p>
+            <p id="author-modal-lrn-row" style="margin: 0 0 8px 0;"><strong>LRN:</strong> <span id="author-modal-lrn">-</span></p>
+            <p style="margin: 0 0 8px 0;"><strong>Date Registered:</strong> <span id="author-modal-date">-</span></p>
+            
+            <div id="author-modal-faculty-row" style="display: none; margin-top: 12px; text-align: center;">
+                <strong>Faculty ID:</strong><br>
+                <img id="author-modal-faculty-img" src="" alt="Faculty ID" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin-top: 6px; border: 1px solid #e2e8f0; object-fit: contain; background: white; padding: 4px;">
+            </div>
+        </div>
+
+        <!-- Strict Password Confidentiality Notice -->
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 10px 14px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" style="flex-shrink: 0;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <span style="font-size: 0.8rem; color: #1e40af; line-height: 1.3;">
+                <strong>Confidentiality Note:</strong> Passwords are fully encrypted and confidential. Passwords cannot be viewed by any user or administrator.
+            </span>
+        </div>
+
+        <div class="confirm-actions" style="justify-content: center;">
+            <button type="button" class="btn-cancel" onclick="closeAuthorDetailsModal()" style="padding: 8px 30px; font-weight: bold; cursor: pointer;">Close</button>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="content-details-modal">
+
     <div class="confirm-box" id="content-details-modal-box" style="border-color: #4a5568; max-width: 800px; width: 90%; position: relative; max-height: 90vh; overflow-y: auto;">
+
         <!-- X button -->
+
         <button type="button" onclick="closeContentDetailsModal()" style="position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 2rem; cursor: pointer; color: #a0aec0; padding: 0; line-height: 1;">&times;</button>
+
         <div id="content-details-modal-icon" style="font-size: 3rem; margin-bottom: 10px; display: flex; justify-content: center; color: #4a5568;">
+
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+
         </div>
+
         <div class="confirm-title" id="content-details-modal-title" style="color: #4a5568;">Content Details</div>
+
         <div class="confirm-text" id="content-details-modal-text" style="text-align: left; background: #f7fafc; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+
             <p style="margin-bottom: 8px;"><strong>Title:</strong> <span id="content-details-title"></span></p>
+
             <p style="margin-bottom: 8px;"><strong>Author:</strong> <span id="content-details-author"></span></p>
+
             <p style="margin-bottom: 8px;"><strong>Category:</strong> <span id="content-details-category"></span></p>
+
             <p style="margin-bottom: 8px;"><strong>Date Uploaded:</strong> <span id="content-details-date"></span></p>
+
             <p style="margin-bottom: 15px;"><strong>Description:</strong> <span id="content-details-desc"></span></p>
+
             <div id="content-media-container" style="display: none; justify-content: center; align-items: center; background: #000; border-radius: 8px; overflow: hidden; margin-top: 20px;">
+
                 <!-- Media injected here -->
+
             </div>
+
         </div>
+
         <div class="confirm-actions" style="justify-content: space-between;">
+
             <button type="button" class="btn-cancel" onclick="closeContentDetailsModal()">Close</button>
+
             <div id="content-modal-actions" style="display: none; gap: 8px;">
+
                 <button type="button" id="modal-deny-btn" class="reject-btn" style="margin: 0; padding: 8px 24px; cursor: pointer; background: var(--pink); color: white; border: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 0 #d84b7a;">Deny</button>
+
                 <button type="button" id="modal-approve-btn" class="approve-btn" style="margin: 0; padding: 8px 24px; cursor: pointer; background: var(--green); color: white; border: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 0 #27ae60;">Approve</button>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
 
+
+
 <!-- MODALS (Super Admin only) -->
+
 {% if role == 'SUPER_ADMIN' %}
+
 {% endif %}
 
+
+
 <script>
-    function openDetailsModal(username, grade, date, lrn, role, email, facultyIdUrl, section) {
-        document.getElementById('details-username').innerText = username;
-        document.getElementById('details-grade').innerText = grade;
-        document.getElementById('details-date').innerText = date;
-        
-        let displayEmail = "Not provided";
-        if (email && email.length > 0) {
-            displayEmail = email;
-        }
-        document.getElementById('details-email').innerText = displayEmail;
-        
-        const lrnContainer = document.getElementById('details-lrn-container');
-        const gradeContainer = document.getElementById('details-grade-container');
-        const sectionContainer = document.getElementById('details-section-container');
-        const facultyIdContainer = document.getElementById('details-faculty-id-container');
-        
-        if (role === 'TEACHER') {
-            lrnContainer.style.display = 'none';
-            gradeContainer.style.display = 'none';
-            if (sectionContainer) sectionContainer.style.display = 'none';
-            
-            if (facultyIdUrl && facultyIdUrl.trim().length > 0) {
-                document.getElementById('details-faculty-id-img').src = facultyIdUrl;
-                facultyIdContainer.style.display = 'block';
-            } else {
-                facultyIdContainer.style.display = 'none';
-            }
+
+    function openAuthorDetailsModal(username, firstName, lastName, email, role, grade, section, lrn, dateJoined, facultyIdUrl) {
+        let fullName = ((firstName || '') + ' ' + (lastName || '')).trim();
+        if (!fullName) fullName = username;
+        document.getElementById('author-modal-name').innerText = fullName;
+        document.getElementById('author-modal-username').innerText = '@' + username;
+        document.getElementById('author-modal-role').innerText = role || 'User';
+        document.getElementById('author-modal-email').innerText = (email && email.trim().length > 0) ? email : 'Not provided';
+        document.getElementById('author-modal-date').innerText = dateJoined || 'Not available';
+
+        const gradeRow = document.getElementById('author-modal-grade-row');
+        const sectionRow = document.getElementById('author-modal-section-row');
+        const lrnRow = document.getElementById('author-modal-lrn-row');
+        const facultyRow = document.getElementById('author-modal-faculty-row');
+
+        if (grade && grade.trim().length > 0 && grade !== 'None') {
+            gradeRow.style.display = 'block';
+            document.getElementById('author-modal-grade').innerText = grade;
         } else {
-            lrnContainer.style.display = 'block';
-            document.getElementById('details-lrn').innerText = lrn || 'None';
-            gradeContainer.style.display = 'block';
-            if (sectionContainer) {
-                sectionContainer.style.display = 'block';
-                document.getElementById('details-section').innerText = section || 'None';
-            }
-            if (facultyIdContainer) facultyIdContainer.style.display = 'none';
+            gradeRow.style.display = 'none';
         }
-        
-        document.getElementById('details-modal').style.display = 'flex';
+
+        if (section && section.trim().length > 0 && section !== 'None') {
+            sectionRow.style.display = 'block';
+            document.getElementById('author-modal-section').innerText = section;
+        } else {
+            sectionRow.style.display = 'none';
+        }
+
+        if (lrn && lrn.trim().length > 0 && lrn !== 'None') {
+            lrnRow.style.display = 'block';
+            document.getElementById('author-modal-lrn').innerText = lrn;
+        } else {
+            lrnRow.style.display = 'none';
+        }
+
+        if (facultyIdUrl && facultyIdUrl.trim().length > 0 && facultyIdUrl !== 'None') {
+            document.getElementById('author-modal-faculty-img').src = facultyIdUrl;
+            facultyRow.style.display = 'block';
+        } else {
+            facultyRow.style.display = 'none';
+        }
+
+        document.getElementById('author-details-modal').style.display = 'flex';
     }
+
+    function closeAuthorDetailsModal() {
+        document.getElementById('author-details-modal').style.display = 'none';
+    }
+
+    function openDetailsModal(username, grade, date, lrn, role, email, facultyIdUrl, section) {
+
+        document.getElementById('details-username').innerText = username;
+
+        document.getElementById('details-grade').innerText = grade;
+
+        document.getElementById('details-date').innerText = date;
+
+        
+
+        let displayEmail = "Not provided";
+
+        if (email && email.length > 0) {
+
+            displayEmail = email;
+
+        }
+
+        document.getElementById('details-email').innerText = displayEmail;
+
+        
+
+        const lrnContainer = document.getElementById('details-lrn-container');
+
+        const gradeContainer = document.getElementById('details-grade-container');
+
+        const sectionContainer = document.getElementById('details-section-container');
+
+        const facultyIdContainer = document.getElementById('details-faculty-id-container');
+
+        
+
+        if (role === 'TEACHER') {
+
+            lrnContainer.style.display = 'none';
+
+            gradeContainer.style.display = 'none';
+
+            if (sectionContainer) sectionContainer.style.display = 'none';
+
+            
+
+            if (facultyIdUrl && facultyIdUrl.trim().length > 0) {
+
+                document.getElementById('details-faculty-id-img').src = facultyIdUrl;
+
+                facultyIdContainer.style.display = 'block';
+
+            } else {
+
+                facultyIdContainer.style.display = 'none';
+
+            }
+
+        } else {
+
+            lrnContainer.style.display = 'block';
+
+            document.getElementById('details-lrn').innerText = lrn || 'None';
+
+            gradeContainer.style.display = 'block';
+
+            if (sectionContainer) {
+
+                sectionContainer.style.display = 'block';
+
+                document.getElementById('details-section').innerText = section || 'None';
+
+            }
+
+            if (facultyIdContainer) facultyIdContainer.style.display = 'none';
+
+        }
+
+        
+
+        document.getElementById('details-modal').style.display = 'flex';
+
+    }
+
+
 
     function openContentDetailsModal(type, title, author, category, date, desc, mediaUrl, approveUrl, denyUrl) {
+
         document.getElementById('content-details-modal-title').innerText = type + ' Details';
+
         document.getElementById('content-details-title').innerText = title;
+
         document.getElementById('content-details-author').innerText = author;
+
         document.getElementById('content-details-category').innerText = category;
+
         document.getElementById('content-details-date').innerText = date;
+
         document.getElementById('content-details-desc').innerText = desc || 'No description provided.';
+
         
+
         const mediaContainer = document.getElementById('content-media-container');
+
         mediaContainer.innerHTML = ''; 
+
         
+
         if (mediaUrl && mediaUrl !== 'None' && mediaUrl !== '') {
+
             mediaContainer.style.display = 'flex';
+
             if (type === 'Video') {
+
                 mediaContainer.innerHTML = `<video controls style="width: 100%; max-height: 400px; outline: none;"><source src="${mediaUrl}" type="video/mp4">Your browser does not support the video tag.</video>`;
+
             } else if (type === 'Flipbook') {
+
                 mediaContainer.innerHTML = `
+
                     <div id="pdf-flipbook-container" style="padding: 10px; position: relative; width: 100%;">
+
                         <div id="loading-book" style="text-align: center; padding: 40px 20px; color: var(--gray);">
+
                             <div style="font-size: 2rem; margin-bottom: 10px;">⏳</div>
+
                             <h3 style="font-family: 'Fredoka One', cursive; margin:0;">Loading Flipbook...</h3>
+
                         </div>
+
                         <div id="book-nav" style="display:none; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px;">
+
                             <button id="btn-prev" class="viewer-link secondary" style="cursor: pointer; padding: 6px 12px; border:none; border-radius: 20px; background:var(--yellow); color:var(--dark); font-weight:bold; font-family:'Fredoka One', cursive;">⬅ Back</button>
+
                             <span style="font-family: 'Fredoka One', cursive; color: #fff; font-size: 1rem;">Flipbook</span>
+
                             <button id="btn-next" class="viewer-link secondary" style="cursor: pointer; padding: 6px 12px; border:none; border-radius: 20px; background:var(--green); color:var(--white); font-weight:bold; font-family:'Fredoka One', cursive;">Next ➡</button>
+
                         </div>
+
                         <div id="book-wrapper" style="display:none; justify-content: center; background: #2d3748; border-radius: 8px; padding: 20px; min-height: 400px;">
+
                             <div id="book" style="touch-action: none;"></div>
+
                         </div>
+
                     </div>
+
                 `;
+
                 loadFlipbook(mediaUrl);
+
             }
+
         } else {
+
             mediaContainer.style.display = 'none';
+
         }
+
         if (approveUrl && denyUrl) {
+
             document.getElementById('modal-approve-btn').onclick = function() {
+
                 closeContentDetailsModal();
+
                 openActionModal(approveUrl, 'Approve ' + type + '?', '✅', 'You are about to approve the ' + type.toLowerCase() + ' &quot;<strong>' + title + '</strong>&quot;.', 'Yes, Approve!', false);
+
             };
+
             document.getElementById('modal-deny-btn').onclick = function() {
+
                 closeContentDetailsModal();
+
                 openActionModal(denyUrl, 'Deny ' + type + '?', '🚫', 'You are about to deny the ' + type.toLowerCase() + ' &quot;<strong>' + title + '</strong>&quot;.', 'Yes, Deny!', true);
+
             };
+
             document.getElementById('content-modal-actions').style.display = 'flex';
+
         } else {
+
             document.getElementById('content-modal-actions').style.display = 'none';
+
         }
+
         
+
         document.getElementById('content-details-modal').style.display = 'flex';
+
     }
+
+
 
     function closeContentDetailsModal() {
+
         if (currentPageFlip) {
+
             currentPageFlip.destroy();
+
             currentPageFlip = null;
+
         }
+
         document.getElementById('content-media-container').innerHTML = '';
+
         document.getElementById('content-details-modal').style.display = 'none';
+
     }
+
     function openActionModal(url, title, icon, message, btnText, isDestructive) {
+
         document.getElementById('action-modal-form').action = url;
+
         document.getElementById('action-modal-title').innerText = title;
+
         document.getElementById('action-modal-text').innerHTML = message;
+
         
+
         let iconHtml = icon;
+
         if (icon === '✅') {
+
             iconHtml = '<svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--green, #4CAF50)"/><path d="M7 12.5l3 3 7-7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
         } else if (icon === '🚫') {
+
             iconHtml = '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15.53" y1="8.47" x2="8.47" y2="15.53"></line><line x1="8.47" y1="8.47" x2="15.53" y2="15.53"></line></svg>';
+
         } else if (icon === '🗑️') {
+
             iconHtml = '<svg width="64" height="64" viewBox="0 0 448 512" fill="currentColor"><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128zM160 224v192c0 8.8-7.2 16-16 16s-16-7.2-16-16V224c0-8.8 7.2-16 16-16s16 7.2 16 16zm96 0v192c0 8.8-7.2 16-16 16s-16-7.2-16-16V224c0-8.8 7.2-16 16-16s16 7.2 16 16zm96 0v192c0 8.8-7.2 16-16 16s-16-7.2-16-16V224c0-8.8 7.2-16 16-16s16 7.2 16 16z"/></svg>';
+
         } else if (icon === '↩️') {
+
             iconHtml = '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>';
+
         }
+
         document.getElementById('action-modal-icon').innerHTML = iconHtml;
+
         
+
         const btn = document.getElementById('action-modal-btn');
+
         btn.innerText = btnText;
+
         
+
         const box = document.getElementById('action-modal-box');
+
         const iconDiv = document.getElementById('action-modal-icon');
+
         
+
         if (isDestructive) {
+
             box.style.borderColor = 'var(--pink)';
+
             document.getElementById('action-modal-title').style.color = 'var(--pink)';
+
             iconDiv.style.color = 'var(--pink)';
+
             btn.style.background = 'var(--pink)';
+
             btn.style.boxShadow = '0 4px 0 #d84b7a';
+
         } else {
+
             box.style.borderColor = 'var(--green)';
+
             document.getElementById('action-modal-title').style.color = 'var(--green)';
+
             iconDiv.style.color = 'var(--green)';
+
             btn.style.background = 'var(--green)';
+
             btn.style.boxShadow = '0 4px 0 #27ae60';
+
         }
+
         
+
         document.getElementById('action-modal').style.display = 'flex';
+
     }
+
+
 
     // Tasks JS
+
     function getCookie(name) {
+
         let cookieValue = null;
+
         if (document.cookie && document.cookie !== '') {
+
             const cookies = document.cookie.split(';');
+
             for (let i = 0; i < cookies.length; i++) {
+
                 const cookie = cookies[i].trim();
+
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
+
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+
                     break;
+
                 }
+
             }
+
         }
+
         return cookieValue;
+
     }
+
+
 
     async function createTask() {
+
         const input = document.getElementById('new-task-input');
+
         const title = input.value.trim();
+
         if (!title) return;
 
+
+
         try {
+
             const response = await fetch('/api/tasks/create/', {
+
                 method: 'POST',
+
                 headers: {
+
                     'Content-Type': 'application/json',
+
                     'X-CSRFToken': getCookie('csrftoken')
+
                 },
+
                 body: JSON.stringify({ title: title })
+
             });
+
             const data = await response.json();
+
             if (data.status === 'success') {
+
                 input.value = '';
+
                 location.reload();
+
             } else {
+
                 alert('Error: ' + data.message);
+
             }
+
         } catch (e) {
+
             console.error(e);
+
         }
+
     }
+
+
 
     async function updateTask(taskId, field, value) {
+
         const bodyData = {};
+
         bodyData[field] = value;
+
         try {
+
             const response = await fetch(`/api/tasks/${taskId}/update/`, {
+
                 method: 'POST',
+
                 headers: {
+
                     'Content-Type': 'application/json',
+
                     'X-CSRFToken': getCookie('csrftoken')
+
                 },
+
                 body: JSON.stringify(bodyData)
+
             });
+
             const data = await response.json();
+
             if (data.status === 'success') {
+
                 if (field === 'status') {
+
                     const selectEl = document.querySelector(`.task-card[data-task-id="${taskId}"] .task-status-select`);
+
                     if (value === 'Working on it') {
+
                         selectEl.style.backgroundColor = '#fde047';
+
                         selectEl.style.color = '#854d0e';
+
                     } else if (value === 'Stuck') {
+
                         selectEl.style.backgroundColor = '#fbcfe8';
+
                         selectEl.style.color = '#9d174d';
+
                     } else if (value === 'Done') {
+
                         selectEl.style.backgroundColor = '#bbf7d0';
+
                         selectEl.style.color = '#166534';
+
                         location.reload();
+
                     } else {
+
                         selectEl.style.backgroundColor = '#e2e8f0';
+
                         selectEl.style.color = '#334155';
+
                     }
+
                     
+
                     const isCompletedGroup = selectEl.closest('#completed-tasks-container');
+
                     if (isCompletedGroup && value !== 'Done') {
+
                         location.reload();
+
                     }
+
                 }
+
             } else {
+
                 alert('Error updating task');
+
             }
+
         } catch (e) {
+
             console.error(e);
+
         }
+
     }
+
+
 
     async function deleteTask(taskId) {
+
         const confirmed = await showCustomConfirm('Delete Task?', 'Are you sure you want to delete this task?', true, null, 'Yes, Delete!');
+
         if (!confirmed) return;
+
         try {
+
             const response = await fetch(`/api/tasks/${taskId}/delete/`, {
+
                 method: 'POST',
+
                 headers: {
+
                     'X-CSRFToken': getCookie('csrftoken')
+
                 }
+
             });
+
             const data = await response.json();
+
             if (data.status === 'success') {
+
                 const card = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+
                 if (card) card.remove();
+
             }
+
         } catch (e) {
+
             console.error(e);
+
         }
+
     }
+
+
 
     function showSection(name) {
+
         const sectionId = 'section-' + name;
+
         const targetSection = document.getElementById(sectionId);
+
         if (!targetSection) return;
+
         document.querySelectorAll('.db-section').forEach(s => s.style.display = 'none');
+
         document.querySelectorAll('.db-sidebar-item').forEach(i => i.classList.remove('active'));
+
         targetSection.style.display = 'block';
+
         const item = document.querySelector('.db-sidebar-item[data-section="' + name + '"]');
+
         if (item) item.classList.add('active');
+
         window.location.hash = sectionId;
+
     }
 
+
+
     // Initialize section immediately to prevent flash
+
     showSection(window.location.hash.replace('#section-', '') || 'overview');
+
     
+
     // Support browser back/forward buttons
+
     window.addEventListener('hashchange', () => {
+
         showSection(window.location.hash.replace('#section-', '') || 'overview');
+
     });
+
+
 
     let currentPageFlip = null;
 
+
+
     async function loadFlipbook(url) {
+
         if (typeof pdfjsLib === 'undefined' || typeof St === 'undefined') {
+
             document.getElementById('loading-book').innerHTML = "<p style='color:red;'>Failed to load required libraries.</p>";
+
             return;
+
         }
+
         
+
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
         
+
         const bookContainer = document.getElementById('book');
+
         const loadingBook = document.getElementById('loading-book');
+
         const bookWrapper = document.getElementById('book-wrapper');
+
         const bookNav = document.getElementById('book-nav');
 
+
+
         try {
+
             const pdf = await pdfjsLib.getDocument(url).promise;
+
             const numPages = pdf.numPages;
 
+
+
             const page1 = await pdf.getPage(1);
+
             const v1 = page1.getViewport({ scale: 1 });
 
+
+
             const isMobile = window.innerWidth <= 768;
+
             const targetHeight = isMobile ? 300 : 350; 
+
             const scale = targetHeight / v1.height;
+
             const targetWidth = v1.width * scale;
+
+
 
             const canvases = {};
 
+
+
             for (let i = 1; i <= numPages; i++) {
+
                 const pageDiv = document.createElement('div');
+
                 pageDiv.className = 'my-page';
+
                 pageDiv.style.backgroundColor = 'white';
+
                 pageDiv.style.overflow = 'hidden';
+
                 pageDiv.style.boxShadow = (i % 2 === 0)
+
                     ? 'inset -7px 0 30px -7px rgba(0,0,0,0.1)'
+
                     : 'inset 7px 0 30px -7px rgba(0,0,0,0.1)';
 
+
+
                 const canvas = document.createElement('canvas');
+
                 canvas.height = targetHeight;
+
                 canvas.width = targetWidth;
+
                 canvas.style.width = '100%';
+
                 canvas.style.height = '100%';
 
+
+
                 pageDiv.appendChild(canvas);
+
                 bookContainer.appendChild(pageDiv);
 
+
+
                 canvases[i] = canvas;
+
             }
 
+
+
             currentPageFlip = new St.PageFlip(bookContainer, {
+
                 width: targetWidth,
+
                 height: targetHeight,
+
                 size: "fixed",
+
                 showCover: true,
+
                 drawShadow: true,
+
                 maxShadowOpacity: 0.5,
+
                 usePortrait: true,
+
                 mobileScrollSupport: false
+
             });
 
+
+
             loadingBook.style.display = 'none';
+
             bookWrapper.style.display = 'flex';
+
             bookNav.style.display = 'flex';
+
+
 
             currentPageFlip.loadFromHTML(document.querySelectorAll('.my-page'));
 
+
+
             document.getElementById('btn-prev').addEventListener('click', () => {
+
                 if (currentPageFlip) currentPageFlip.flipPrev();
-            });
-            document.getElementById('btn-next').addEventListener('click', () => {
-                if (currentPageFlip) currentPageFlip.flipNext();
+
             });
 
+            document.getElementById('btn-next').addEventListener('click', () => {
+
+                if (currentPageFlip) currentPageFlip.flipNext();
+
+            });
+
+
+
             async function renderPagesInBackground() {
+
                 for (let i = 1; i <= numPages; i++) {
+
                     const page = await pdf.getPage(i);
+
                     const viewport = page.getViewport({ scale: scale });
+
                     const ctx = canvases[i].getContext('2d');
+
                     await page.render({
+
                         canvasContext: ctx,
+
                         viewport: viewport
+
                     }).promise;
+
                 }
+
             }
+
+
 
             renderPagesInBackground();
 
+
+
         } catch (err) {
+
             console.error('Failed to load flipbook:', err);
+
             loadingBook.innerHTML = "<p style='color:red;'>Failed to load book animation. Make sure the PDF is supported.</p>";
+
         }
+
     }
+
+
 
     function toggleSelectAll(selectAllCheckbox, tableId) {
+
         const table = document.getElementById(tableId);
+
         if (!table) return;
+
         const checkboxes = table.querySelectorAll('.select-item');
+
         checkboxes.forEach(cb => {
+
             cb.checked = selectAllCheckbox.checked;
+
         });
+
         const bulkActionId = 'bulk-actions-' + tableId.replace('table-archived-', '');
+
         updateBulkActionVisibility(tableId, bulkActionId);
+
     }
+
+
 
     function updateBulkActionVisibility(tableId, bulkActionId) {
+
         const table = document.getElementById(tableId);
+
         const bulkActionDiv = document.getElementById(bulkActionId);
+
         if (!table || !bulkActionDiv) return;
+
         const anyChecked = table.querySelectorAll('.select-item:checked').length > 0;
+
         bulkActionDiv.style.display = anyChecked ? 'flex' : 'none';
+
         bulkActionDiv.style.gap = '8px';
+
     }
+
+
 
     function showCustomConfirm(title, message, isDestructive = false, onConfirm = null, btnText = 'Confirm') {
+
         return new Promise((resolve) => {
+
             const modal = document.getElementById('custom-confirm-modal');
+
             const box = document.getElementById('custom-confirm-box');
+
             const iconDiv = document.getElementById('custom-confirm-icon');
+
             const titleH1 = document.getElementById('custom-confirm-title');
+
             const textP = document.getElementById('custom-confirm-text');
+
             const confirmBtn = document.getElementById('custom-confirm-btn');
+
             const cancelBtn = document.getElementById('custom-confirm-cancel-btn');
 
+
+
             if (isDestructive) {
+
                 box.style.borderTopColor = 'var(--pink)';
+
                 box.style.borderColor = 'var(--pink) #e2e8f0 #e2e8f0 #e2e8f0';
+
                 iconDiv.innerHTML = '<svg width="64" height="64" viewBox="0 0 448 512" fill="var(--pink)"><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128zM160 224v192c0 8.8-7.2 16-16 16s-16-7.2-16-16V224c0-8.8 7.2-16 16-16s16 7.2 16 16zm96 0v192c0 8.8-7.2 16-16 16s-16-7.2-16-16V224c0-8.8 7.2-16 16-16s16 7.2 16 16zm96 0v192c0 8.8-7.2 16-16 16s-16-7.2-16-16V224c0-8.8 7.2-16 16-16s16 7.2 16 16z"/></svg>';
+
                 titleH1.style.color = 'var(--pink)';
+
                 confirmBtn.style.background = 'var(--pink)';
+
                 confirmBtn.style.boxShadow = '0 4px 0 #d84b7a';
+
             } else {
+
                 box.style.borderTopColor = 'var(--green)';
+
                 box.style.borderColor = 'var(--green) #e2e8f0 #e2e8f0 #e2e8f0';
+
                 iconDiv.innerHTML = '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>';
+
                 titleH1.style.color = 'var(--green)';
+
                 confirmBtn.style.background = 'var(--green)';
+
                 confirmBtn.style.boxShadow = '0 4px 0 #27ae60';
+
             }
 
+
+
             titleH1.innerText = title || 'Are you sure?';
+
             textP.innerHTML = message || '';
+
             confirmBtn.innerText = btnText;
 
+
+
             const handleConfirm = () => {
+
                 modal.style.display = 'none';
+
                 cleanup();
+
                 if (onConfirm && typeof onConfirm === 'function') {
+
                     onConfirm();
+
                 }
+
                 resolve(true);
+
             };
+
+
 
             const handleCancel = () => {
+
                 modal.style.display = 'none';
+
                 cleanup();
+
                 resolve(false);
+
             };
+
+
 
             const cleanup = () => {
+
                 confirmBtn.removeEventListener('click', handleConfirm);
+
                 cancelBtn.removeEventListener('click', handleCancel);
+
             };
 
+
+
             confirmBtn.addEventListener('click', handleConfirm);
+
             cancelBtn.addEventListener('click', handleCancel);
 
+
+
             modal.style.display = 'flex';
+
         });
+
     }
 
+
+
     async function submitBulkAction(tableId, modelType, action) {
+
         const table = document.getElementById(tableId);
+
         if (!table) return;
+
         const checkedBoxes = Array.from(table.querySelectorAll('.select-item:checked'));
+
         if (checkedBoxes.length === 0) return;
+
         
+
         const isDelete = action === 'delete';
+
         const actionText = isDelete ? 'permanently delete' : 'restore';
+
         const title = isDelete ? 'Permanently Delete?' : 'Restore Items?';
+
         const btnText = isDelete ? 'Yes, Delete permanently!' : 'Yes, Restore!';
+
         const itemLabel = checkedBoxes.length === 1 ? 'selected item' : 'selected items';
+
         
+
         const message = isDelete
+
             ? `You are about to permanently delete <strong>${checkedBoxes.length}</strong> ${itemLabel}. This cannot be recovered.`
+
             : `You are about to restore <strong>${checkedBoxes.length}</strong> ${itemLabel}.`;
 
+
+
         const confirmed = await showCustomConfirm(title, message, isDelete, null, btnText);
+
         if (!confirmed) return;
+
+
 
         const ids = checkedBoxes.map(cb => parseInt(cb.value));
 
+
+
         try {
+
             const response = await fetch('/dashboard/archive/bulk-action/', {
+
                 method: 'POST',
+
                 headers: {
+
                     'Content-Type': 'application/json',
+
                     'X-CSRFToken': getCookie('csrftoken')
+
                 },
+
                 body: JSON.stringify({
+
                     action: action,
+
                     model_type: modelType,
+
                     ids: ids
+
                 })
+
             });
 
+
+
             const data = await response.json();
+
             if (data.status === 'success') {
+
                 showCustomAlert('Success', data.message, false, () => location.reload());
+
             } else {
+
                 showCustomAlert('Error', data.message, true);
+
             }
+
         } catch (e) {
+
             console.error(e);
+
             showCustomAlert('Error', 'An unexpected error occurred.', true);
+
         }
+
     }
+
+
 
     function updateSelectedCount(sectionId) {
+
         const checkboxes = document.querySelectorAll(`.${sectionId}-checkbox`);
+
         const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+
         
+
         const countSpan = document.getElementById(`selected-count-${sectionId}`);
+
         if (countSpan) {
+
             countSpan.textContent = checkedCount;
+
         }
+
         
+
         const actionBar = document.getElementById(`bulk-action-${sectionId}`);
+
         if (actionBar) {
+
             actionBar.style.display = checkedCount > 0 ? 'flex' : 'none';
+
         }
+
     }
+
+
 
     function selectAllInSection(sectionId, status) {
+
         const checkboxes = document.querySelectorAll(`.${sectionId}-checkbox`);
+
         checkboxes.forEach(cb => {
+
             cb.checked = status;
+
         });
+
         updateSelectedCount(sectionId);
+
     }
+
+
 
     async function triggerBulkAction(sectionId, action) {
+
         const checkboxes = document.querySelectorAll(`.${sectionId}-checkbox:checked`);
+
         if (checkboxes.length === 0) {
+
             showCustomAlert('Notice', 'Please select at least one item.', true);
+
             return;
+
         }
+
         
+
         const actionText = action === 'approve' ? 'approve' : 'deny';
+
         const isDeny = action === 'deny';
+
         const title = isDeny ? 'Deny Selected?' : 'Approve Selected?';
+
         const btnText = isDeny ? 'Yes, Deny!' : 'Yes, Approve!';
+
         const message = `Are you sure you want to ${actionText} the <strong>${checkboxes.length}</strong> selected item(s)?`;
+
         
+
         const confirmed = await showCustomConfirm(title, message, isDeny, null, btnText);
+
         if (!confirmed) return;
+
         
+
         const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
         
+
         try {
+
             const response = await fetch('/dashboard/approve/bulk-action/', {
+
                 method: 'POST',
+
                 headers: {
+
                     'Content-Type': 'application/json',
+
                     'X-CSRFToken': getCookie('csrftoken')
+
                 },
+
                 body: JSON.stringify({
+
                     action: action,
+
                     model_type: sectionId,
+
                     ids: ids
+
                 })
+
             });
+
             
+
             const data = await response.json();
+
             if (data.status === 'success') {
+
                 showCustomAlert('Success', data.message, false, () => location.reload());
+
             } else {
+
                 showCustomAlert('Error', data.message, true);
+
             }
+
         } catch (e) {
+
             console.error(e);
+
             showCustomAlert('Error', 'An unexpected error occurred.', true);
+
         }
+
     }
 
+
+
     function showCustomAlert(title, message, isError = false, onConfirm = null) {
+
         const modal = document.getElementById('custom-alert-modal');
+
         const box = document.getElementById('custom-alert-box');
+
         const iconDiv = document.getElementById('custom-alert-icon');
+
         const titleH1 = document.getElementById('custom-alert-title');
+
         const textP = document.getElementById('custom-alert-text');
+
         const okBtn = document.getElementById('custom-alert-ok-btn');
 
+
+
         if (isError) {
+
             box.style.borderTopColor = '#ff6b6b';
+
             iconDiv.innerText = '🚫';
+
             titleH1.innerText = title || 'Error';
+
             titleH1.style.color = '#e53935';
+
             okBtn.className = 'db-btn red';
+
         } else {
+
             box.style.borderTopColor = '#2ecc71';
+
             iconDiv.innerHTML = '<svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--green, #4CAF50)"/><path d="M7 12.5l3 3 7-7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
             titleH1.innerText = title || 'Success';
+
             titleH1.style.color = 'var(--green-dark)';
+
             okBtn.className = 'db-btn teal';
+
         }
+
+
 
         textP.innerHTML = message;
 
+
+
         okBtn.onclick = function() {
+
             modal.style.display = 'none';
+
             if (onConfirm && typeof onConfirm === 'function') {
+
                 onConfirm();
+
             }
+
         };
 
+
+
         modal.style.display = 'flex';
+
     }
+
+
 
     function openSectionModal(slug) {
+
         const modal = document.getElementById(`section-modal-${slug}`);
+
         if (modal) {
+
             modal.style.display = 'flex';
+
         }
+
     }
+
     
+
     function closeSectionModal(slug) {
+
         const modal = document.getElementById(`section-modal-${slug}`);
+
         if (modal) {
+
             modal.style.display = 'none';
+
         }
+
     }
+
+
 
     function openGradeModal(slug) {
+
         const modal = document.getElementById(`grade-modal-${slug}`);
+
         if (modal) {
+
             modal.style.display = 'flex';
+
         }
+
     }
+
     
+
     function closeGradeModal(slug) {
+
         const modal = document.getElementById(`grade-modal-${slug}`);
+
         if (modal) {
+
             modal.style.display = 'none';
+
         }
+
     }
+
+
 
     function toggleSelectAllAnnModal(slug, checked) {
+
         const checkboxes = document.querySelectorAll(`.ann-modal-checkbox-${slug}`);
+
         checkboxes.forEach(cb => {
+
             cb.checked = checked;
+
         });
+
     }
+
+
 
     async function triggerBulkArchiveAnnModal(slug) {
+
         const checkboxes = document.querySelectorAll(`.ann-modal-checkbox-${slug}:checked`);
+
         if (checkboxes.length === 0) {
+
             showCustomAlert('Notice', 'Please select at least one announcement.', true);
+
             return;
+
         }
+
         
+
         const message = `Are you sure you want to archive the <strong>${checkboxes.length}</strong> selected announcement(s)?`;
+
         const confirmed = await showCustomConfirm('Archive Announcements?', message, true, null, 'Yes, Archive!');
+
         if (!confirmed) return;
+
         
+
         const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
         
+
         try {
+
             const response = await fetch('/dashboard/announcements/bulk-archive/', {
+
                 method: 'POST',
+
                 headers: {
+
                     'Content-Type': 'application/json',
+
                     'X-CSRFToken': getCookie('csrftoken')
+
                 },
+
                 body: JSON.stringify({ ids: ids })
+
             });
+
             
+
             const data = await response.json();
+
             if (response.ok && data.status === 'success') {
+
                 showCustomAlert('Success', data.message, false, () => location.reload());
+
             } else {
+
                 showCustomAlert('Error', data.message || 'Error executing bulk action.', true);
+
             }
+
         } catch (e) {
+
             console.error(e);
+
             showCustomAlert('Error', 'An unexpected error occurred.', true);
+
         }
+
     }
+
     
+
     function toggleSelectAllModal(slug, checked) {
+
         const checkboxes = document.querySelectorAll(`.modal-checkbox-${slug}`);
+
         checkboxes.forEach(cb => {
+
             cb.checked = checked;
+
         });
+
     }
+
     
+
     async function triggerBulkActionModal(slug, action) {
+
         const checkboxes = document.querySelectorAll(`.modal-checkbox-${slug}:checked`);
+
         if (checkboxes.length === 0) {
+
             showCustomAlert('Notice', 'Please select at least one student.', true);
+
             return;
+
         }
+
         
+
         const actionText = action === 'approve' ? 'approve' : 'deny';
+
         const isDeny = action === 'deny';
+
         const title = isDeny ? 'Deny Students?' : 'Approve Students?';
+
         const btnText = isDeny ? 'Yes, Deny!' : 'Yes, Approve!';
+
         const message = `Are you sure you want to ${actionText} the <strong>${checkboxes.length}</strong> selected student(s)?`;
+
         
+
         const confirmed = await showCustomConfirm(title, message, isDeny, null, btnText);
+
         if (!confirmed) return;
+
         
+
         const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
         
+
         try {
+
             const response = await fetch('/dashboard/approve/bulk-action/', {
+
                 method: 'POST',
+
                 headers: {
+
                     'Content-Type': 'application/json',
+
                     'X-CSRFToken': getCookie('csrftoken')
+
                 },
+
                 body: JSON.stringify({
+
                     action: action,
+
                     model_type: 'user',
+
                     ids: ids
+
                 })
+
             });
+
             
+
             const data = await response.json();
+
             if (data.status === 'success') {
+
                 showCustomAlert('Success', data.message, false, () => location.reload());
+
             } else {
+
                 showCustomAlert('Error', data.message, true);
+
             }
+
         } catch (e) {
+
             console.error(e);
+
             showCustomAlert('Error', 'An unexpected error occurred.', true);
+
         }
+
     }
+
+
 
     function switchPendingSubTab(tabName) {
+
         // Hide all subtab content
+
         document.querySelectorAll('.pending-subtab-content').forEach(el => {
+
             el.style.display = 'none';
+
         });
+
         
+
         // Remove active class from all tabs
+
         document.querySelectorAll('.pending-tab-btn').forEach(btn => {
+
             btn.classList.remove('active');
+
         });
+
         
+
         // Show selected subtab content
+
         const targetSubtab = document.getElementById(`pending-subtab-${tabName}`);
+
         if (targetSubtab) {
+
             targetSubtab.style.display = 'block';
+
         }
+
         
+
         // Add active class to selected tab button
+
         const targetBtn = document.querySelector(`.pending-tab-btn[data-tab="${tabName}"]`);
+
         if (targetBtn) {
+
             targetBtn.classList.add('active');
+
         }
+
     }
 
+
+
     // Auto-select the first pending category tab with count > 0 on load
+
     document.addEventListener('DOMContentLoaded', () => {
+
         const tabs = ['accounts', 'grades', 'videos', 'flipbooks'];
+
         let selectedTab = 'accounts'; // fallback default
+
         
+
         for (const tab of tabs) {
+
             const badge = document.getElementById(`badge-${tab}`);
+
             if (badge) {
+
                 const count = parseInt(badge.textContent.trim()) || 0;
+
                 if (count > 0) {
+
                     selectedTab = tab;
+
                     break;
+
                 }
+
             }
+
         }
+
         
+
         switchPendingSubTab(selectedTab);
+
     });
+
 </script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
 <script src="https://unpkg.com/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+
 {% endblock %}
