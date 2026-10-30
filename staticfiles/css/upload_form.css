@@ -1,0 +1,164 @@
+/* upload_form.css */
+.upload-section {
+    max-width: 700px;
+    margin: 40px auto;
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 36px;
+    box-shadow: var(--shadow);
+    border: 2px solid var(--green-mid);
+}
+
+.upload-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.upload-title {
+    font-family: "Fredoka One", cursive;
+    color: var(--green-dark);
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.upload-sub {
+    color: var(--gray);
+    font-size: 1.1rem;
+}
+
+.custom-form-group {
+    margin-bottom: 24px;
+}
+
+.custom-form-group label {
+    display: block;
+    font-family: 'Fredoka One', cursive;
+    /* playful labels */
+    font-size: 1.1rem;
+    color: var(--dark);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.custom-form-group input[type="text"],
+.custom-form-group input[type="url"],
+.custom-form-group input[type="number"],
+.custom-form-group select,
+.custom-form-group textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #d0e8d0;
+    border-radius: 12px;
+    font-family: "Nunito", sans-serif;
+    font-size: 1rem;
+    color: var(--dark);
+    background: var(--green-light);
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.custom-form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.custom-form-group input:focus,
+.custom-form-group select:focus,
+.custom-form-group textarea:focus {
+    border-color: var(--green);
+    background: var(--white);
+    box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.1);
+}
+
+/* File inputs styling to make them friendly */
+.custom-file-upload {
+    border: 2px dashed var(--teal);
+    background: #f0fbfb;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.custom-file-upload:hover {
+    background: #e0f6f6;
+    border-color: var(--teal-dark);
+}
+
+.custom-file-upload input[type="file"] {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    font-family: "Nunito", sans-serif;
+    color: var(--gray);
+}
+
+.file-icon {
+    font-size: 3rem;
+    color: var(--teal);
+    margin-bottom: 10px;
+}
+
+.errorlist {
+    color: var(--pink);
+    list-style: none;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-top: 8px;
+    padding: 0;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: 2px dashed var(--green-mid);
+}
+
+.btn-upload-submit {
+    background: var(--yellow);
+    color: var(--dark);
+    font-family: "Fredoka One", cursive;
+    font-size: 1.1rem;
+    padding: 14px 32px;
+    border-radius: 24px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 0 #e6c229;
+}
+
+.btn-upload-submit:hover {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #e6c229;
+}
+
+.btn-upload-submit:active {
+    transform: translateY(4px);
+    box-shadow: none;
+}
+
+.btn-cancel {
+    color: var(--gray);
+    font-weight: 800;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #f1f1f1;
+    color: var(--dark);
+}
+
+/* Helper text */
+.helptext {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.85rem;
+    color: var(--gray);
+}

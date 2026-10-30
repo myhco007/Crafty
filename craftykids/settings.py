@@ -37,6 +37,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'main.middleware.DisableClientCacheMiddleware',
 ]
 
 ROOT_URLCONF = 'craftykids.urls'
@@ -133,7 +134,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-# TODO: Replace with your actual Gmail address
-EMAIL_HOST_USER = 'myhcobaling@gmail.com'
-EMAIL_HOST_PASSWORD = 'dusppiaaubctozna'
-DEFAULT_FROM_EMAIL = 'myhcobaling@gmail.com'
+EMAIL_HOST_USER = 'johnsentasis01@gmail.com'
+EMAIL_HOST_PASSWORD = 'fsxjytpqgbaspknp'
+DEFAULT_FROM_EMAIL = 'johnsentasis01@gmail.com'

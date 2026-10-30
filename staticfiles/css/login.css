@@ -1,162 +1,470 @@
+/* ==========================================================================
+   CraftyKids Login Page - Four-Leaf Clover & Glassmorphism Theme
+   ========================================================================== */
+
+/* Outer Page Background: Progressive Elementary School with Subtle Ambient Overlay */
 .auth-page {
-    min-height: 80vh;
+    min-height: calc(100vh - 80px);
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 24px 16px;
+    background: 
+        linear-gradient(rgba(10, 25, 16, 0.28), rgba(10, 25, 16, 0.38)),
+        url('../images/progressive-image.jpg') center/cover no-repeat fixed;
     position: relative;
     overflow: hidden;
-    padding: 40px 24px;
 }
 
+/* Subtle Animated Ambient Glow in corners */
 .blob {
     position: absolute;
     border-radius: 50%;
-    opacity: 0.25;
+    filter: blur(65px);
     pointer-events: none;
+    z-index: 1;
+    opacity: 0.35;
 }
 
 .blob-pink {
-    width: 180px;
-    height: 180px;
-    background: var(--pink);
-    top: 10%;
-    left: 5%;
+    width: 320px;
+    height: 320px;
+    background: #ffb3d9;
+    top: 5%;
+    left: 4%;
+    animation: floatAmbient 14s ease-in-out infinite alternate;
 }
 
 .blob-green {
-    width: 220px;
-    height: 220px;
-    background: var(--green);
-    bottom: 5%;
-    left: 15%;
+    width: 380px;
+    height: 380px;
+    background: #2ecc71;
+    bottom: 2%;
+    right: 4%;
+    animation: floatAmbient 18s ease-in-out infinite alternate-reverse;
 }
 
 .blob-blue {
-    width: 160px;
-    height: 160px;
-    background: var(--teal);
-    top: 15%;
-    right: 8%;
+    width: 280px;
+    height: 280px;
+    background: #4ecdc4;
+    top: 25%;
+    right: 18%;
+    animation: floatAmbient 12s ease-in-out infinite alternate;
 }
 
-.auth-card {
-    background: var(--white);
-    border-radius: 24px;
-    box-shadow: 0 8px 40px rgba(46, 204, 113, 0.15);
-    padding: 40px 36px;
-    width: 100%;
-    max-width: 400px;
+@keyframes floatAmbient {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(30px, -25px) scale(1.1); }
+}
+
+/* ==========================================================================
+   Main Box Container (Fits in one sighted view)
+   ========================================================================== */
+.auth-box {
     position: relative;
-    z-index: 1;
-    border-top: 4px solid var(--green);
+    z-index: 10;
+    display: flex;
+    width: 100%;
+    max-width: 980px;
+    min-height: 520px;
+    max-height: 90vh;
+    border-radius: 26px;
+    overflow: hidden;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45), 0 0 35px rgba(46, 204, 113, 0.2);
+    animation: slideUpFade 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.auth-logo {
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(30px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Remove dark overlay covering the whole box */
+.auth-box::before {
+    display: none;
+}
+
+/* ==========================================================================
+   Left Side: Progressive Elementary School Design with Gradient Blend
+   ========================================================================== */
+.auth-box-left {
+    position: relative;
+    z-index: 2;
+    flex: 1.1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    margin-bottom: 6px;
+    justify-content: space-between;
+    padding: 38px 34px;
+    color: #fff;
+    /* Translucent Emerald Glass Overlay - Reveals actual outer background through blur */
+    background: linear-gradient(135deg, rgba(8, 38, 20, 0.85) 0%, rgba(16, 70, 36, 0.72) 55%, rgba(10, 30, 18, 0.82) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-right: 1.5px solid rgba(255, 255, 255, 0.25);
+    overflow: hidden;
 }
 
-.auth-logo-icon {
-    font-size: 2.4rem;
-    background: var(--green);
-    width: 64px;
-    height: 64px;
-    border-radius: 18px;
+.auth-school-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    color: #e6fffa;
+    margin-bottom: 12px;
+    width: fit-content;
+}
+
+.auth-welcome-text h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.7rem;
+    margin-bottom: 8px;
+    line-height: 1.1;
+    color: #ffffff;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.auth-welcome-text p {
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.45;
+    color: #e6fffa;
+    max-width: 320px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.auth-left-features {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.auth-feature-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 8px 14px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.auth-left-footer {
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: #d1fae5;
+}
+
+.teacher-link-pill {
+    color: #ffd93d;
+    font-weight: 800;
+    text-decoration: none;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 217, 61, 0.4);
+    transition: all 0.2s ease;
+}
+
+.teacher-link-pill:hover {
+    background: #ffd93d;
+    color: #1a2e1a;
+}
+
+/* ==========================================================================
+   Right Side: Login Box with Four Leaf Inner Background & Frosted Glass
+   ========================================================================== */
+.auth-box-right {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    padding: 34px 38px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 8px;
-    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.35);
+    /* Translucent Frosted Glass Overlay - Reveals actual outer background through blur */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(240, 253, 244, 0.80) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.auth-card {
+    width: 100%;
+    background: transparent;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+/* Card Header */
+.auth-card-header {
+    margin-bottom: 18px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.auth-logo-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .auth-logo-text {
-    display: flex;
-    gap: 6px;
-    font-family: "Fredoka One", cursive;
-    font-size: 1.6rem;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.65rem;
+    color: #14532d;
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.7);
 }
 
-.logo-crafty {
-    color: var(--green-dark);
-}
-
-.logo-kids {
-    color: var(--teal-dark);
-}
-
-.auth-welcome {
-    text-align: center;
-    color: var(--gray);
-    font-size: 0.95rem;
-    margin-bottom: 24px;
-}
-
-.auth-tabs {
-    display: flex;
-    border-bottom: 2px solid #eee;
-    margin-bottom: 24px;
-}
-
-.auth-tab {
-    flex: 1;
-    text-align: center;
-    padding: 10px;
-    text-decoration: none;
+.auth-pill-badge {
+    font-size: 0.65rem;
     font-weight: 800;
-    color: var(--gray);
-    border-bottom: 3px solid transparent;
-    margin-bottom: -2px;
-    transition: color 0.2s;
+    background: rgba(34, 197, 94, 0.25);
+    border: 1px solid rgba(34, 197, 94, 0.5);
+    color: #064e3b;
+    padding: 1px 8px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.auth-tab.active {
-    color: var(--green-dark);
-    border-bottom-color: var(--green);
+.auth-card-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.35rem;
+    color: #15803d;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.7);
+}
+
+/* ==========================================================================
+   Form Styles & Frosted Glass Gradient Input Boxes
+   ========================================================================== */
+.form-group {
+    margin-bottom: 14px;
+    text-align: left;
+    position: relative;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 800;
+    font-size: 0.78rem;
+    color: #0f381e;
+    margin-bottom: 4px;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.2px;
+}
+
+/* Frosted Glass Gradient on Input Boxes */
+.form-group input[type="text"],
+.form-group input[type="password"] {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 11px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #0d2e18;
+    outline: none;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    /* Frosted glass gradient */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.48) 100%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255, 255, 255, 0.85);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.7), 0 2px 5px rgba(0, 0, 0, 0.06);
+}
+
+.form-group input::placeholder {
+    color: rgba(22, 101, 52, 0.55);
+    font-weight: 500;
+}
+
+.form-group input:focus {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.35);
+}
+
+/* Password Visibility Wrapper */
+.password-field-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-field-wrapper input {
+    padding-right: 42px !important;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: #166534;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    z-index: 5;
+}
+
+.toggle-password:hover {
+    color: #15803d;
+}
+
+.toggle-password svg {
+    width: 19px;
+    height: 19px;
 }
 
 .forgot-link {
-    position: absolute;
-    right: 0;
-    bottom: -22px;
-    font-size: 0.8rem;
-    color: var(--teal-dark);
+    display: block;
+    text-align: right;
+    font-size: 0.76rem;
+    color: #15803d;
+    font-weight: 800;
     text-decoration: none;
-    font-weight: 700;
+    margin-top: 5px;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
 }
 
+.forgot-link:hover {
+    text-decoration: underline;
+    color: #047857;
+}
+
+/* Error warnings */
+.input-error {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.25) !important;
+    background: rgba(254, 242, 242, 0.9) !important;
+}
+
+/* ==========================================================================
+   Button & Action Links
+   ========================================================================== */
 .btn-auth {
     width: 100%;
-    padding: 13px;
-    background: var(--yellow);
-    color: var(--dark);
-    border: none;
+    padding: 11px 14px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 12px;
-    font-family: "Fredoka One", cursive;
+    font-family: 'Fredoka One', cursive;
     font-size: 1.1rem;
     cursor: pointer;
-    margin-top: 20px;
-    transition: transform 0.2s, background 0.2s;
-    box-shadow: 0 4px 12px rgba(255, 217, 61, 0.35);
+    box-shadow: 0 4px 15px rgba(22, 163, 74, 0.35);
+    transition: all 0.2s ease;
+    margin-top: 10px;
 }
 
 .btn-auth:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1.5px);
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    box-shadow: 0 6px 20px rgba(22, 163, 74, 0.45);
 }
 
-.auth-back {
-    text-align: center;
-    margin-top: 20px;
+.btn-auth:active {
+    transform: translateY(0);
 }
 
-.auth-back a {
-    color: var(--gray);
-    font-size: 0.88rem;
-    text-decoration: none;
+.auth-card-footer-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 0.78rem;
     font-weight: 700;
+    color: #0f381e;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    text-align: center;
 }
 
-.auth-back a:hover {
-    color: var(--green-dark);
+.auth-card-footer-links a {
+    color: #15803d;
+    text-decoration: none;
+    font-weight: 800;
+}
+
+.auth-card-footer-links a:hover {
+    text-decoration: underline;
+    color: #047857;
+}
+
+.bullet-dot {
+    color: #166534;
+    opacity: 0.6;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+@media (max-width: 900px) {
+    .auth-box {
+        flex-direction: column;
+        max-width: 480px;
+        max-height: none;
+        min-height: auto;
+    }
+    
+    .auth-box-left {
+        padding: 26px 22px;
+        border-right: none;
+        border-bottom: 1.5px solid rgba(255, 255, 255, 0.25);
+    }
+    
+    .auth-welcome-text h1 {
+        font-size: 2.2rem;
+    }
+    
+    .auth-left-features {
+        display: none;
+    }
+    
+    .auth-box-right {
+        padding: 24px 20px;
+    }
+}
+
+@media (max-width: 600px) {
+    .auth-box-left {
+        padding: 20px 18px;
+    }
+    
+    .auth-welcome-text h1 {
+        font-size: 1.9rem;
+    }
 }

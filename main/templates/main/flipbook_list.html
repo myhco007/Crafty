@@ -7,8 +7,29 @@
 {% block content %}
 
 <div class="page-section">
-    <h1 class="page-title">DIY Flipbook Tutorials</h1>
-    <p class="page-sub">Read step-by-step instructions in our digital books!</p>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
+        <div>
+            <h1 class="page-title">
+                {% if current_lang == 'tl' %}Mga Aralin sa DIY Flipbook{% else %}DIY Flipbook Tutorials{% endif %}
+            </h1>
+            <p class="page-sub">
+                {% if current_lang == 'tl' %}Basahin ang mga sunud-sunod na panuto sa ating mga digital na aklat!{% else %}Read step-by-step instructions in our digital books!{% endif %}
+            </p>
+        </div>
+
+        <!-- Language Selector Toggle -->
+        <div class="language-switcher-bar" style="display: inline-flex; align-items: center; gap: 8px; background: #ffffff; padding: 6px 14px; border-radius: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 2px solid #e2e8f0;">
+            <span style="font-weight: bold; color: var(--dark); font-size: 0.9rem; display: flex; align-items: center; gap: 5px;">
+                🌐 Language / Wika:
+            </span>
+            <a href="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}lang=en" class="lang-pill" style="padding: 4px 12px; border-radius: 20px; font-weight: bold; text-decoration: none; font-size: 0.85rem; transition: all 0.2s; {% if current_lang != 'tl' %}background: #3b82f6; color: white; box-shadow: 0 2px 4px rgba(59,130,246,0.3);{% else %}color: #64748b; background: #f1f5f9;{% endif %}">
+                🇬🇧 English
+            </a>
+            <a href="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}lang=tl" class="lang-pill" style="padding: 4px 12px; border-radius: 20px; font-weight: bold; text-decoration: none; font-size: 0.85rem; transition: all 0.2s; {% if current_lang == 'tl' %}background: #ef4444; color: white; box-shadow: 0 2px 4px rgba(239,68,68,0.3);{% else %}color: #64748b; background: #f1f5f9;{% endif %}">
+                🇵🇭 Tagalog
+            </a>
+        </div>
+    </div>
 
     <!-- Subject Tabs -->
     <div class="tab-row">
@@ -107,7 +128,7 @@
     <div class="media-grid">
         {% for flipbook in flipbooks %}
         <div class="yt-card">
-            <a href="{% url 'flipbook_detail' flipbook.pk %}" class="yt-thumb-container">
+            <a href="{% url 'flipbook_detail' flipbook.pk %}" class="yt-thumb-container" style="position: relative;">
                 {% if flipbook.cover_image %}
                     <img src="{{ flipbook.cover_image.url }}" alt="{{ flipbook.title }}" class="yt-thumb">
                 {% else %}
@@ -115,19 +136,30 @@
                         <span class="book-icon">&#128214;</span>
                     </div>
                 {% endif %}
+                {% if flipbook.has_audio %}
+                <span class="audio-badge" style="position: absolute; bottom: 8px; right: 8px; background: rgba(139, 92, 246, 0.95); color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                    🔊 {% if current_lang == 'tl' %}May Audio{% else %}Audio{% endif %}
+                </span>
+                {% endif %}
             </a>
             <div class="yt-details">
                 <div class="yt-avatar">
                     <img src="{% static 'images/favicon.png' %}" alt="CraftyKids">
                 </div>
                 <div class="yt-info">
-                    <h3 class="yt-title">{{ flipbook.title }}</h3>
+                    <h3 class="yt-title">
+                        {% if current_lang == 'tl' and flipbook.title_tl %}{{ flipbook.title_tl }}{% else %}{{ flipbook.title }}{% endif %}
+                    </h3>
                     <div class="yt-meta">
                         <div class="yt-channel">
                             CraftyKids
                             <svg class="yt-verified" viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zM10 17l-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8l-9 9z"/></svg>
                         </div>
                         <div class="yt-stats">
+                            <span style="display: inline-block; background: #e0f2fe; color: #0284c7; padding: 1px 7px; border-radius: 8px; font-weight: bold; font-size: 0.75rem; margin-right: 4px;">{{ flipbook.grade }}</span>
+                            {% if flipbook.has_audio %}
+                            <span style="display: inline-block; background: #ede9fe; color: #7c3aed; padding: 1px 7px; border-radius: 8px; font-weight: bold; font-size: 0.75rem; margin-right: 4px;">🔊 {% if current_lang == 'tl' %}May Boses{% else %}Audio{% endif %}</span>
+                            {% endif %}
                             {{ flipbook.category }} &bull; {{ flipbook.created_at|timesince }} ago
                         </div>
                     </div>

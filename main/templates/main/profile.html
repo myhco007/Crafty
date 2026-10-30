@@ -368,6 +368,185 @@
     :root.dark-mode .pref-item-clickable:hover {
         background: #4a5568;
     }
+
+    /* LEVEL & STARS CARD */
+    .level-progress-box {
+        margin-top: 20px;
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        border: 2px solid #fde68a;
+        border-radius: 16px;
+        padding: 16px;
+        text-align: left;
+    }
+
+    .level-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+
+    .level-badge {
+        font-family: 'Fredoka One', cursive;
+        color: #b45309;
+        font-size: 1.05rem;
+    }
+
+    .stars-count {
+        background: #f59e0b;
+        color: white;
+        font-weight: bold;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+    }
+
+    .progress-bar-bg {
+        width: 100%;
+        height: 12px;
+        background: #ffffff;
+        border: 1px solid #fde68a;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 8px 0 6px;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #f59e0b 0%, #10b981 100%);
+        border-radius: 10px;
+        transition: width 0.5s ease-out;
+    }
+
+    .progress-subtext {
+        font-size: 0.75rem;
+        color: #92400e;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* TROPHIES GRID */
+    .trophies-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .trophy-card {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        position: relative;
+    }
+
+    .trophy-card.unlocked {
+        background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+        border-color: #86efac;
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.12);
+    }
+
+    .trophy-card.locked {
+        opacity: 0.65;
+        filter: grayscale(80%);
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+
+    .trophy-icon {
+        font-size: 2.2rem;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        flex-shrink: 0;
+    }
+
+    .trophy-info {
+        flex: 1;
+    }
+
+    .trophy-name {
+        font-family: 'Fredoka One', cursive;
+        font-size: 0.95rem;
+        color: var(--dark);
+        margin-bottom: 2px;
+    }
+
+    .trophy-desc {
+        font-size: 0.75rem;
+        color: var(--gray);
+        line-height: 1.2;
+    }
+
+    .trophy-status {
+        display: inline-block;
+        font-size: 0.65rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-top: 6px;
+    }
+
+    .trophy-status.unlocked {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .trophy-status.locked {
+        background: #e2e8f0;
+        color: #64748b;
+    }
+
+    :root.dark-mode .level-progress-box {
+        background: #2d2618;
+        border-color: #78350f;
+    }
+
+    :root.dark-mode .level-badge {
+        color: #fbbf24;
+    }
+
+    :root.dark-mode .progress-subtext {
+        color: #fde68a;
+    }
+
+    :root.dark-mode .trophy-card.unlocked {
+        background: #143823;
+        border-color: #166534;
+    }
+
+    :root.dark-mode .trophy-card.locked {
+        background: #1e293b;
+        border-color: #334155;
+    }
+
+    :root.dark-mode .trophy-icon {
+        background: #1e293b;
+    }
+
+    :root.dark-mode .trophy-name {
+        color: #f8fafc;
+    }
+
+    :root.dark-mode .trophy-desc {
+        color: #94a3b8;
+    }
 </style>
 {% endblock %}
 
@@ -408,6 +587,26 @@
                     User
                     {% endif %}
                 </div>
+
+                {% if level_info %}
+                <div class="level-progress-box">
+                    <div class="level-title-row">
+                        <span class="level-badge">Lvl {{ level_info.level }}: {{ level_info.title }}</span>
+                        <span class="stars-count">⭐ {{ level_info.points }} Stars</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: {{ level_info.progress_pct }}%;"></div>
+                    </div>
+                    <div class="progress-subtext">
+                        <span>Progress: {{ level_info.progress_pct }}%</span>
+                        {% if level_info.level < 5 %}
+                        <span>{{ level_info.stars_needed }} stars to Lvl {{ level_info.level|add:1 }}</span>
+                        {% else %}
+                        <span>Max Level! 🏆</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
 
                 {% if user.profile.role == 'CLIENT' %}
                 <div class="id-card-details">
@@ -489,6 +688,28 @@
 
     <!-- RIGHT COLUMN: SETTINGS & EDIT -->
     <div class="profile-right">
+
+        {% if badges_info %}
+        <div class="pref-card">
+            <h2 class="pref-header">Achievements & Trophies 🏆</h2>
+            <div class="trophies-grid">
+                {% for badge in badges_info %}
+                <div class="trophy-card {% if badge.unlocked %}unlocked{% else %}locked{% endif %}">
+                    <div class="trophy-icon">{{ badge.icon }}</div>
+                    <div class="trophy-info">
+                        <div class="trophy-name">{{ badge.name }}</div>
+                        <div class="trophy-desc">{{ badge.desc }}</div>
+                        {% if badge.unlocked %}
+                        <span class="trophy-status unlocked">Unlocked ✓</span>
+                        {% else %}
+                        <span class="trophy-status locked">Locked 🔒</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
 
         <div class="pref-card">
             <h2 class="pref-header">Manage password</h2>

@@ -2,13 +2,15 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.http import require_POST
+from django.views.decorators.cache import never_cache
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.urls import reverse
 from django.core.mail import send_mail
 from .audit import log_audit_event
-from .models import AnimationVideo, AuditLog, Flipbook, Category, Announcement, Notification, VideoComment, FlipbookComment, UserProfile, StudentActivity, CalendarEvent, TeacherTask, PasswordResetCode
-from .forms import AnimationVideoForm, FlipbookForm, AnnouncementForm, UserUpdateForm, UserProfileUpdateForm, CalendarEventForm
+from .models import AnimationVideo, AuditLog, Flipbook, Category, Announcement, Notification, VideoComment, FlipbookComment, UserProfile, StudentActivity, CalendarEvent, TeacherTask, PasswordResetCode, FlipbookQuiz, FlipbookQuestion, StudentQuizAttempt, FlipbookPageAudio
+from .forms import AnimationVideoForm, FlipbookForm, AnnouncementForm, UserUpdateForm, UserProfileUpdateForm, CalendarEventForm, FlipbookQuizForm, FlipbookQuestionForm
 
 import urllib.request
 import urllib.parse
@@ -40,6 +42,44 @@ def is_staff_or_teacher(user):
 
 def is_super_admin(user):
     return user.is_authenticated and (user.is_superuser or (hasattr(user, 'profile') and user.profile.role == 'SUPER_ADMIN'))
+
+
+def _save_page_audios(request, flipbook):
+    """
+    Reads page_count and audio_page_N files from POST/FILES and saves
+    FlipbookPageAudio records for each page that has a submitted audio file.
+    If a page already has audio and no new file is submitted, the old audio is kept.
+    """
+    try:
+        page_count = int(request.POST.get('page_count', 0))
+    except (ValueError, TypeError):
+        page_count = 0
+
+    if page_count <= 0:
+        return
+
+    # Build lookup of existing records
+    existing = {pa.page_number: pa for pa in flipbook.page_audios.all()}
+
+    for page_num in range(1, page_count + 1):
+        file_key = f'audio_page_{page_num}'
+        uploaded_file = request.FILES.get(file_key)
+        if uploaded_file:
+            if page_num in existing:
+                pa = existing[page_num]
+                # Delete old file from storage
+                if pa.audio_file:
+                    pa.audio_file.delete(save=False)
+                pa.audio_file = uploaded_file
+                pa.save()
+            else:
+                FlipbookPageAudio.objects.create(
+                    flipbook=flipbook,
+                    page_number=page_num,
+                    audio_file=uploaded_file
+                )
+
+
 
 def home(request):
     return render(request, 'main/home.html')
@@ -95,9 +135,14 @@ def profile_view(request):
         u_form = UserUpdateForm(instance=request.user)
         p_form = UserProfileUpdateForm(instance=request.user.profile)
         
+    level_info = request.user.profile.get_level_info() if hasattr(request.user, 'profile') else None
+    badges_info = request.user.profile.get_badges_info() if hasattr(request.user, 'profile') else []
+
     context = {
         'u_form': u_form,
-        'p_form': p_form
+        'p_form': p_form,
+        'level_info': level_info,
+        'badges_info': badges_info,
     }
     return render(request, 'main/profile.html', context)
 
@@ -156,21 +201,19 @@ def faqs(request):
     return render(request, 'main/faqs.html')
 
 from django.utils.timezone import now
+from .context_processors import get_user_notifications
 
 def notifications(request):
-    qs = Notification.objects.all()
-    
-    # Filter admin-only notifications for regular users
-    if not is_super_admin(request.user):
-        qs = qs.exclude(title__icontains='Pending').exclude(title__icontains='Registration')
-        
-    notifications_list = qs
-    
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    notifications_list = get_user_notifications(request.user)
+
     # Update profile to hide the indicator
-    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+    if hasattr(request.user, 'profile'):
         request.user.profile.last_seen_notifications = now()
         request.user.profile.save()
-    
+
     return render(request, 'main/notifications.html', {'notifications': notifications_list})
 
 
@@ -205,6 +248,7 @@ def video_list(request):
     if query:
         videos = videos.filter(title__icontains=query)
         
+    videos = videos.order_by('-created_at', '-id')
     return render(request, 'main/video_list.html', {'videos': videos, 'active': category, 'selected_grade': grade, 'selected_craft': craft_category})
 
 @login_required(login_url='login')
@@ -296,7 +340,26 @@ def video_detail(request, pk):
     video = get_object_or_404(AnimationVideo, pk=pk, is_archived=False)
     comments = video.comments.filter(is_archived=False)
     has_liked = request.user.is_authenticated and video.liked_by.filter(id=request.user.id).exists()
-    return render(request, 'main/video_detail.html', {'video': video, 'comments': comments, 'has_liked': has_liked})
+    is_completed = request.user.is_authenticated and StudentActivity.objects.filter(user=request.user, video=video).exists()
+    
+    # Get videos accessible to the user based on grade level (excluding current video)
+    more_videos = AnimationVideo.objects.filter(is_archived=False, is_approved=True).exclude(pk=video.pk)
+    if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.role == 'CLIENT':
+        user_grade = request.user.profile.grade_level
+        if user_grade:
+            from django.db.models import Q
+            more_videos = more_videos.filter(Q(grade=user_grade) | Q(grade='All Grades'))
+            
+    more_videos = more_videos.order_by('-created_at')
+    
+    context = {
+        'video': video,
+        'comments': comments,
+        'has_liked': has_liked,
+        'is_completed': is_completed,
+        'more_videos': more_videos
+    }
+    return render(request, 'main/video_detail.html', context)
 
 @login_required(login_url='login')
 def video_like(request, pk):
@@ -341,6 +404,12 @@ def video_comment_delete(request, pk):
 # Flipbooks CRUD
 
 def flipbook_list(request):
+    lang = request.GET.get('lang')
+    if lang in ['en', 'tl']:
+        request.session['flipbook_lang'] = lang
+    else:
+        lang = request.session.get('flipbook_lang', 'en')
+
     category = request.GET.get('category')
     craft_category = request.GET.get('craft_category', 'All Categories')
     query = request.GET.get('q', '').strip()
@@ -367,17 +436,175 @@ def flipbook_list(request):
         flipbooks = flipbooks.filter(craft_category=craft_category)
     
     if query:
-        flipbooks = flipbooks.filter(title__icontains=query)
+        from django.db.models import Q
+        flipbooks = flipbooks.filter(Q(title__icontains=query) | Q(title_tl__icontains=query))
         
-    return render(request, 'main/flipbook_list.html', {'flipbooks': flipbooks, 'active': category, 'selected_grade': grade, 'selected_craft': craft_category})
+    flipbooks = flipbooks.order_by('-created_at', '-id')
+    return render(request, 'main/flipbook_list.html', {
+        'flipbooks': flipbooks,
+        'active': category,
+        'selected_grade': grade,
+        'selected_craft': craft_category,
+        'current_lang': lang
+    })
 
-# DITO KO IDINAGDAG YUNG FLIPBOOK DETAIL VIEW
 @login_required(login_url='login')
 def flipbook_detail(request, pk):
+    lang = request.GET.get('lang')
+    if lang in ['en', 'tl']:
+        request.session['flipbook_lang'] = lang
+    else:
+        lang = request.session.get('flipbook_lang', 'en')
+
     flipbook = get_object_or_404(Flipbook, pk=pk, is_archived=False)
     comments = flipbook.comments.filter(is_archived=False)
     has_liked = request.user.is_authenticated and flipbook.liked_by.filter(id=request.user.id).exists()
-    return render(request, 'main/flipbook_detail.html', {'flipbook': flipbook, 'comments': comments, 'has_liked': has_liked})
+    is_completed = request.user.is_authenticated and StudentActivity.objects.filter(user=request.user, flipbook=flipbook).exists()
+    
+    quiz = getattr(flipbook, 'quiz', None)
+    quiz_questions = quiz.questions.all() if quiz else []
+    quiz_attempt = None
+    if quiz and request.user.is_authenticated:
+        quiz_attempt = StudentQuizAttempt.objects.filter(user=request.user, quiz=quiz).order_by('-completed_at').first()
+
+    active_audio_url = None
+    if lang == 'tl' and flipbook.audio_file_tl:
+        active_audio_url = flipbook.audio_file_tl.url
+    elif flipbook.audio_file:
+        active_audio_url = flipbook.audio_file.url
+
+    silent_pages_list = flipbook.get_silent_pages_list()
+    page_timestamps_list = flipbook.get_timestamps_list()
+
+    # Build per-page audio map: {page_number: audio_url}
+    page_audio_map = {}
+    for pa in flipbook.page_audios.all():
+        if pa.audio_file:
+            page_audio_map[pa.page_number] = pa.audio_file.url
+
+    context = {
+        'flipbook': flipbook,
+        'comments': comments,
+        'has_liked': has_liked,
+        'is_completed': is_completed,
+        'quiz': quiz,
+        'quiz_questions': quiz_questions,
+        'quiz_attempt': quiz_attempt,
+        'current_lang': lang,
+        'active_audio_url': active_audio_url,
+        'silent_pages_list': silent_pages_list,
+        'page_timestamps_list': page_timestamps_list,
+        'page_audio_map': page_audio_map,
+        'has_page_audios': bool(page_audio_map),
+    }
+    return render(request, 'main/flipbook_detail.html', context)
+
+
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def quiz_manage(request, pk):
+    flipbook = get_object_or_404(Flipbook, pk=pk)
+    quiz, created = FlipbookQuiz.objects.get_or_create(flipbook=flipbook, defaults={'title': f"Assessment: {flipbook.title}"})
+    
+    if request.method == 'POST':
+        if 'save_quiz' in request.POST:
+            quiz_form = FlipbookQuizForm(request.POST, instance=quiz)
+            if quiz_form.is_valid():
+                quiz_form.save()
+                messages.success(request, 'Quiz settings updated successfully!')
+                return redirect('quiz_manage', pk=pk)
+        elif 'add_question' in request.POST:
+            question_form = FlipbookQuestionForm(request.POST)
+            if question_form.is_valid():
+                question = question_form.save(commit=False)
+                question.quiz = quiz
+                question.save()
+                messages.success(request, 'Question added successfully!')
+                return redirect('quiz_manage', pk=pk)
+    
+    quiz_form = FlipbookQuizForm(instance=quiz)
+    question_form = FlipbookQuestionForm(initial={'order': quiz.questions.count() + 1})
+    questions = quiz.questions.all()
+    
+    context = {
+        'flipbook': flipbook,
+        'quiz': quiz,
+        'questions': questions,
+        'quiz_form': quiz_form,
+        'question_form': question_form,
+    }
+    return render(request, 'main/quiz_manage.html', context)
+
+
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def quiz_question_delete(request, pk):
+    question = get_object_or_404(FlipbookQuestion, pk=pk)
+    flipbook_pk = question.quiz.flipbook.pk
+    question.delete()
+    messages.success(request, 'Question deleted successfully!')
+    return redirect('quiz_manage', pk=flipbook_pk)
+
+
+@login_required
+@require_POST
+def submit_flipbook_quiz(request):
+    try:
+        data = json.loads(request.body)
+        quiz_id = data.get('quiz_id')
+        answers = data.get('answers', {})
+        
+        quiz = get_object_or_404(FlipbookQuiz, pk=quiz_id)
+        questions = quiz.questions.all()
+        total_questions = questions.count()
+        
+        if total_questions == 0:
+            return JsonResponse({'status': 'error', 'message': 'Quiz has no questions.'}, status=400)
+            
+        correct_count = 0
+        details = {}
+        for q in questions:
+            user_ans = str(answers.get(str(q.id)) or '').upper().strip()
+            is_correct = (user_ans == q.correct_option)
+            if is_correct:
+                correct_count += 1
+            details[q.id] = {
+                'user_option': user_ans,
+                'correct_option': q.correct_option,
+                'is_correct': is_correct
+            }
+            
+        score_pct = int((correct_count / total_questions) * 100)
+        passed = score_pct >= quiz.pass_percentage
+        
+        already_passed = StudentQuizAttempt.objects.filter(user=request.user, quiz=quiz, passed=True).exists()
+        
+        StudentQuizAttempt.objects.create(
+            user=request.user,
+            quiz=quiz,
+            score=correct_count,
+            total_questions=total_questions,
+            passed=passed
+        )
+        
+        points_earned = 0
+        if passed and not already_passed and hasattr(request.user, 'profile'):
+            request.user.profile.points += 30
+            request.user.profile.save()
+            points_earned = 30
+            
+        return JsonResponse({
+            'status': 'success',
+            'score': correct_count,
+            'total': total_questions,
+            'percentage': score_pct,
+            'passed': passed,
+            'points_earned': points_earned,
+            'total_points': request.user.profile.points if hasattr(request.user, 'profile') else 0,
+            'details': details
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 @login_required(login_url='login')
 def flipbook_like(request, pk):
@@ -421,6 +648,7 @@ def flipbook_comment_delete(request, pk):
 @login_required(login_url='login')
 @user_passes_test(is_staff_or_teacher, login_url='home')
 def flipbook_create(request):
+    from .models import FlipbookPageAudio
     form = FlipbookForm(request.POST or None, request.FILES or None)
     if form.is_valid():
         flipbook = form.save(commit=False)
@@ -448,19 +676,32 @@ def flipbook_create(request):
                 message=f"A new flipbook tutorial '{flipbook.title}' is now available.",
                 icon="Book"
             )
+
+        # Save per-page audio files
+        _save_page_audios(request, flipbook)
+
         return redirect('/dashboard/#section-flipbooks' if request.user.is_staff else 'flipbook_list')
     return render(request, 'main/flipbook_form.html', {'form': form, 'title': 'Add Flipbook'})
 
 @login_required(login_url='login')
 @user_passes_test(is_staff_or_teacher, login_url='home')
 def flipbook_edit(request, pk):
+    from .models import FlipbookPageAudio
     flipbook = get_object_or_404(Flipbook, pk=pk)
+    # Build existing page audio map for the template
+    existing_page_audios = {pa.page_number: pa for pa in flipbook.page_audios.all()}
     form = FlipbookForm(request.POST or None, request.FILES or None, instance=flipbook)
     if form.is_valid():
         updated_flipbook = form.save()
+        # Save per-page audio files
+        _save_page_audios(request, updated_flipbook)
         log_audit_event(request, 'update', updated_flipbook, {'source': 'dashboard'})
         return redirect('/dashboard/#section-flipbooks' if request.user.is_staff else 'flipbook_list')
-    return render(request, 'main/flipbook_form.html', {'form': form, 'title': 'Edit Flipbook'})
+    return render(request, 'main/flipbook_form.html', {
+        'form': form,
+        'title': 'Edit Flipbook',
+        'existing_page_audios': existing_page_audios,
+    })
 
 @login_required(login_url='login')
 @user_passes_test(is_staff_or_teacher, login_url='home')
@@ -503,7 +744,13 @@ def flipbook_permanent_delete(request, pk):
 
 # Auth
 
+@never_cache
 def login_view(request, template_name='main/login.html'):
+    if request.user.is_authenticated:
+        if request.user.is_staff or getattr(getattr(request.user, 'profile', None), 'role', '') in ['TEACHER', 'SUPER_ADMIN']:
+            return redirect('dashboard')
+        return redirect('home')
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -537,10 +784,16 @@ def login_view(request, template_name='main/login.html'):
             messages.error(request, 'Invalid username or password.')
     return render(request, template_name, {'recaptcha_site_key': settings.RECAPTCHA_SITE_KEY})
 
+@never_cache
 def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('home')
     if request.method == 'POST':
-        first_name = request.POST.get('first_name')
-        last_name  = request.POST.get('last_name')
+        first_name = request.POST.get('first_name', '').strip()
+        middle_name = request.POST.get('middle_name', '').strip()
+        no_middle_name = request.POST.get('no_middle_name')
+        suffix     = request.POST.get('suffix', '').strip()
+        last_name  = request.POST.get('last_name', '').strip()
         email      = request.POST.get('email')
         lrn_number = request.POST.get('lrn_number')
         grade_level = request.POST.get('grade_level')
@@ -549,19 +802,34 @@ def register_view(request):
         password1  = request.POST.get('password1')
         password2  = request.POST.get('password2')
 
-        if password1 != password2:
+        # Clean up any soft-archived or unapproved/pending user records with matching email/username/LRN so re-registration is seamless
+        if email:
+            User.objects.filter(email__iexact=email, profile__is_archived=True).delete()
+            User.objects.filter(email__iexact=email, profile__is_approved=False).delete()
+        if username:
+            User.objects.filter(username__iexact=username, profile__is_archived=True).delete()
+            User.objects.filter(username__iexact=username, profile__is_approved=False).delete()
+        if lrn_number:
+            User.objects.filter(profile__lrn_number=lrn_number, profile__is_archived=True).delete()
+            User.objects.filter(profile__lrn_number=lrn_number, profile__is_approved=False).delete()
+
+        if not no_middle_name and not middle_name:
+            messages.error(request, 'Please enter your Middle Name or check "No Middle Name".')
+        elif password1 != password2:
             messages.error(request, 'Passwords do not match.')
+        elif len(password1) > 15:
+            messages.error(request, 'Password must not exceed 15 characters.')
         elif not re.search(r'[a-zA-Z]', password1) or not re.search(r'[0-9]', password1) or not re.search(r'_', password1):
             messages.error(request, 'Password must contain a combination of letters, numbers, and an underscore.')
         elif not email or not email.lower().endswith('@gmail.com'):
             pass # Frontend will handle the warning display
-        elif User.objects.filter(email__iexact=email).exists():
+        elif User.objects.filter(email__iexact=email, profile__is_approved=True, profile__is_archived=False).exists():
             messages.error(request, 'This Gmail account is already registered. Please use a different one.')
-        elif User.objects.filter(username=username).exists():
+        elif User.objects.filter(username=username, profile__is_approved=True, profile__is_archived=False).exists():
             messages.error(request, 'Username already taken.')
         elif not lrn_number or not lrn_number.isdigit() or len(lrn_number) != 12:
             messages.error(request, 'LRN Number must be exactly 12 digits.')
-        elif UserProfile.objects.filter(lrn_number=lrn_number).exists():
+        elif UserProfile.objects.filter(lrn_number=lrn_number, is_approved=True, is_archived=False).exists():
             messages.error(request, 'This LRN Number is already registered by another user. Please use a different one.')
         elif not section or not re.match(r'^[1-3]$', section):
             messages.error(request, 'Section must be a single number from 1 to 3.')
@@ -575,6 +843,8 @@ def register_view(request):
             
             # Profile is automatically created by signal, just update it
             user.profile.lrn_number = lrn_number
+            user.profile.suffix = suffix if suffix else None
+            user.profile.middle_name = None if no_middle_name else middle_name
             if grade_level:
                 user.profile.grade_level = grade_level
             if section:
@@ -592,7 +862,7 @@ def register_view(request):
             log_audit_event(request, 'register', user, {'source': 'auth'}, target_label=user.username)
             
             # Notify Super Admin
-            full_name_combined = f"{first_name} {last_name}".strip()
+            full_name_combined = f"{first_name} {user.profile.middle_name or ''} {last_name} {suffix or ''}".replace("  ", " ").strip()
             from main.models import Notification
             Notification.objects.create(
                 title="New Student Registration",
@@ -627,25 +897,43 @@ def register_view(request):
         'recaptcha_site_key': settings.RECAPTCHA_SITE_KEY
     })
 
+@never_cache
 def teacher_register_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
     if request.method == 'POST':
-        first_name = request.POST.get('first_name')
-        last_name  = request.POST.get('last_name')
+        first_name = request.POST.get('first_name', '').strip()
+        middle_name = request.POST.get('middle_name', '').strip()
+        no_middle_name = request.POST.get('no_middle_name')
+        suffix     = request.POST.get('suffix', '').strip()
+        last_name  = request.POST.get('last_name', '').strip()
         email      = request.POST.get('email')
         username   = request.POST.get('username')
         password1  = request.POST.get('password1')
         password2  = request.POST.get('password2')
         grade_level = request.POST.get('grade_level')
 
-        if password1 != password2:
+        # Clean up any soft-archived or unapproved/pending user records with matching email/username so re-registration is seamless
+        if email:
+            User.objects.filter(email__iexact=email, profile__is_archived=True).delete()
+            User.objects.filter(email__iexact=email, profile__is_approved=False).delete()
+        if username:
+            User.objects.filter(username__iexact=username, profile__is_archived=True).delete()
+            User.objects.filter(username__iexact=username, profile__is_approved=False).delete()
+
+        if not no_middle_name and not middle_name:
+            messages.error(request, 'Please enter your Middle Name or check "No Middle Name".')
+        elif password1 != password2:
             messages.error(request, 'Passwords do not match.')
+        elif len(password1) > 15:
+            messages.error(request, 'Password must not exceed 15 characters.')
         elif not re.search(r'[a-zA-Z]', password1) or not re.search(r'[0-9]', password1) or not re.search(r'_', password1):
             messages.error(request, 'Password must contain a combination of letters, numbers, and an underscore.')
         elif not email or not email.lower().endswith('@gmail.com'):
             pass # Frontend will handle the warning display
-        elif User.objects.filter(email__iexact=email).exists():
+        elif User.objects.filter(email__iexact=email, profile__is_approved=True, profile__is_archived=False).exists():
             messages.error(request, 'This Gmail account is already registered. Please use a different one.')
-        elif User.objects.filter(username=username).exists():
+        elif User.objects.filter(username=username, profile__is_approved=True, profile__is_archived=False).exists():
             messages.error(request, 'Username already taken.')
         elif not verify_recaptcha(request):
             messages.error(request, 'CAPTCHA verification failed. Please prove you are human.')
@@ -658,7 +946,8 @@ def teacher_register_view(request):
             # Set role to TEACHER and is_approved to False
             user.profile.role = 'TEACHER'
             user.profile.is_approved = False
-            
+            user.profile.suffix = suffix if suffix else None
+            user.profile.middle_name = None if no_middle_name else middle_name
             if grade_level:
                 user.profile.grade_level = grade_level
             
@@ -671,7 +960,7 @@ def teacher_register_view(request):
             log_audit_event(request, 'register', user, {'source': 'teacher_auth'}, target_label=user.username)
             
             # Notify Super Admin
-            full_name_combined = f"{first_name} {last_name}".strip()
+            full_name_combined = f"{first_name} {user.profile.middle_name or ''} {last_name} {suffix or ''}".replace("  ", " ").strip()
             Notification.objects.create(
                 title="New Teacher Registration",
                 message=f"A new teacher account '{username}' ({full_name_combined}) is pending approval.",
@@ -1031,6 +1320,26 @@ def reject_user(request, pk):
         user.is_active = False
         user.save()
         
+        # Send Email Notification to User regarding rejection
+        if user.email:
+            subject = "Registration Status Update - CraftyKids"
+            website_link = request.build_absolute_uri('/')
+            full_name = f"{user.first_name} {user.last_name}".strip() or username
+            message_body = (
+                f"Hello {full_name},\n\n"
+                f"We are writing to notify you that your registration request for CraftyKids ({username}) "
+                f"was reviewed and has been declined by the Main Admin at this time.\n\n"
+                f"Your registration details have been deactivated. If you wish to re-apply or create a new account, "
+                f"you are welcome to submit a new registration using your email address ({user.email}) here:\n"
+                f"{website_link}\n\n"
+                f"Thank you,\n"
+                f"CraftyKids Team"
+            )
+            try:
+                send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user.email])
+            except Exception as e:
+                print(f"Failed to send rejection email: {e}")
+
         log_audit_event(request, 'archive', user, {'source': 'dashboard'}, target_label=username)
         messages.success(request, f'{role_display} {username} request denied and account archived.')
         return redirect('/dashboard/#section-pending')
@@ -1105,6 +1414,29 @@ def user_permanent_delete(request, pk):
             messages.error(request, "You cannot delete your own account.")
             return redirect('/dashboard/#section-archive')
         username = user.username
+        user_email = user.email
+        full_name = f"{user.first_name} {user.last_name}".strip() or username
+
+        # Send Email Notification to User before permanent deletion
+        if user_email:
+            subject = "Account Deletion Notice - CraftyKids"
+            website_link = request.build_absolute_uri('/')
+            message_body = (
+                f"Hello {full_name},\n\n"
+                f"This email is to inform you that your CraftyKids account (username: {username}) "
+                f"has been permanently deleted by the Main Admin.\n\n"
+                f"All account details associated with this account have been removed from our database. "
+                f"If you wish to use CraftyKids in the future, you may now re-register a new account "
+                f"using your email address ({user_email}) on our registration page:\n"
+                f"{website_link}\n\n"
+                f"Thank you,\n"
+                f"CraftyKids Team"
+            )
+            try:
+                send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user_email])
+            except Exception as e:
+                print(f"Failed to send account deletion email: {e}")
+
         log_audit_event(request, 'delete', user, {'source': 'dashboard'}, target_label=username)
         user.delete()
         messages.success(request, f'User {username} permanently deleted!')
@@ -1152,6 +1484,9 @@ def category_delete(request, pk):
     return redirect('dashboard')
 
 def explore_subjects(request):
+    if not request.user.is_authenticated:
+        messages.info(request, "Welcome to CraftyKids! To explore our learning activities and creative projects, please sign in to your account. If you do not have an account yet, please register first to get started.")
+        return redirect('login')
     return render(request, 'main/explore_subjects.html')
 
 # Announcements CRUD
@@ -1276,7 +1611,7 @@ def student_calendar(request):
         })
         
     context = {
-        'events_json': json.dumps(events),
+        'events_list': events,
         'total_week_crafts': total_week_crafts,
         'videos_completed': videos_completed,
         'flipbooks_completed': flipbooks_completed,
@@ -1296,16 +1631,34 @@ def mark_completed(request):
         video_id = data.get('video_id')
         flipbook_id = data.get('flipbook_id')
         
+        points_earned = 0
         if video_id:
             video = get_object_or_404(AnimationVideo, pk=video_id)
-            # Avoid duplicate completion on the same day if desired, but for now just record it
-            StudentActivity.objects.create(user=request.user, video=video)
-            return JsonResponse({'status': 'success', 'message': 'Video completion recorded!'})
+            activity, created = StudentActivity.objects.get_or_create(user=request.user, video=video)
+            if created and hasattr(request.user, 'profile'):
+                request.user.profile.points += 50
+                request.user.profile.save()
+                points_earned = 50
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Video completion recorded!',
+                'points_earned': points_earned,
+                'total_points': request.user.profile.points if hasattr(request.user, 'profile') else 0
+            })
             
         if flipbook_id:
             flipbook = get_object_or_404(Flipbook, pk=flipbook_id)
-            StudentActivity.objects.create(user=request.user, flipbook=flipbook)
-            return JsonResponse({'status': 'success', 'message': 'Flipbook completion recorded!'})
+            activity, created = StudentActivity.objects.get_or_create(user=request.user, flipbook=flipbook)
+            if created and hasattr(request.user, 'profile'):
+                request.user.profile.points += 50
+                request.user.profile.save()
+                points_earned = 50
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Flipbook completion recorded!',
+                'points_earned': points_earned,
+                'total_points': request.user.profile.points if hasattr(request.user, 'profile') else 0
+            })
             
         return JsonResponse({'status': 'error', 'message': 'No valid ID provided.'}, status=400)
     except Exception as e:
@@ -1456,6 +1809,26 @@ def bulk_archive_action(request):
                     user.save()
                     log_audit_event(request, 'restore', user, {'source': 'dashboard', 'bulk': True}, target_label=user.username)
                 elif action == 'delete':
+                    user_email = user.email
+                    display_name = f"{user.first_name} {user.last_name}".strip() or user.username
+                    if user_email:
+                        subject = "Account Deletion Notice - CraftyKids"
+                        website_link = request.build_absolute_uri('/')
+                        message_body = (
+                            f"Hello {display_name},\n\n"
+                            f"This email is to inform you that your CraftyKids account (username: {user.username}) "
+                            f"has been permanently deleted by the Main Admin.\n\n"
+                            f"All account details associated with this account have been removed from our database. "
+                            f"If you wish to use CraftyKids in the future, you may now re-register a new account "
+                            f"using your email address ({user_email}) on our registration page:\n"
+                            f"{website_link}\n\n"
+                            f"Thank you,\n"
+                            f"CraftyKids Team"
+                        )
+                        try:
+                            send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user_email])
+                        except Exception as e:
+                            print(f"Failed to send bulk account deletion email: {e}")
                     log_audit_event(request, 'delete', user, {'source': 'dashboard', 'bulk': True}, target_label=user.username)
                     user.delete()
                     
@@ -1543,6 +1916,24 @@ def bulk_approval_action(request):
                     
                 elif action == 'deny':
                     username = user.username
+                    if user.email:
+                        subject = "Registration Status Update - CraftyKids"
+                        website_link = request.build_absolute_uri('/')
+                        full_name = f"{user.first_name} {user.last_name}".strip() or username
+                        message_body = (
+                            f"Hello {full_name},\n\n"
+                            f"We are writing to notify you that your registration request for CraftyKids ({username}) "
+                            f"was reviewed and has been declined by the Main Admin at this time.\n\n"
+                            f"Your registration details have been deactivated. If you wish to re-apply or create a new account, "
+                            f"you are welcome to submit a new registration using your email address ({user.email}) here:\n"
+                            f"{website_link}\n\n"
+                            f"Thank you,\n"
+                            f"CraftyKids Team"
+                        )
+                        try:
+                            send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user.email])
+                        except Exception as e:
+                            print(f"Failed to send bulk rejection email: {e}")
                     if hasattr(user, 'profile'):
                         user.profile.is_archived = True
                         user.profile.save()
@@ -1800,4 +2191,111 @@ def reset_password_view(request):
             messages.error(request, "An error occurred. Please try again.")
             return redirect('forgot_password')
 
-    return render(request, 'main/reset_password.html')
+    return render(request, 'main/reset_password.html')
+
+
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def quiz_manage(request, pk):
+    flipbook = get_object_or_404(Flipbook, pk=pk)
+    quiz, created = FlipbookQuiz.objects.get_or_create(flipbook=flipbook)
+    
+    quiz_form = FlipbookQuizForm(request.POST or None, instance=quiz, prefix='quiz')
+    question_form = FlipbookQuestionForm(request.POST or None, prefix='question')
+    
+    if request.method == 'POST':
+        if 'update_quiz' in request.POST:
+            if quiz_form.is_valid():
+                quiz_form.save()
+                messages.success(request, 'Quiz settings updated successfully!')
+                return redirect('quiz_manage', pk=pk)
+        else:
+            if question_form.is_valid():
+                q = question_form.save(commit=False)
+                q.quiz = quiz
+                q.save()
+                messages.success(request, 'Question added successfully!')
+                return redirect('quiz_manage', pk=pk)
+
+    questions = quiz.questions.all()
+    context = {
+        'flipbook': flipbook,
+        'quiz': quiz,
+        'quiz_form': quiz_form,
+        'question_form': question_form,
+        'questions': questions,
+    }
+    return render(request, 'main/quiz_manage.html', context)
+
+
+@login_required(login_url='login')
+@user_passes_test(is_staff_or_teacher, login_url='home')
+def quiz_question_delete(request, pk):
+    question = get_object_or_404(FlipbookQuestion, pk=pk)
+    flipbook_pk = question.quiz.flipbook.pk
+    if request.method == 'POST':
+        question.delete()
+        messages.success(request, 'Question deleted successfully!')
+    return redirect('quiz_manage', pk=flipbook_pk)
+
+
+@login_required
+@require_POST
+def submit_flipbook_quiz(request):
+    try:
+        data = json.loads(request.body)
+        flipbook_id = data.get('flipbook_id')
+        quiz_id = data.get('quiz_id')
+        answers = data.get('answers', {})
+
+        if quiz_id:
+            quiz = get_object_or_404(FlipbookQuiz, pk=quiz_id)
+        elif flipbook_id:
+            quiz = get_object_or_404(FlipbookQuiz, flipbook_id=flipbook_id)
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Quiz or Flipbook ID required.'}, status=400)
+
+        questions = quiz.questions.all()
+        total_questions = questions.count()
+        if total_questions == 0:
+            return JsonResponse({'status': 'error', 'message': 'This assessment has no questions.'}, status=400)
+
+        score = 0
+        for q in questions:
+            user_ans = answers.get(str(q.pk)) or answers.get(q.pk)
+            if user_ans and str(user_ans).upper() == q.correct_option.upper():
+                score += 1
+
+        pct = int((score / total_questions) * 100)
+        passed = pct >= quiz.pass_percentage
+
+        existing_attempt = StudentQuizAttempt.objects.filter(user=request.user, quiz=quiz, passed=True).exists()
+
+        attempt = StudentQuizAttempt.objects.create(
+            user=request.user,
+            quiz=quiz,
+            score=score,
+            total_questions=total_questions,
+            passed=passed
+        )
+
+        stars_awarded = 0
+        if passed and not existing_attempt:
+            stars_awarded = 30
+            if hasattr(request.user, 'profile'):
+                request.user.profile.points += stars_awarded
+                request.user.profile.save()
+
+        return JsonResponse({
+            'status': 'success',
+            'score': score,
+            'total': total_questions,
+            'percentage': pct,
+            'passed': passed,
+            'pass_percentage': quiz.pass_percentage,
+            'stars_awarded': stars_awarded,
+            'total_points': request.user.profile.points if hasattr(request.user, 'profile') else 0
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+

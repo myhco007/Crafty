@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .audit import log_audit_event
-from .models import AnimationVideo, AuditLog, Category, Flipbook
+from .models import AnimationVideo, AuditLog, Category, Flipbook, FlipbookPageAudio
 
 
 admin.site.site_header = "Django administration"
@@ -43,8 +43,8 @@ class AnimationVideoAdmin(admin.ModelAdmin):
 
 @admin.register(Flipbook)
 class FlipbookAdmin(admin.ModelAdmin):
-    list_display = ("title", "category", "created_at")
-    list_filter = ("category", "created_at")
+    list_display = ("title", "category", "grade", "has_audio", "created_at")
+    list_filter = ("category", "grade", "created_at")
     search_fields = ("title", "description")
     autocomplete_fields = ("category",)
     ordering = ("-created_at",)
@@ -56,6 +56,13 @@ class FlipbookAdmin(admin.ModelAdmin):
     def delete_model(self, request, obj):
         log_audit_event(request, 'delete', obj, {'source': 'admin'})
         super().delete_model(request, obj)
+
+
+@admin.register(FlipbookPageAudio)
+class FlipbookPageAudioAdmin(admin.ModelAdmin):
+    list_display = ('flipbook', 'page_number', 'audio_file')
+    list_filter = ('flipbook',)
+    ordering = ('flipbook', 'page_number')
 
 
 @admin.register(AuditLog)

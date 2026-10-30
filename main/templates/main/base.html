@@ -296,6 +296,13 @@
                 e.preventDefault();
             }
         });
+
+        // Ensure fresh reload if restored from browser back/forward cache (bfcache)
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     {% block scripts %}{% endblock %}

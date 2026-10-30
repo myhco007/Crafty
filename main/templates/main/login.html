@@ -14,25 +14,43 @@
     <div class="blob blob-blue"></div>
 
     <!-- Main Auth Container -->
-    <div class="auth-box" style="background-image: url('{% static 'images/progressive-image.jpg' %}');">
+    <div class="auth-box">
 
-        <!-- Left Side: Welcome Text -->
+        <!-- Left Side: Progressive Elementary School Design with Gradient Blend -->
         <div class="auth-box-left">
             <div class="auth-welcome-text">
+                <div class="auth-school-badge">Progressive Elementary School</div>
                 <h1>Welcome Back!</h1>
-                <p>Log in to continue your learning journey with Progressive Elementary School.</p>
+                <p>Log in to continue your learning journey with CraftyKids.</p>
+                
+                <div class="auth-left-features">
+                    <div class="auth-feature-item">
+                        Creative DIY craft tutorials
+                    </div>
+                    <div class="auth-feature-item">
+                        Interactive digital flipbooks
+                    </div>
+                    <div class="auth-feature-item">
+                        Earn student badges & stars
+                    </div>
+                </div>
+            </div>
+            <div class="auth-left-footer">
+                <span>Are you an educator?</span>
+                <a href="{% url 'teacher_login' %}" class="teacher-link-pill">Teacher Login &rarr;</a>
             </div>
         </div>
 
-        <!-- Right Side: Login Card -->
+        <!-- Right Side: Login Card (Progressive Elementary School + Frosted Glass) -->
         <div class="auth-box-right">
             <div class="auth-card">
-                <div class="auth-logo">
-                    <div class="auth-logo-text">Crafty Kids</div>
-                    <p class="auth-card-welcome">Welcome to your creative space!</p>
+                <div class="auth-card-header">
+                    <div class="auth-logo-row">
+                        <span class="auth-logo-text">CraftyKids</span>
+                        <span class="auth-pill-badge">Student</span>
+                    </div>
+                    <h2 class="auth-card-title">Login</h2>
                 </div>
-
-                <h2 class="auth-card-title">Login</h2>
 
                 <style>
                 @keyframes fadeInOverlay {
@@ -63,7 +81,7 @@
                                         <path d="M7 12.5l3 3 7-7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 </div>
-                                <h1 style="font-family: 'Fredoka One', cursive; color: var(--green-dark); font-size: 1.8rem; margin-bottom: 15px;">Welcome to Crafty Kids!</h1>
+                                <h1 style="font-family: 'Fredoka One', cursive; color: var(--green-dark); font-size: 1.8rem; margin-bottom: 15px;">Welcome to CraftyKids!</h1>
                                 <p style="font-size: 1.05rem; font-weight: 700; color: #4a5568; margin-bottom: 25px; line-height: 1.6;">{{ message.message }}</p>
                                 <div style="display: flex; justify-content: center;">
                                     <button type="button" onclick="document.getElementById('registration-success-modal').style.display='none'; confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });" class="btn-auth" style="padding: 10px 40px; border-radius: 20px; font-weight: bold; cursor: pointer; border: none; background: var(--green); color: white; font-size: 1.1rem; box-shadow: 0 4px 0 var(--green-dark); width: auto;">Awesome!</button>
@@ -82,7 +100,7 @@
                         </script>
                         {% else %}
                         <ul class="messages">
-                            <li>{{ message }}</li>
+                            <li class="{{ message.tags }}">{{ message }}</li>
                         </ul>
                         {% endif %}
                     {% endfor %}
@@ -105,7 +123,7 @@
                             <button type="button" class="toggle-password"
                                 onclick="togglePasswordVisibility('password', this)">
                                 <!-- Initially Eye-Off (Slashed) because password is hidden -->
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="eye-off-icon">
                                     <path
@@ -118,22 +136,16 @@
                         <a href="{% url 'forgot_password' %}" class="forgot-link">Forgot Password?</a>
                     </div>
 
-                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" style="margin-bottom: 15px; display: flex; justify-content: center;"></div>
+                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" style="margin-bottom: 12px; display: flex; justify-content: center; transform: scale(0.9); transform-origin: center;"></div>
 
                     <button type="submit" class="btn-auth">Login</button>
 
-                    <div style="text-align: center; margin-top: 20px; font-size: 0.9rem;">
-                        <p style="color: #666; margin-bottom: 8px;">Are you an educator?</p>
-                        <a href="{% url 'teacher_login' %}"
-                            style="color: var(--green-dark); font-weight: 800; text-decoration: none;">Log in as a
-                            teacher here</a>
+                    <div class="auth-card-footer-links">
+                        <span>New to CraftyKids? <a href="{% url 'register' %}">Create an account</a></span>
+                        <span class="bullet-dot">•</span>
+                        <a href="{% url 'home' %}">Back to Home</a>
                     </div>
                 </form>
-
-
-                <div class="auth-back">
-                    <a href="{% url 'home' %}">← Back to Home Page</a>
-                </div>
             </div>
         </div>
     </div>

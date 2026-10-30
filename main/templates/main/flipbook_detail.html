@@ -9,19 +9,56 @@
 <div class="flipbook-viewer-page">
     <div class="viewer-header">
         <div>
+            <!-- Language Selector Toggle -->
+            <div class="language-switcher-bar" style="margin-bottom: 12px; display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.95); padding: 6px 14px; border-radius: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 2px solid #e2e8f0;">
+                <span style="font-weight: bold; color: var(--dark); font-size: 0.9rem; display: flex; align-items: center; gap: 5px;">
+                    🌐 Language / Wika:
+                </span>
+                <a href="?lang=en" class="lang-pill" style="padding: 4px 12px; border-radius: 20px; font-weight: bold; text-decoration: none; font-size: 0.85rem; transition: all 0.2s; {% if current_lang != 'tl' %}background: #3b82f6; color: white; box-shadow: 0 2px 4px rgba(59,130,246,0.3);{% else %}color: #64748b; background: #f1f5f9;{% endif %}">
+                    🇬🇧 English
+                </a>
+                <a href="?lang=tl" class="lang-pill" style="padding: 4px 12px; border-radius: 20px; font-weight: bold; text-decoration: none; font-size: 0.85rem; transition: all 0.2s; {% if current_lang == 'tl' %}background: #ef4444; color: white; box-shadow: 0 2px 4px rgba(239,68,68,0.3);{% else %}color: #64748b; background: #f1f5f9;{% endif %}">
+                    🇵🇭 Tagalog
+                </a>
+            </div>
+
             <p class="viewer-kicker">{{ flipbook.category }}</p>
-            <h1 class="viewer-title">{{ flipbook.title }}</h1>
-            <p class="viewer-sub"> "Open the digital flipbook below and read it like a mini storybook."</p>
+            <h1 class="viewer-title">
+                {% if current_lang == 'tl' and flipbook.title_tl %}{{ flipbook.title_tl }}{% else %}{{ flipbook.title }}{% endif %}
+            </h1>
+            <p class="viewer-sub">
+                {% if current_lang == 'tl' %}
+                    "Buksan ang digital flipbook sa ibaba at basahin ito tulad ng isang kuwento."
+                {% else %}
+                    "Open the digital flipbook below and read it like a mini storybook."
+                {% endif %}
+            </p>
         </div>
         <div class="viewer-actions">
             <a href="{% url 'flipbook_list' %}?category={{ flipbook.category.name|urlencode }}"
-                class="viewer-link secondary">Back to Flipbooks</a>
+                class="viewer-link secondary">
+                {% if current_lang == 'tl' %}Bumalik sa mga Flipbook{% else %}Back to Flipbooks{% endif %}
+            </a>
             {% if flipbook.pdf_file %}
-            <a href="{{ flipbook.pdf_file.url }}" target="_blank" rel="noopener" class="viewer-link primary">Open PDF in
-                New Tab</a>
+            <a href="{{ flipbook.pdf_file.url }}" target="_blank" rel="noopener" class="viewer-link primary">
+                {% if current_lang == 'tl' %}Buksan ang PDF sa Bagong Tab{% else %}Open PDF in New Tab{% endif %}
+            </a>
+            {% endif %}
+            {% if user.is_staff or user.profile.role == 'TEACHER' %}
+            <a href="{% url 'quiz_manage' flipbook.pk %}" class="viewer-link secondary" style="background: #3b82f6; color: white; border: none; font-weight: bold;">
+                {% if current_lang == 'tl' %}Pamahalaan ang Pagsusulit 📝{% else %}Manage Quiz 📝{% endif %}
+            </a>
+            {% endif %}
+            {% if quiz_questions %}
+            <button id="open-quiz-btn" onclick="openQuizModal()" class="viewer-link primary" style="background-color: #8b5cf6; border: none; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 5px;">
+                {% if current_lang == 'tl' %}Kumuha ng Pagsusulit 📝{% else %}Take Assessment 📝{% endif %}
+                {% if quiz_attempt %}({% if quiz_attempt.passed %}{% if current_lang == 'tl' %}Pasa ✓{% else %}Passed ✓{% endif %}{% else %}{% if current_lang == 'tl' %}Ulitin{% else %}Retake{% endif %}{% endif %}){% endif %}
+            </button>
             {% endif %}
             {% if user.is_authenticated %}
-            <button id="mark-finished-btn" class="viewer-link primary" style="background-color: var(--green); border: none; cursor: pointer;">Mark as Finished ✔</button>
+            <span id="completion-status-badge" class="viewer-link" style="{% if is_completed %}background-color: #22c55e;{% else %}background-color: #f59e0b;{% endif %} color: white; border: none; cursor: default; font-weight: bold; display: inline-flex; align-items: center; gap: 5px;">
+                {% if is_completed %}{% if current_lang == 'tl' %}Tapos Na ✓{% else %}Completed ✓{% endif %}{% else %}{% if current_lang == 'tl' %}Kasalukuyang Ginagawa{% else %}In Progress{% endif %}{% endif %}
+            </span>
             {% endif %}
         </div>
     </div>
@@ -45,16 +82,32 @@
             </div>
 
             <div id="book-nav"
-                style="display:none; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px;">
+                style="display:none; justify-content: center; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
                 <button id="btn-prev" class="viewer-link secondary"
                     style="cursor: pointer; padding: 8px 16px; border:none; border-radius: 20px; background:var(--yellow); color:var(--dark); font-weight:bold; font-family:'Fredoka One', cursive; box-shadow: 0 4px 0 #e6c229;">⬅
                     Flip Back</button>
-                <span style="font-family: 'Fredoka One', cursive; color: var(--dark); font-size: 1.1rem;">
+                <span id="page-indicator" style="font-family: 'Fredoka One', cursive; color: var(--dark); font-size: 1.05rem; min-width: 130px; text-align: center; background: #f8fafc; padding: 4px 12px; border-radius: 12px; border: 1px solid #e2e8f0;">
                     Interactive Book
                 </span>
                 <button id="btn-next" class="viewer-link secondary"
                     style="cursor: pointer; padding: 8px 16px; border:none; border-radius: 20px; background:var(--green); color:var(--white); font-weight:bold; font-family:'Fredoka One', cursive; box-shadow: 0 4px 0 var(--green-dark);">Flip
                     Forward ➡</button>
+
+                {% if has_page_audios %}
+                <!-- Per-page audio PLAY BUTTON -->
+                <button id="btn-play-page-audio" type="button"
+                    style="cursor:pointer; padding:8px 18px; border:none; border-radius:20px;
+                           background:#8b5cf6; color:white; font-weight:bold;
+                           font-family:'Fredoka One', cursive;
+                           box-shadow: 0 4px 0 #6d28d9;
+                           display:inline-flex; align-items:center; gap:7px;
+                           transition: background 0.2s, box-shadow 0.2s; font-size:0.95rem;">
+                    <span id="page-audio-btn-icon" style="font-size:1.1rem;">🔊</span>
+                    <span id="page-audio-btn-label">{% if current_lang == 'tl' %}I-play ang Audio{% else %}Play Page Audio{% endif %}</span>
+                </button>
+                <!-- Hidden audio element -->
+                <audio id="page-audio-player" preload="none" style="display:none;"></audio>
+                {% endif %}
             </div>
 
             <div id="book-wrapper"
@@ -78,6 +131,46 @@
             const loadingBook = document.getElementById('loading-book');
             const bookWrapper = document.getElementById('book-wrapper');
             const bookNav = document.getElementById('book-nav');
+
+            {% if user.is_authenticated %}
+            let isFlipbookCompleted = {% if is_completed %}true{% else %}false{% endif %};
+            function triggerFlipbookCompletion() {
+                if (isFlipbookCompleted) return;
+                isFlipbookCompleted = true;
+
+                fetch("{% url 'mark_completed' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ 'flipbook_id': '{{ flipbook.id }}' })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        const badge = document.getElementById('completion-status-badge');
+                        if (badge) {
+                            badge.innerText = "Completed ✓";
+                            badge.style.backgroundColor = "#22c55e";
+                        }
+                        if (typeof confetti === 'function') {
+                            confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
+                        }
+                        const toast = document.createElement('div');
+                        toast.innerText = '🌟 Activity Complete! A sticker was added to your calendar.';
+                        toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#4ade80; color:#064e3b; padding:15px 25px; border-radius:12px; font-weight:bold; box-shadow:0 4px 6px rgba(0,0,0,0.1); z-index:9999; animation: slideIn 0.5s ease-out;';
+                        document.body.appendChild(toast);
+                        setTimeout(() => toast.remove(), 5000);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error marking completion:', err);
+                    isFlipbookCompleted = false;
+                });
+            }
+            {% endif %}
 
             async function initFlipbook() {
                 try {
@@ -136,29 +229,182 @@
 
                     pageFlip.loadFromHTML(document.querySelectorAll('.my-page'));
 
-                    // Bind buttons
-                    document.getElementById('btn-prev').addEventListener('click', () => {
-                        pageFlip.flipPrev();
-                    });
-                    document.getElementById('btn-next').addEventListener('click', () => {
-                        pageFlip.flipNext();
-                    });
-
-                    // Background rendering loop (non-blocking)
+                    // Background rendering loop (renders PDF pages onto canvases immediately)
                     async function renderPagesInBackground() {
                         for (let i = 1; i <= numPages; i++) {
-                            const page = await pdf.getPage(i);
-                            const viewport = page.getViewport({ scale: scale });
-                            const ctx = canvases[i].getContext('2d');
-                            await page.render({
-                                canvasContext: ctx,
-                                viewport: viewport
-                            }).promise;
+                            try {
+                                const page = await pdf.getPage(i);
+                                const viewport = page.getViewport({ scale: scale });
+                                const ctx = canvases[i].getContext('2d');
+                                await page.render({
+                                    canvasContext: ctx,
+                                    viewport: viewport
+                                }).promise;
+                            } catch (pageErr) {
+                                console.error(`Error rendering page ${i}:`, pageErr);
+                            }
                         }
                     }
 
-                    // Start rendering the pages in the background
+                    // Start rendering pages immediately
                     renderPagesInBackground();
+
+                    // Page indicator element
+                    const pageIndicator = document.getElementById('page-indicator');
+                    let currentPage = 1;
+
+                    function updatePageIndicator() {
+                        if (pageIndicator) {
+                            {% if current_lang == 'tl' %}
+                            pageIndicator.textContent = `Pahina ${currentPage} ng ${numPages}`;
+                            {% else %}
+                            pageIndicator.textContent = `Page ${currentPage} of ${numPages}`;
+                            {% endif %}
+                        }
+                    }
+                    updatePageIndicator();
+
+                    // Bind Flip Back & Flip Forward buttons
+                    const btnPrev = document.getElementById('btn-prev');
+                    const btnNext = document.getElementById('btn-next');
+                    if (numPages <= 1) {
+                        if (btnPrev) {
+                            btnPrev.disabled = true;
+                            btnPrev.style.opacity = '0.5';
+                            btnPrev.style.cursor = 'not-allowed';
+                        }
+                        if (btnNext) {
+                            btnNext.disabled = true;
+                            btnNext.style.opacity = '0.5';
+                            btnNext.style.cursor = 'not-allowed';
+                        }
+                    } else {
+                        if (btnPrev) {
+                            btnPrev.addEventListener('click', () => {
+                                pageFlip.flipPrev();
+                            });
+                        }
+                        if (btnNext) {
+                            btnNext.addEventListener('click', () => {
+                                pageFlip.flipNext();
+                            });
+                        }
+                    }
+
+                    // ─────────────────────────────────────────────────
+                    // PER-PAGE AUDIO ENGINE  (button-driven)
+                    // ─────────────────────────────────────────────────
+                    const pageAudioMap = {};
+                    {% if has_page_audios %}
+                    {% for page_num, audio_url in page_audio_map.items %}
+                    pageAudioMap[{{ page_num }}] = "{{ audio_url }}";
+                    {% endfor %}
+                    {% endif %}
+
+                    const pageAudioPlayer  = document.getElementById('page-audio-player');
+                    const btnPlayPageAudio = document.getElementById('btn-play-page-audio');
+                    const pageAudioBtnIcon = document.getElementById('page-audio-btn-icon');
+                    const pageAudioBtnLbl  = document.getElementById('page-audio-btn-label');
+
+                    let pageAudioPlaying = false;
+
+                    // Update button appearance for the given page number
+                    function updatePageAudioButton(pageNum) {
+                        if (!btnPlayPageAudio) return;
+                        const hasAudio = !!pageAudioMap[pageNum];
+
+                        if (!hasAudio) {
+                            // No audio uploaded for this page
+                            pageAudioBtnIcon.textContent = '🔇';
+                            {% if current_lang == 'tl' %}
+                            pageAudioBtnLbl.textContent  = 'Walang Audio';
+                            {% else %}
+                            pageAudioBtnLbl.textContent  = 'No Audio for this Page';
+                            {% endif %}
+                            btnPlayPageAudio.style.background  = '#94a3b8';
+                            btnPlayPageAudio.style.boxShadow   = '0 4px 0 #64748b';
+                            btnPlayPageAudio.style.cursor      = 'not-allowed';
+                            btnPlayPageAudio.disabled = true;
+                        } else if (pageAudioPlaying) {
+                            // Currently playing
+                            pageAudioBtnIcon.textContent = '⏸';
+                            {% if current_lang == 'tl' %}
+                            pageAudioBtnLbl.textContent  = 'I-pause ang Audio';
+                            {% else %}
+                            pageAudioBtnLbl.textContent  = 'Pause Audio';
+                            {% endif %}
+                            btnPlayPageAudio.style.background  = '#10b981';
+                            btnPlayPageAudio.style.boxShadow   = '0 4px 0 #059669';
+                            btnPlayPageAudio.style.cursor      = 'pointer';
+                            btnPlayPageAudio.disabled = false;
+                        } else {
+                            // Stopped / ready
+                            pageAudioBtnIcon.textContent = '🔊';
+                            {% if current_lang == 'tl' %}
+                            pageAudioBtnLbl.textContent  = 'I-play ang Audio';
+                            {% else %}
+                            pageAudioBtnLbl.textContent  = 'Play Page Audio';
+                            {% endif %}
+                            btnPlayPageAudio.style.background  = '#8b5cf6';
+                            btnPlayPageAudio.style.boxShadow   = '0 4px 0 #6d28d9';
+                            btnPlayPageAudio.style.cursor      = 'pointer';
+                            btnPlayPageAudio.disabled = false;
+                        }
+                    }
+
+                    // Play/pause toggle on button click
+                    if (btnPlayPageAudio && pageAudioPlayer) {
+                        btnPlayPageAudio.addEventListener('click', () => {
+                            if (!pageAudioMap[currentPage]) return;
+
+                            if (pageAudioPlaying) {
+                                // Pause
+                                pageAudioPlayer.pause();
+                                pageAudioPlaying = false;
+                                updatePageAudioButton(currentPage);
+                            } else {
+                                // Load & play current page audio
+                                pageAudioPlayer.src = pageAudioMap[currentPage];
+                                pageAudioPlayer.load();
+                                pageAudioPlayer.play().then(() => {
+                                    pageAudioPlaying = true;
+                                    updatePageAudioButton(currentPage);
+                                }).catch(e => console.warn('Audio play blocked:', e));
+                            }
+                        });
+
+                        // When audio finishes naturally
+                        pageAudioPlayer.addEventListener('ended', () => {
+                            pageAudioPlaying = false;
+                            updatePageAudioButton(currentPage);
+                        });
+                    }
+
+                    // On page flip: stop audio, load the new page's audio, update button
+                    pageFlip.on('flip', (e) => {
+                        currentPage = e.data + 1;
+                        updatePageIndicator();
+
+                        // Stop whatever is playing
+                        if (pageAudioPlayer) {
+                            pageAudioPlayer.pause();
+                            pageAudioPlayer.src = '';
+                        }
+                        pageAudioPlaying = false;
+                        updatePageAudioButton(currentPage);
+
+                        {% if user.is_authenticated %}
+                        if (numPages > 1) {
+                            const totalPages = pageFlip.getPageCount();
+                            if (e.data >= totalPages - 2) {
+                                triggerFlipbookCompletion();
+                            }
+                        }
+                        {% endif %}
+                    });
+
+                    // Initialise button state for page 1
+                    updatePageAudioButton(currentPage);
 
                 } catch (err) {
                     console.error('Failed to load flipbook:', err);
@@ -171,11 +417,6 @@
         {% endif %}
 
     </div>
-
-    <p class="viewer-help" style="margin-top: 15px;">
-        If the book does not appear inside the page, use
-        <a href="{{ flipbook.pdf_file.url }}" target="_blank" rel="noopener">Open PDF in New Tab</a>.
-    </p>
 
     {% endif %}
 
@@ -236,38 +477,6 @@
             })
             .catch(error => console.error('Error:', error));
         });
-
-        // Flipbook Completion Tracking
-        {% if user.is_authenticated %}
-        document.getElementById('mark-finished-btn')?.addEventListener('click', function() {
-            const btn = this;
-            fetch("{% url 'mark_completed' %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({ 'flipbook_id': '{{ flipbook.id }}' })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
-                    btn.innerText = "Completed! 🌟";
-                    btn.style.pointerEvents = 'none';
-                    btn.style.opacity = '0.8';
-                    
-                    const toast = document.createElement('div');
-                    toast.innerText = '🌟 Activity Complete! A sticker was added to your calendar.';
-                    toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#4ade80; color:#064e3b; padding:15px 25px; border-radius:12px; font-weight:bold; box-shadow:0 4px 6px rgba(0,0,0,0.1); z-index:9999; animation: slideIn 0.5s ease-out;';
-                    document.body.appendChild(toast);
-                    setTimeout(() => toast.remove(), 5000);
-                }
-            })
-            .catch(err => console.error(err));
-        });
-        {% endif %}
         </script>
 
         <!-- Comments Section -->
@@ -335,5 +544,149 @@
         </div>
     </div>
 </div>
+
+<!-- Interactive Quiz Assessment Modal -->
+{% if quiz_questions %}
+<div id="quiz-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: white; border-radius: 20px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 30px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 3px solid #8b5cf6;">
+        
+        <button onclick="closeQuizModal()" style="position: absolute; top: 15px; right: 15px; background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 32px; font-weight: bold; cursor: pointer; color: #64748b;">✕</button>
+
+        <div id="quiz-start-view">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 3rem; margin-bottom: 10px;">📝</div>
+                <h2 style="font-family: 'Fredoka One', cursive; color: var(--dark); font-size: 1.8rem;">{{ quiz.title }}</h2>
+                <p style="color: var(--gray);">Test your understanding of <strong>{{ flipbook.title }}</strong>!</p>
+                <div style="background: #f3e8ff; color: #6b21a8; padding: 10px 16px; border-radius: 12px; font-weight: bold; font-size: 0.9rem; margin: 15px 0; display: inline-block;">
+                    ⭐ Earn +30 Bonus Crafty Stars by passing ({{ quiz.pass_percentage }}% required)
+                </div>
+            </div>
+            
+            <form id="quiz-form">
+                {% for q in quiz_questions %}
+                <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-bottom: 15px;">
+                    <p style="font-weight: bold; color: var(--dark); font-size: 1rem; margin-bottom: 12px;">Q{{ forloop.counter }}: {{ q.question_text }}</p>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="display: flex; align-items: center; gap: 10px; background: white; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; cursor: pointer;">
+                            <input type="radio" name="q_{{ q.id }}" value="A" required>
+                            <span>A) {{ q.option_a }}</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; background: white; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; cursor: pointer;">
+                            <input type="radio" name="q_{{ q.id }}" value="B" required>
+                            <span>B) {{ q.option_b }}</span>
+                        </label>
+                        {% if q.option_c %}
+                        <label style="display: flex; align-items: center; gap: 10px; background: white; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; cursor: pointer;">
+                            <input type="radio" name="q_{{ q.id }}" value="C">
+                            <span>C) {{ q.option_c }}</span>
+                        </label>
+                        {% endif %}
+                        {% if q.option_d %}
+                        <label style="display: flex; align-items: center; gap: 10px; background: white; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; cursor: pointer;">
+                            <input type="radio" name="q_{{ q.id }}" value="D">
+                            <span>D) {{ q.option_d }}</span>
+                        </label>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <button type="submit" style="background: #8b5cf6; color: white; border: none; padding: 12px 30px; border-radius: 25px; font-weight: bold; font-size: 1.05rem; cursor: pointer; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);">Submit Answers 🚀</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="quiz-results-view" style="display: none; text-align: center; padding: 20px 0;">
+            <div id="quiz-result-icon" style="font-size: 4rem; margin-bottom: 10px;">🎉</div>
+            <h2 id="quiz-result-title" style="font-family: 'Fredoka One', cursive; font-size: 2rem; color: var(--dark); margin-bottom: 10px;">Assessment Result</h2>
+            <div id="quiz-result-score" style="font-size: 1.5rem; font-weight: bold; color: #8b5cf6; margin-bottom: 15px;"></div>
+            <p id="quiz-result-msg" style="color: var(--gray); font-size: 1rem; margin-bottom: 20px;"></p>
+            <div id="quiz-bonus-badge" style="display: none; background: #fef3c7; color: #b45309; padding: 10px 20px; border-radius: 15px; font-weight: bold; font-size: 1.1rem; margin-bottom: 20px; border: 2px solid #fde68a;">
+                ⭐ +30 Bonus Crafty Stars Awarded!
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button onclick="closeQuizModal()" style="background: var(--green); color: white; border: none; padding: 12px 28px; border-radius: 25px; font-weight: bold; cursor: pointer;">Awesome!</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function openQuizModal() {
+    document.getElementById('quiz-start-view').style.display = 'block';
+    document.getElementById('quiz-results-view').style.display = 'none';
+    document.getElementById('quiz-modal-overlay').style.display = 'flex';
+}
+
+function closeQuizModal() {
+    document.getElementById('quiz-modal-overlay').style.display = 'none';
+}
+
+document.getElementById('quiz-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const answers = {};
+    const formData = new FormData(this);
+    for (let [key, val] of formData.entries()) {
+        if (key.startsWith('q_')) {
+            const qId = key.replace('q_', '');
+            answers[qId] = val;
+        }
+    }
+
+    fetch("{% url 'submit_flipbook_quiz' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            quiz_id: '{{ quiz.id }}',
+            answers: answers
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            document.getElementById('quiz-start-view').style.display = 'none';
+            document.getElementById('quiz-results-view').style.display = 'block';
+            
+            const scoreEl = document.getElementById('quiz-result-score');
+            const iconEl = document.getElementById('quiz-result-icon');
+            const titleEl = document.getElementById('quiz-result-title');
+            const msgEl = document.getElementById('quiz-result-msg');
+            const badgeEl = document.getElementById('quiz-bonus-badge');
+
+            scoreEl.innerText = `${data.score} / ${data.total} Correct (${data.percentage}%)`;
+
+            if (data.passed) {
+                iconEl.innerText = '🌟';
+                titleEl.innerText = 'Great Job! Assessment Passed! 🎉';
+                titleEl.style.color = '#22c55e';
+                msgEl.innerText = 'You answered the questions correctly!';
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
+                }
+                if (data.points_earned > 0) {
+                    badgeEl.style.display = 'inline-block';
+                    badgeEl.innerText = `⭐ +${data.points_earned} Bonus Crafty Stars Awarded!`;
+                } else {
+                    badgeEl.style.display = 'none';
+                }
+            } else {
+                iconEl.innerText = '💪';
+                titleEl.innerText = 'Keep Trying!';
+                titleEl.style.color = '#f59e0b';
+                msgEl.innerText = `You need ${data.percentage}% or higher to pass. Give it another try!`;
+                badgeEl.style.display = 'none';
+            }
+        }
+    })
+    .catch(err => console.error('Quiz submission error:', err));
+});
+</script>
+{% endif %}
 
 {% endblock %}

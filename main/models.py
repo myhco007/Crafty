@@ -30,6 +30,19 @@ class UserProfile(models.Model):
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     role = models.CharField(max_length=20, choices=ROLES, default='CLIENT')
+    middle_name = models.CharField(max_length=50, blank=True, null=True)
+    
+    SUFFIX_CHOICES = [
+        ('', 'None'),
+        ('Jr.', 'Jr.'),
+        ('Sr.', 'Sr.'),
+        ('I', 'I'),
+        ('II', 'II'),
+        ('III', 'III'),
+        ('IV', 'IV'),
+        ('V', 'V'),
+    ]
+    suffix = models.CharField(max_length=10, choices=SUFFIX_CHOICES, blank=True, null=True)
     profile_picture = models.ImageField(upload_to='avatars/', null=True, blank=True)
     is_approved = models.BooleanField(default=False)  # For teacher approval
     is_archived = models.BooleanField(default=False)  # For soft deleting users
@@ -52,6 +65,113 @@ class UserProfile(models.Model):
     date_of_birth = models.DateField(blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
+    points = models.PositiveIntegerField(default=0)
+
+    def get_level_info(self):
+        pts = self.points
+        levels = [
+            (1, "Novice Crafter", 0, 150),
+            (2, "Junior Maker", 150, 450),
+            (3, "Story Master", 450, 1000),
+            (4, "Craft Explorer", 1000, 2000),
+            (5, "Legend Crafter", 2000, 2000),
+        ]
+        
+        for lvl, title, min_p, max_p in levels:
+            if lvl == 5:
+                return {
+                    'level': 5,
+                    'title': title,
+                    'points': pts,
+                    'min_points': min_p,
+                    'max_points': max_p,
+                    'progress_pct': 100,
+                    'stars_needed': 0
+                }
+            if pts < max_p:
+                range_pts = max_p - min_p
+                current_in_lvl = max(0, pts - min_p)
+                pct = int((current_in_lvl / range_pts) * 100) if range_pts > 0 else 100
+                return {
+                    'level': lvl,
+                    'title': title,
+                    'points': pts,
+                    'min_points': min_p,
+                    'max_points': max_p,
+                    'progress_pct': min(100, max(0, pct)),
+                    'stars_needed': max_p - pts
+                }
+        return {
+            'level': 1,
+            'title': "Novice Crafter",
+            'points': pts,
+            'min_points': 0,
+            'max_points': 150,
+            'progress_pct': 0,
+            'stars_needed': 150
+        }
+
+    def get_badges_info(self):
+        user = self.user
+        completed_flipbooks = user.activities.filter(flipbook__isnull=False).count()
+        completed_videos = user.activities.filter(video__isnull=False).count()
+        total_completed = user.activities.count()
+        total_likes = user.liked_videos.count() + user.liked_flipbooks.count()
+        completed_quizzes = user.quiz_attempts.filter(passed=True).count() if hasattr(user, 'quiz_attempts') else 0
+        total_comments = (user.video_comments.count() if hasattr(user, 'video_comments') else 0) + (user.flipbook_comments.count() if hasattr(user, 'flipbook_comments') else 0)
+
+        badges = [
+            {
+                'id': 'first_flipbook',
+                'icon': '📖',
+                'name': 'First Page Turner',
+                'desc': 'Finished reading your 1st Flipbook',
+                'unlocked': completed_flipbooks >= 1
+            },
+            {
+                'id': 'bookworm',
+                'icon': '📚',
+                'name': 'Bookworm Legend',
+                'desc': 'Finished reading 5 Flipbooks',
+                'unlocked': completed_flipbooks >= 5
+            },
+            {
+                'id': 'first_video',
+                'icon': '🎬',
+                'name': 'Video Explorer',
+                'desc': 'Completed watching 1st Video Tutorial',
+                'unlocked': completed_videos >= 1
+            },
+            {
+                'id': 'craft_master',
+                'icon': '🌟',
+                'name': 'Craft Master',
+                'desc': 'Completed 10 total learning activities',
+                'unlocked': total_completed >= 10
+            },
+            {
+                'id': 'quiz_master',
+                'icon': '🧠',
+                'name': 'Quiz Master',
+                'desc': 'Passed 3 Flipbook Assessments',
+                'unlocked': completed_quizzes >= 3
+            },
+            {
+                'id': 'supporter',
+                'icon': '❤️',
+                'name': 'Super Supporter',
+                'desc': 'Liked 5 flipbooks or videos',
+                'unlocked': total_likes >= 5
+            },
+            {
+                'id': 'friendly',
+                'icon': '💬',
+                'name': 'Friendly Crafter',
+                'desc': 'Posted 3 comments on crafts',
+                'unlocked': total_comments >= 3
+            },
+        ]
+        return badges
 
     def __str__(self):
         return f"{self.user.username} - {self.role}"
@@ -111,6 +231,9 @@ class AnimationVideo(models.Model):
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_videos')
     is_approved = models.BooleanField(default=True) # Default True for existing content
 
+    class Meta:
+        ordering = ['-created_at', '-id']
+
     def __str__(self):
         return self.title
 
@@ -118,11 +241,17 @@ class AnimationVideo(models.Model):
 class Flipbook(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+    title_tl = models.CharField(max_length=200, blank=True, null=True)
+    description_tl = models.TextField(blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='flipbooks')
     craft_category = models.CharField(max_length=50, choices=CRAFT_CHOICES, default='All Categories')
     grade = models.CharField(max_length=20, choices=GRADE_CHOICES, default='All Grades')
     cover_image = models.ImageField(upload_to='flipbooks/', blank=True, null=True)
     pdf_file = models.FileField(upload_to='flipbook_pdfs/', blank=True, null=True)
+    audio_file = models.FileField(upload_to='flipbook_audios/', blank=True, null=True, help_text="Upload 1 audio narration file (MP3/M4A/WAV). Required for Grades 1-3.")
+    audio_file_tl = models.FileField(upload_to='flipbook_audios/', blank=True, null=True, help_text="Optional Tagalog narration (MP3/M4A/WAV).")
+    silent_pages = models.CharField(max_length=200, blank=True, default='', help_text="Comma-separated page numbers without dialogue (e.g. 1, 3, 5). Audio will stop on these pages.")
+    page_timestamps = models.CharField(max_length=255, blank=True, default='', help_text="Optional comma-separated start times for pages (e.g. 0:00, 0:15, 0:32). If blank, timings are automatically divided equally!")
     created_at = models.DateTimeField(auto_now_add=True)
     liked_by = models.ManyToManyField(User, related_name='liked_flipbooks', blank=True)
     is_archived = models.BooleanField(default=False)
@@ -131,11 +260,69 @@ class Flipbook(models.Model):
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_flipbooks')
     is_approved = models.BooleanField(default=True) # Default True for existing content
 
+    class Meta:
+        ordering = ['-created_at', '-id']
+
     def __str__(self):
         return self.title
 
+    @property
+    def has_audio(self):
+        return bool(self.audio_file or self.audio_file_tl)
+
+    def get_silent_pages_list(self):
+        if not self.silent_pages:
+            return []
+        pages = []
+        for p in self.silent_pages.replace(';', ',').split(','):
+            p = p.strip()
+            if p.isdigit():
+                pages.append(int(p))
+        return pages
+
+    def get_timestamps_list(self):
+        if not self.page_timestamps:
+            return []
+        timestamps = []
+        for item in self.page_timestamps.replace(';', ',').split(','):
+            item = item.strip()
+            if not item:
+                continue
+            if ':' in item:
+                parts = item.split(':')
+                try:
+                    if len(parts) == 2:
+                        seconds = int(parts[0]) * 60 + float(parts[1])
+                        timestamps.append(round(seconds, 2))
+                    elif len(parts) == 3:
+                        seconds = int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
+                        timestamps.append(round(seconds, 2))
+                except ValueError:
+                    pass
+            else:
+                try:
+                    timestamps.append(round(float(item), 2))
+                except ValueError:
+                    pass
+        return timestamps
+
+
+class FlipbookPageAudio(models.Model):
+    """Stores a per-page audio file for a Flipbook. One record per page."""
+    flipbook = models.ForeignKey(Flipbook, on_delete=models.CASCADE, related_name='page_audios')
+    page_number = models.PositiveIntegerField(help_text="1-indexed page number this audio belongs to.")
+    audio_file = models.FileField(upload_to='flipbook_page_audios/', help_text="MP3 audio for this specific page.")
+
+    class Meta:
+        ordering = ['page_number']
+        unique_together = ('flipbook', 'page_number')
+
+    def __str__(self):
+        return f"{self.flipbook.title} – Page {self.page_number}"
+
 
 class Announcement(models.Model):
+
     CATEGORY_CHOICES = [
         ('Update', 'Update'),
         ('Activity', 'Activity'),
@@ -318,3 +505,51 @@ class PasswordResetCode(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.code}"
+
+
+class FlipbookQuiz(models.Model):
+    flipbook = models.OneToOneField(Flipbook, on_delete=models.CASCADE, related_name='quiz')
+    title = models.CharField(max_length=200, default='Flipbook Assessment')
+    pass_percentage = models.PositiveIntegerField(default=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Quiz for {self.flipbook.title}"
+
+
+class FlipbookQuestion(models.Model):
+    OPTION_CHOICES = [
+        ('A', 'Option A'),
+        ('B', 'Option B'),
+        ('C', 'Option C'),
+        ('D', 'Option D'),
+    ]
+    quiz = models.ForeignKey(FlipbookQuiz, on_delete=models.CASCADE, related_name='questions')
+    question_text = models.TextField()
+    option_a = models.CharField(max_length=255)
+    option_b = models.CharField(max_length=255)
+    option_c = models.CharField(max_length=255, blank=True, null=True)
+    option_d = models.CharField(max_length=255, blank=True, null=True)
+    correct_option = models.CharField(max_length=1, choices=OPTION_CHOICES, default='A')
+    order = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f"Q{self.order}: {self.question_text[:30]}"
+
+
+class StudentQuizAttempt(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quiz_attempts')
+    quiz = models.ForeignKey(FlipbookQuiz, on_delete=models.CASCADE, related_name='attempts')
+    score = models.PositiveIntegerField()
+    total_questions = models.PositiveIntegerField()
+    passed = models.BooleanField(default=True)
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-completed_at']
+
+    def __str__(self):
+        return f"{self.user.username} scored {self.score}/{self.total_questions} on {self.quiz.flipbook.title}"

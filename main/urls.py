@@ -50,6 +50,9 @@ urlpatterns = [
     path('flipbook/<int:pk>/like/', views.flipbook_like, name='flipbook_like'),
     path('flipbook/<int:pk>/comment/', views.flipbook_comment, name='flipbook_comment'),
     path('flipbook/comment/<int:pk>/delete/', views.flipbook_comment_delete, name='flipbook_comment_delete'),
+    path('flipbook/<int:pk>/quiz/', views.quiz_manage, name='quiz_manage'),
+    path('quiz/question/<int:pk>/delete/', views.quiz_question_delete, name='quiz_question_delete'),
+    path('quiz/submit/', views.submit_flipbook_quiz, name='submit_flipbook_quiz'),
 
     # Dashboard
     path('dashboard/', views.dashboard, name='dashboard'),

@@ -3,13 +3,125 @@
 {% block title %}- {{ title }}{% endblock %}
 {% block page_css %}
 <link rel="stylesheet" href="{% static 'css/upload_form.css' %}">
+<style>
+    /* ── Page-count + MP3 section ── */
+    .audio-section {
+        background: linear-gradient(135deg, #f5f3ff 0%, #fdf4ff 100%);
+        border: 2px solid #c4b5fd;
+        border-radius: 16px;
+        padding: 24px 28px;
+        margin-top: 8px;
+    }
+    .audio-section-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #5b21b6;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+    .audio-section-sub {
+        font-size: 0.85rem;
+        color: #7c3aed;
+        margin-bottom: 18px;
+        line-height: 1.5;
+    }
+    .page-count-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    .page-count-row label {
+        font-weight: 700;
+        color: #4c1d95;
+        font-size: 0.95rem;
+        white-space: nowrap;
+    }
+    #page_count_input {
+        width: 80px;
+        padding: 9px 12px;
+        border: 2px solid #c4b5fd;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #4c1d95;
+        text-align: center;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    #page_count_input:focus { border-color: #7c3aed; }
+
+    #per-page-audio-fields {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .page-audio-field {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: white;
+        border: 1.5px solid #ddd6fe;
+        border-radius: 12px;
+        padding: 12px 16px;
+        flex-wrap: wrap;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .page-audio-field:hover { border-color: #7c3aed; box-shadow: 0 2px 8px rgba(124,58,237,0.1); }
+    .page-audio-field .page-badge {
+        background: #ede9fe;
+        color: #5b21b6;
+        font-weight: 800;
+        font-size: 0.85rem;
+        padding: 4px 12px;
+        border-radius: 20px;
+        white-space: nowrap;
+        min-width: 70px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    .page-audio-field .existing-audio {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .page-audio-field .existing-tag {
+        font-size: 0.78rem;
+        color: #059669;
+        font-weight: 700;
+        background: #d1fae5;
+        padding: 2px 8px;
+        border-radius: 8px;
+    }
+    .page-audio-field .replace-lbl {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        white-space: nowrap;
+    }
+    .page-audio-field input[type="file"] {
+        flex: 1;
+        min-width: 180px;
+        font-size: 0.88rem;
+    }
+    .empty-hint {
+        text-align: center;
+        color: #a78bfa;
+        font-size: 0.88rem;
+        padding: 18px 0 4px;
+        font-style: italic;
+    }
+</style>
 {% endblock %}
 {% block content %}
 
 <div class="upload-section">
     <div class="upload-header">
         <h1 class="upload-title">{{ title }}</h1>
-        <p class="upload-sub">Add an interactive DIY flipbook from a PDF!</p>
+        <p class="upload-sub">Fill in the details below, upload the PDF, then attach one MP3 per page.</p>
     </div>
 
     <form method="POST" enctype="multipart/form-data" novalidate>
@@ -18,18 +130,26 @@
         {% for field in form %}
             <div class="custom-form-group">
                 {{ field.label_tag }}
-                
+
                 {% if field.field.widget.input_type == 'file' %}
                     <div class="custom-file-upload">
-                        <div class="file-icon">&#128214;</div> <!-- Open book icon -->
+                        <div class="file-icon">
+                            {% if field.name == 'cover_image' %}🖼️{% else %}📖{% endif %}
+                        </div>
+                        {% if field.value %}
+                            <div style="margin-bottom:10px;font-size:0.9rem;color:#475569;word-break:break-all;">
+                                <strong>Current file:</strong>
+                                <a href="{{ field.value.url }}" target="_blank" style="color:#2563eb;text-decoration:underline;">{{ field.value.name }}</a>
+                            </div>
+                        {% endif %}
                         {{ field }}
                     </div>
                 {% else %}
                     {{ field }}
                 {% endif %}
-                
+
                 {% if field.help_text %}
-                    <span class="helptext">{{ field.help_text }}</span>
+                    <span class="helptext" style="display:block;margin-top:6px;font-size:0.88rem;color:#64748b;">{{ field.help_text }}</span>
                 {% endif %}
                 {% for error in field.errors %}
                     <ul class="errorlist"><li>{{ error }}</li></ul>
@@ -37,11 +157,145 @@
             </div>
         {% endfor %}
 
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!--  PER-PAGE AUDIO SECTION                            -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="custom-form-group">
+            <div class="audio-section">
+                <p class="audio-section-title">
+                    🎙️ Page Audio (MP3 per Page)
+                </p>
+                <p class="audio-section-sub">
+                    Enter the <strong>number of pages</strong> your PDF has — the same number of MP3 upload slots will appear automatically.
+                    Upload one MP3 for each page. Pages left blank will have no audio.
+                </p>
+
+                <!-- Page count input -->
+                <div class="page-count-row">
+                    <label for="page_count_input">Number of pages in the PDF:</label>
+                    <input
+                        type="number"
+                        id="page_count_input"
+                        name="page_count"
+                        min="1"
+                        max="200"
+                        placeholder="e.g. 8"
+                        value="{{ request.POST.page_count|default:'' }}"
+                    >
+                </div>
+
+                <!-- Dynamic per-page upload fields -->
+                <div id="per-page-audio-fields">
+                    <p class="empty-hint" id="empty-hint">
+                        ↑ Enter the number of pages above to see the audio upload fields.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- ═══════════════════════════════════════════════════ -->
+
         <div class="form-actions">
             <a href="{% url 'dashboard' %}" class="btn-cancel">Cancel</a>
-            <button type="submit" class="btn-upload-submit">Save Flipbook</button>
+            <button type="submit" class="btn-upload-submit">💾 Save Flipbook</button>
         </div>
     </form>
 </div>
+
+<script>
+// Existing per-page audio data injected from server (edit mode)
+const existingPageAudios = {
+    {% if existing_page_audios %}
+        {% for page_num, pa in existing_page_audios.items %}
+        {{ page_num }}: { url: "{{ pa.audio_file.url }}", name: "{{ pa.audio_file.name|truncatechars:45 }}" },
+        {% endfor %}
+    {% endif %}
+};
+
+const pageCountInput = document.getElementById('page_count_input');
+const fieldsContainer = document.getElementById('per-page-audio-fields');
+const emptyHint       = document.getElementById('empty-hint');
+
+function buildFields(count) {
+    // Clear previous dynamic fields only (keep empty hint reference)
+    fieldsContainer.querySelectorAll('.page-audio-field').forEach(el => el.remove());
+
+    if (!count || count < 1) {
+        if (emptyHint) emptyHint.style.display = 'block';
+        return;
+    }
+    if (emptyHint) emptyHint.style.display = 'none';
+
+    for (let i = 1; i <= count; i++) {
+        const existing = existingPageAudios[i];
+
+        const row = document.createElement('div');
+        row.className = 'page-audio-field';
+
+        // Page badge
+        const badge = document.createElement('span');
+        badge.className = 'page-badge';
+        badge.textContent = `Page ${i}`;
+        row.appendChild(badge);
+
+        // Existing audio preview (edit mode)
+        if (existing) {
+            const existDiv = document.createElement('div');
+            existDiv.className = 'existing-audio';
+
+            const tag = document.createElement('span');
+            tag.className = 'existing-tag';
+            tag.textContent = '✓ Has audio';
+
+            const audio = document.createElement('audio');
+            audio.controls = true;
+            audio.src = existing.url;
+            audio.style.cssText = 'height:28px;max-width:200px;';
+
+            existDiv.appendChild(tag);
+            existDiv.appendChild(audio);
+            row.appendChild(existDiv);
+        }
+
+        // Replace/Upload label
+        const lbl = document.createElement('span');
+        lbl.className = 'replace-lbl';
+        lbl.textContent = existing ? '↺ Replace:' : 'Upload MP3:';
+        row.appendChild(lbl);
+
+        // File input
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.name = `audio_page_${i}`;
+        fileInput.accept = 'audio/*,.mp3,.m4a,.wav,.ogg';
+        row.appendChild(fileInput);
+
+        fieldsContainer.appendChild(row);
+    }
+}
+
+// Rebuild fields whenever the number changes
+pageCountInput.addEventListener('input', function () {
+    const val = parseInt(this.value);
+    buildFields(isNaN(val) ? 0 : val);
+});
+
+// On initial load: pre-fill if there's a POST value (form re-render on error)
+// or if editing and existing audio files exist
+(function init() {
+    const postCount = parseInt(pageCountInput.value);
+    if (!isNaN(postCount) && postCount > 0) {
+        buildFields(postCount);
+        return;
+    }
+    // In edit mode, auto-detect from existing records
+    const maxPage = Object.keys(existingPageAudios).length
+        ? Math.max(...Object.keys(existingPageAudios).map(Number))
+        : 0;
+    if (maxPage > 0) {
+        pageCountInput.value = maxPage;
+        buildFields(maxPage);
+    }
+})();
+</script>
 
 {% endblock %}

@@ -13,26 +13,44 @@
     <div class="blob blob-green"></div>
     <div class="blob blob-blue"></div>
 
-    <!-- Main Auth Container -->
-    <div class="auth-box" style="background-image: url('{% static 'images/progressive-image.jpg' %}');">
+    <!-- Main Auth Container (Fitted in one sight) -->
+    <div class="auth-box">
 
-        <!-- Left Side: Welcome Text -->
+        <!-- Left Side: Progressive Elementary School Design with Gradient Blend -->
         <div class="auth-box-left">
             <div class="auth-welcome-text">
+                <div class="auth-school-badge">Progressive Elementary School</div>
                 <h1>Join as a Teacher</h1>
-                <p>Register as an educator to start uploading DIY projects and flipbooks for your students.</p>
+                <p>Register as an educator to start uploading DIY projects and interactive flipbooks for students.</p>
+                
+                <div class="auth-left-features">
+                    <div class="auth-feature-item">
+                        Upload DIY crafts & creative projects
+                    </div>
+                    <div class="auth-feature-item">
+                        Publish interactive digital flipbooks
+                    </div>
+                    <div class="auth-feature-item">
+                        Inspire young learners and students
+                    </div>
+                </div>
+            </div>
+            <div class="auth-left-footer">
+                <span>Not an educator?</span>
+                <a href="{% url 'register' %}" class="teacher-link-pill">Student Signup &rarr;</a>
             </div>
         </div>
 
-        <!-- Right Side: Registration Card -->
+        <!-- Right Side: Registration Card (Progressive Elementary School + Frosted Glass) -->
         <div class="auth-box-right">
             <div class="auth-card">
-                <div class="auth-logo">
-                    <div class="auth-logo-text">Crafty Kids</div>
-                    <p class="auth-card-welcome">Educator Registration</p>
+                <div class="auth-card-header">
+                    <div class="auth-logo-row">
+                        <span class="auth-logo-text">CraftyKids</span>
+                        <span class="auth-pill-badge">Teacher</span>
+                    </div>
+                    <h2 class="auth-card-title">Teacher Signup</h2>
                 </div>
-
-                <h2 class="auth-card-title">Teacher Signup</h2>
 
                 {% if messages %}
                 <ul class="messages">
@@ -42,100 +60,127 @@
                 </ul>
                 {% endif %}
 
-                <!-- Register Form -->
+                <!-- Register Form: 2-Column Grid Fitted into One Sight -->
                 <form method="POST" action="{% url 'teacher_register' %}" enctype="multipart/form-data" onsubmit="return validateForm(event)">
                     {% csrf_token %}
+
+                    <!-- Row 1: First Name & Last Name -->
                     <div class="form-row">
                         <div class="form-group">
                             <label>First Name</label>
-                            <input type="text" name="first_name" value="{{ form_data.first_name|default:'' }}" placeholder="Enter first name" autocomplete="off" required oninput="validateName(this, 'fn-warning')">
-                            <small id="fn-warning" style="position: absolute; bottom: -14px; left: 4px; color: #e65100; font-size: 0.65rem; display: none; font-weight: bold; white-space: nowrap;">Please enter valid letters only.</small>
+                            <input type="text" name="first_name" value="{{ form_data.first_name|default:'' }}" placeholder="First name" autocomplete="off" required oninput="validateName(this, 'fn-warning')">
+                            <small id="fn-warning" class="field-warning">Please enter valid letters only.</small>
                         </div>
                         <div class="form-group">
                             <label>Last Name</label>
-                            <input type="text" name="last_name" value="{{ form_data.last_name|default:'' }}" placeholder="Enter last name" autocomplete="off" required oninput="validateName(this, 'ln-warning')">
-                            <small id="ln-warning" style="position: absolute; bottom: -14px; left: 4px; color: #e65100; font-size: 0.65rem; display: none; font-weight: bold; white-space: nowrap;">Please enter valid letters only.</small>
+                            <input type="text" name="last_name" value="{{ form_data.last_name|default:'' }}" placeholder="Last name" autocomplete="off" required oninput="validateName(this, 'ln-warning')">
+                            <small id="ln-warning" class="field-warning">Please enter valid letters only.</small>
                         </div>
                     </div>
+
+                    <!-- Row 2: Middle Name & Suffix -->
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1.35;">
+                            <div class="label-with-toggle">
+                                <label>Middle Name</label>
+                                <label class="inline-checkbox-label" for="no_middle_name">
+                                    <input type="checkbox" id="no_middle_name" name="no_middle_name" value="1" onchange="toggleMiddleName(this)" {% if form_data and form_data.no_middle_name %}checked{% endif %}>
+                                    <span>No Middle Name</span>
+                                </label>
+                            </div>
+                            <input type="text" id="middle_name_input" name="middle_name" value="{{ form_data.middle_name|default:'' }}" placeholder="Middle name" autocomplete="off" oninput="validateName(this, 'mn-warning')" {% if form_data and form_data.no_middle_name %}disabled{% endif %}>
+                            <small id="mn-warning" class="field-warning">Please enter valid letters only.</small>
+                        </div>
+                        <div class="form-group suffix-group" style="flex: 0.65;">
+                            <label>Suffix</label>
+                            <select name="suffix" class="custom-suffix-select">
+                                <option value="" {% if not form_data.suffix %}selected{% endif %}>None</option>
+                                <option value="Jr." {% if form_data.suffix == 'Jr.' %}selected{% endif %}>Jr.</option>
+                                <option value="Sr." {% if form_data.suffix == 'Sr.' %}selected{% endif %}>Sr.</option>
+                                <option value="I" {% if form_data.suffix == 'I' %}selected{% endif %}>I</option>
+                                <option value="II" {% if form_data.suffix == 'II' %}selected{% endif %}>II</option>
+                                <option value="III" {% if form_data.suffix == 'III' %}selected{% endif %}>III</option>
+                                <option value="IV" {% if form_data.suffix == 'IV' %}selected{% endif %}>IV</option>
+                                <option value="V" {% if form_data.suffix == 'V' %}selected{% endif %}>V</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Grade Level Taught & Username -->
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1.15;">
+                            <label>Grade Level Taught</label>
+                            <select name="grade_level" required class="custom-select-grade">
+                                <option value="" disabled selected>Select Grade Level</option>
+                                <option value="Grade 1">Grade 1</option>
+                                <option value="Grade 2">Grade 2</option>
+                                <option value="Grade 3">Grade 3</option>
+                                <option value="Grade 4">Grade 4</option>
+                                <option value="Grade 5">Grade 5</option>
+                                <option value="Grade 6">Grade 6</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 0.85;">
+                            <label>Username</label>
+                            <input type="text" name="username" value="{{ form_data.username|default:'' }}" placeholder="Choose username" autocomplete="off" required>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Email Address -->
                     <div class="form-group">
                         <label>Email Address</label>
-                        <input type="email" name="email" value="{{ form_data.email|default:'' }}" placeholder="Enter email" autocomplete="off" required onblur="validateEmail(this, 'email-warning')" oninput="validateEmail(this, 'email-warning')">
-                        <small id="email-warning" style="position: absolute; bottom: -14px; left: 4px; color: #e65100; font-size: 0.65rem; display: none; font-weight: bold; white-space: nowrap;">Please provide a valid @gmail.com address.</small>
+                        <input type="email" name="email" value="{{ form_data.email|default:'' }}" placeholder="example@gmail.com" autocomplete="off" required onblur="validateEmail(this, 'email-warning')" oninput="validateEmail(this, 'email-warning')">
+                        <small id="email-warning" class="field-warning">Please provide a valid @gmail.com address.</small>
                     </div>
-                    <div class="form-group">
-                        <label>Grade Level Taught</label>
-                        <select name="grade_level" required style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: var(--radius); font-size: 1rem; color: #4a5568; outline: none;">
-                            <option value="" disabled selected>Select Grade Level</option>
-                            <option value="Grade 1">Grade 1</option>
-                            <option value="Grade 2">Grade 2</option>
-                            <option value="Grade 3">Grade 3</option>
-                            <option value="Grade 4">Grade 4</option>
-                            <option value="Grade 5">Grade 5</option>
-                            <option value="Grade 6">Grade 6</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" name="username" value="{{ form_data.username|default:'' }}" placeholder="Choose username" autocomplete="off" required>
-                    </div>
+
+                    <!-- Row 5: Password & Confirm -->
                     <div class="form-row">
                         <div class="form-group">
                             <label>Password</label>
                             <div class="password-field-wrapper">
-                                <input type="password" name="password1" id="password1" placeholder="••••••••" required>
-                                <button type="button" class="toggle-password"
-                                    onclick="togglePasswordVisibility('password1', this)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" class="eye-off-icon">
-                                        <path
-                                            d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                                        </path>
+                                <input type="password" name="password1" id="password1" placeholder="••••••••" maxlength="15" oninput="validatePasswordComplexity(this)" required>
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password1', this)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                                         <line x1="1" y1="1" x2="23" y2="23"></line>
                                     </svg>
                                 </button>
                             </div>
+                            <small id="pwd1-limit-warning" class="field-warning">Max 15 characters.</small>
                         </div>
                         <div class="form-group">
                             <label>Confirm</label>
                             <div class="password-field-wrapper">
-                                <input type="password" name="password2" id="password2" placeholder="••••••••" required>
-                                <button type="button" class="toggle-password"
-                                    onclick="togglePasswordVisibility('password2', this)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" class="eye-off-icon">
-                                        <path
-                                            d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                                        </path>
+                                <input type="password" name="password2" id="password2" placeholder="••••••••" maxlength="15" oninput="checkConfirmPasswordLimit(this)" required>
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password2', this)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                                         <line x1="1" y1="1" x2="23" y2="23"></line>
                                     </svg>
                                 </button>
                             </div>
+                            <small id="pwd2-limit-warning" class="field-warning">Max 15 characters.</small>
                         </div>
                     </div>
-                    <small style="color: #718096; font-size: 0.8rem; display: block; margin-top: -10px; margin-bottom: 15px;">Note: Password must use a combination of a-z, underscore (_), and numbers.</small>
-                    
-                    <div class="form-group" style="margin-top: 15px;">
-                        <label>Faculty ID (Required for Verification)</label>
-                        <input type="file" name="faculty_id" accept="image/*" required style="padding: 10px; background: #fff; border: 2px solid #e2e8f0; border-radius: var(--radius); width: 100%; box-sizing: border-box;">
-                        <small style="color: #718096; font-size: 0.8rem; display: block; margin-top: 4px;">Please upload a clear photo or scan of your valid faculty ID.</small>
-                    </div>
-                    
-                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" style="margin-bottom: 15px; margin-top: 20px; display: flex; justify-content: center;"></div>
-                    <button type="submit" class="btn-auth" style="margin-top: 15px;">Register as Teacher</button>
+                    <small id="password-note" class="form-help-note">Note: Password must use a combination of a-z, underscore (_), and numbers.</small>
 
-                    <div style="text-align: center; margin-top: 20px; font-size: 0.9rem;">
-                        <p style="color: #666; margin-bottom: 8px;">Not a teacher?</p>
-                        <a href="{% url 'register' %}"
-                            style="color: var(--green-dark); font-weight: 800; text-decoration: none;">Standard Client
-                            Registration</a>
+                    <!-- Row 6: Faculty ID File Upload -->
+                    <div class="form-group" style="margin-top: 6px;">
+                        <label>Faculty ID (Required for Verification)</label>
+                        <input type="file" name="faculty_id" accept="image/*" required class="custom-file-input">
+                        <small class="form-help-note" style="margin-top: 3px;">Please upload a clear photo or scan of your valid faculty ID.</small>
+                    </div>
+
+                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" style="margin-bottom: 6px; margin-top: 6px; display: flex; justify-content: center; transform: scale(0.85); transform-origin: center; height: 66px;"></div>
+
+                    <button type="submit" class="btn-auth">Register as Teacher</button>
+
+                    <div class="auth-card-footer-links">
+                        <span>Not a teacher? <a href="{% url 'register' %}">Student Registration</a></span>
+                        <span class="bullet-dot">•</span>
+                        <a href="{% url 'home' %}">Back to Home</a>
                     </div>
                 </form>
-
-                <div class="auth-back">
-                    <a href="{% url 'home' %}">← Back to Home Page</a>
-                </div>
             </div>
         </div>
     </div>
@@ -201,6 +246,67 @@
 
 {% block scripts %}
 <script>
+    function validatePasswordComplexity(input) {
+        const val = input.value;
+        const noteEl = document.getElementById('password-note');
+        const limitWarn = document.getElementById('pwd1-limit-warning');
+        
+        if (limitWarn) {
+            if (val.length >= 15) {
+                limitWarn.style.display = 'block';
+            } else {
+                limitWarn.style.display = 'none';
+            }
+        }
+        
+        if (!noteEl) return;
+        
+        if (!val) {
+            noteEl.style.color = '#0f381e';
+            noteEl.style.fontWeight = '800';
+            return;
+        }
+        
+        const hasLetter = /[a-zA-Z]/.test(val);
+        const hasNumber = /[0-9]/.test(val);
+        const hasUnderscore = /_/.test(val);
+        
+        if (!hasLetter || !hasNumber || !hasUnderscore) {
+            noteEl.style.color = '#dc2626';
+            noteEl.style.fontWeight = '800';
+        } else {
+            noteEl.style.color = '#15803d';
+            noteEl.style.fontWeight = '800';
+        }
+    }
+
+    function checkConfirmPasswordLimit(input) {
+        const val = input.value;
+        const limitWarn = document.getElementById('pwd2-limit-warning');
+        if (limitWarn) {
+            if (val.length >= 15) {
+                limitWarn.style.display = 'block';
+            } else {
+                limitWarn.style.display = 'none';
+            }
+        }
+    }
+
+    function toggleMiddleName(checkbox) {
+        const mnInput = document.getElementById('middle_name_input');
+        const mnWarning = document.getElementById('mn-warning');
+        if (!mnInput) return;
+        if (checkbox.checked) {
+            mnInput.value = '';
+            mnInput.disabled = true;
+            mnInput.classList.remove('input-error');
+            if (mnWarning) mnWarning.style.display = 'none';
+        } else {
+            mnInput.disabled = false;
+            mnInput.focus();
+        }
+    }
+
     function validateName(input, warningId) {
         const originalValue = input.value;
         // Allow letters, spaces, and hyphens. Strip everything else including digits.
@@ -209,11 +315,11 @@
         
         if (originalValue !== sanitizedValue) {
             input.value = sanitizedValue;
-            warningEl.style.display = 'block';
+            if (warningEl) warningEl.style.display = 'block';
             
             // Hide the warning after 3 seconds
             setTimeout(() => {
-                warningEl.style.display = 'none';
+                if (warningEl) warningEl.style.display = 'none';
             }, 3000);
         }
     }
@@ -236,9 +342,24 @@
 
     function validateForm(event) {
         const emailInput = document.querySelector('input[name="email"]');
+        const noMnCheckbox = document.getElementById('no_middle_name');
+        const mnInput = document.getElementById('middle_name_input');
         let isValid = true;
+
+        if (noMnCheckbox && mnInput) {
+            if (!noMnCheckbox.checked && !mnInput.value.trim()) {
+                alert('Please enter your Middle Name or check "No Middle Name".');
+                mnInput.classList.add('input-error');
+                isValid = false;
+            } else {
+                mnInput.classList.remove('input-error');
+            }
+        }
+
         if (emailInput && emailInput.value) {
-            isValid = validateEmail(emailInput, 'email-warning');
+            if (!validateEmail(emailInput, 'email-warning')) {
+                isValid = false;
+            }
         }
         
         var response = grecaptcha.getResponse();

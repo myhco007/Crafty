@@ -1,5 +1,5 @@
 {% extends 'main/base.html' %}
-{% block title %}- Login{% endblock %}
+{% block title %}- Teacher Login{% endblock %}
 {% load static %}
 
 {% block page_css %}
@@ -14,26 +14,43 @@
     <div class="blob blob-blue"></div>
 
     <!-- Main Auth Container -->
-    <div class="auth-box" style="background-image: url('{% static 'images/progressive-image.jpg' %}');">
+    <div class="auth-box">
 
-        <!-- Left Side: Welcome Text -->
+        <!-- Left Side: Progressive Elementary School Design with Gradient Blend -->
         <div class="auth-box-left">
             <div class="auth-welcome-text">
+                <div class="auth-school-badge">Progressive Elementary School</div>
                 <h1>Educator Portal</h1>
-                <p>Welcome to the Progressive Elementary School Teacher Dashboard. Log in to manage your lessons and
-                    creativity.</p>
+                <p>Welcome to the Teacher Dashboard. Log in to manage lessons, interactive flipbooks, and track student creativity.</p>
+                
+                <div class="auth-left-features">
+                    <div class="auth-feature-item">
+                        Curriculum-aligned craft lessons
+                    </div>
+                    <div class="auth-feature-item">
+                        Manage interactive flipbooks & quizzes
+                    </div>
+                    <div class="auth-feature-item">
+                        Review student work & progress
+                    </div>
+                </div>
+            </div>
+            <div class="auth-left-footer">
+                <span>Are you a student?</span>
+                <a href="{% url 'login' %}" class="teacher-link-pill">Student Login &rarr;</a>
             </div>
         </div>
 
-        <!-- Right Side: Login Card -->
+        <!-- Right Side: Login Card (Progressive Elementary School + Frosted Glass) -->
         <div class="auth-box-right">
             <div class="auth-card">
-                <div class="auth-logo">
-                    <div class="auth-logo-text">Crafty Kids</div>
-                    <p class="auth-card-welcome">Teacher Dashboard Access</p>
+                <div class="auth-card-header">
+                    <div class="auth-logo-row">
+                        <span class="auth-logo-text">CraftyKids</span>
+                        <span class="auth-pill-badge">Teacher</span>
+                    </div>
+                    <h2 class="auth-card-title">Teacher Login</h2>
                 </div>
-
-                <h2 class="auth-card-title">Teacher Login</h2>
 
                 <style>
                 @keyframes fadeInOverlay {
@@ -54,7 +71,7 @@
 
                 {% if messages %}
                     {% for message in messages %}
-                        {% if 'Registration successful' in message %}
+                        {% if 'Registration successful' in message.message or 'Registration successful' in message|stringformat:"s" %}
                         <!-- PREMIUM SUCCESS POPUP MODAL (Blur Background) -->
                         <div id="registration-success-modal" class="modal-overlay" style="display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(230, 242, 230, 0.6); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; animation: fadeInOverlay 0.3s ease-out forwards;">
                             <div class="confirm-box" style="background: var(--white); padding: 40px; border-radius: var(--radius); text-align: center; box-shadow: var(--shadow); border: 2px dashed var(--green); max-width: 450px; width: 90%; animation: slideUpFade 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">
@@ -64,7 +81,7 @@
                                         <path d="M7 12.5l3 3 7-7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 </div>
-                                <h1 style="font-family: 'Fredoka One', cursive; color: var(--green-dark); font-size: 1.8rem; margin-bottom: 15px;">Welcome to Crafty Kids!</h1>
+                                <h1 style="font-family: 'Fredoka One', cursive; color: var(--green-dark); font-size: 1.8rem; margin-bottom: 15px;">Welcome to CraftyKids!</h1>
                                 <p style="font-size: 1.05rem; font-weight: 700; color: #4a5568; margin-bottom: 25px; line-height: 1.6;">{{ message }}</p>
                                 <div style="display: flex; justify-content: center;">
                                     <button type="button" onclick="document.getElementById('registration-success-modal').style.display='none'; confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });" class="btn-auth" style="padding: 10px 40px; border-radius: 20px; font-weight: bold; cursor: pointer; border: none; background: var(--green); color: white; font-size: 1.1rem; box-shadow: 0 4px 0 var(--green-dark); width: auto;">Awesome!</button>
@@ -73,7 +90,6 @@
                         </div>
                         <script>
                             document.addEventListener('DOMContentLoaded', () => {
-                                // Trigger confetti celebration on modal load!
                                 confetti({
                                     particleCount: 150,
                                     spread: 80,
@@ -96,17 +112,15 @@
                     {% endif %}
                     <div class="form-group">
                         <label for="username">Teacher Username</label>
-                        <input type="text" name="username" id="username" placeholder="Enter username" autocomplete="off"
-                            required>
+                        <input type="text" name="username" id="username" placeholder="Enter username" autocomplete="off" required>
                     </div>
                     <div class="form-group">
                         <label for="password">Password</label>
                         <div class="password-field-wrapper">
                             <input type="password" name="password" id="password" placeholder="••••••••" required>
-                            <button type="button" class="toggle-password"
-                                onclick="togglePasswordVisibility('password', this)">
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password', this)">
                                 <!-- Initially Eye-Off (Slashed) because password is hidden -->
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="eye-off-icon">
                                     <path
@@ -116,25 +130,21 @@
                                 </svg>
                             </button>
                         </div>
-                        <a href="{% url 'forgot_password' %}" class="forgot-link" style="color: #666; font-size: 0.9rem; text-decoration: none; margin-top: 10px; display: inline-block;">Forgot Password?</a>
+                        <a href="{% url 'forgot_password' %}" class="forgot-link">Forgot Password?</a>
                     </div>
 
-                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" style="margin-bottom: 15px; display: flex; justify-content: center;"></div>
+                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" style="margin-bottom: 12px; display: flex; justify-content: center; transform: scale(0.9); transform-origin: center;"></div>
 
                     <button type="submit" class="btn-auth">Login as Teacher</button>
 
-                    <div style="text-align: center; margin-top: 20px; font-size: 0.9rem;">
-                        <p style="color: #666; margin-bottom: 8px;">Not a teacher?</p>
-                        <a href="{% url 'login' %}"
-                            style="color: var(--green-dark); font-weight: 800; text-decoration: none;">Standard Client
-                            Login</a>
+                    <div class="auth-card-footer-links">
+                        <span>Need a teacher account? <a href="{% url 'teacher_register' %}">Sign up</a></span>
+                        <span class="bullet-dot">•</span>
+                        <a href="{% url 'login' %}">Student Login</a>
+                        <span class="bullet-dot">•</span>
+                        <a href="{% url 'home' %}">Back to Home</a>
                     </div>
                 </form>
-
-
-                <div class="auth-back">
-                    <a href="{% url 'home' %}">← Back to Home Page</a>
-                </div>
             </div>
         </div>
     </div>
@@ -148,13 +158,11 @@
         if (!passwordInput) return;
 
         if (passwordInput.type === 'password') {
-            // Show password, switch to Eye icon
             passwordInput.type = 'text';
-            button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+            button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
         } else {
-            // Hide password, switch to Eye-Off (Slashed) icon
             passwordInput.type = 'password';
-            button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+            button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-off-icon"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
         }
     }
 
