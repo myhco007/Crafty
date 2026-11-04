@@ -9,3 +9,4 @@ pymysql
 cryptography
 whitenoise
 dj-database-url
+gdown
