@@ -157,7 +157,11 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Media files (uploads)
-MEDIA_URL = '/media/'
+CLOUDFLARE_R2_URL = 'https://pub-f88888ca49534716892f76459482d932.r2.dev/'
+if os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('MYSQL_URL') or os.environ.get('DATABASE_URL'):
+    MEDIA_URL = CLOUDFLARE_R2_URL
+else:
+    MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Allow iframes from same origin for viewing PDFs
