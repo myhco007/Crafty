@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.railpack.com",
   "deploy": {
-    "startCommand": "python manage.py migrate && gunicorn craftykids.wsgi --log-file -"
+    "startCommand": "python manage.py migrate && python manage.py load_initial_data && gunicorn craftykids.wsgi --log-file -"
   }
 }
