@@ -167,8 +167,8 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Google reCAPTCHA v2 (Production Keys)
-RECAPTCHA_SITE_KEY = '6Ldj7QcuAAAAANag5LLHUpK8jABJoAmZ_WKGfrar'
-RECAPTCHA_SECRET_KEY = '6Ldj7QcuAAAAAIkzlJ4R-T3cKb0zbuMyL4Svh46s'
+RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY', '6Lfzuw8uAAAAADLTjIggvyOofIovUvn_7-_93fGo')
+RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY', '6Lfzuw8uAAAAABkzml9pKrQa8bCevE2sj8zQ7McJ')
 
 # Email Configuration (Gmail SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
