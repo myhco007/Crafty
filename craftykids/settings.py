@@ -14,7 +14,8 @@ SECRET_KEY = 'django-insecure-2#k%!ims_(xc0ol!qn%lc*#5vd9$n@&4&!9-+9qo*f^g8b9k96
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '10.20.57.170']
+ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = ['https://*.trycloudflare.com']
 
 
 # Application definition
@@ -126,8 +127,8 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Google reCAPTCHA v2 (Production Keys)
-RECAPTCHA_SITE_KEY = '6LcNM-0sAAAAAGpbXDa9_PLYP-86zY_u01Oy8mMJ'
-RECAPTCHA_SECRET_KEY = '6LcNM-0sAAAAAJzeSTMKdtGRZXXljgJ4rtf7FMbo'
+RECAPTCHA_SITE_KEY = '6Ldj7QcuAAAAANag5LLHUpK8jABJoAmZ_WKGfrar'
+RECAPTCHA_SECRET_KEY = '6Ldj7QcuAAAAAIkzlJ4R-T3cKb0zbuMyL4Svh46s'
 
 # Email Configuration (Gmail SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

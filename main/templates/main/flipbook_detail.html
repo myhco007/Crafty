@@ -3,6 +3,86 @@
 {% block page_css %}
 <link rel="stylesheet" href="{% static 'css/flipbook_detail.css' %}">
 <link rel="stylesheet" href="{% static 'css/interactions.css' %}">
+<style>
+    /* Responsive book display with horizontal scroll support on narrow screens */
+    .viewer-frame-wrap {
+        overflow: visible !important;
+    }
+    #book-wrapper {
+        overflow: visible !important;
+        position: relative;
+        padding: 20px 10px !important;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 280px;
+    }
+    #book-container-rel {
+        position: relative;
+        display: inline-block;
+        margin: 0 auto;
+    }
+    #book {
+        margin: 0 auto;
+        flex-shrink: 0;
+    }
+    #book-nav {
+        gap: 8px !important;
+    }
+
+    /* Edge speaker button attached to the right edge outside the flipbook */
+    #btn-play-page-audio {
+        position: absolute;
+        top: 15px;
+        right: -52px;
+        z-index: 100;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #8b5cf6;
+        color: white;
+        border: 2px solid #ffffff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    #btn-play-page-audio:hover {
+        transform: scale(1.1);
+    }
+    #btn-play-page-audio:active {
+        transform: scale(0.95);
+    }
+    #page-audio-btn-icon {
+        font-size: 1.35rem;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+        .flipbook-viewer-page {
+            padding: 12px 8px 40px !important;
+        }
+        #book-wrapper {
+            padding: 15px 5px !important;
+            overflow-x: auto !important;
+        }
+        #btn-play-page-audio {
+            right: -42px;
+            width: 38px;
+            height: 38px;
+            top: 10px;
+        }
+        #page-audio-btn-icon {
+            font-size: 1.15rem;
+        }
+    }
+</style>
 {% endblock %}
 {% block content %}
 
@@ -94,17 +174,6 @@
                     Forward ➡</button>
 
                 {% if has_page_audios %}
-                <!-- Per-page audio PLAY BUTTON -->
-                <button id="btn-play-page-audio" type="button"
-                    style="cursor:pointer; padding:8px 18px; border:none; border-radius:20px;
-                           background:#8b5cf6; color:white; font-weight:bold;
-                           font-family:'Fredoka One', cursive;
-                           box-shadow: 0 4px 0 #6d28d9;
-                           display:inline-flex; align-items:center; gap:7px;
-                           transition: background 0.2s, box-shadow 0.2s; font-size:0.95rem;">
-                    <span id="page-audio-btn-icon" style="font-size:1.1rem;">🔊</span>
-                    <span id="page-audio-btn-label">{% if current_lang == 'tl' %}I-play ang Audio{% else %}Play Page Audio{% endif %}</span>
-                </button>
                 <!-- Hidden audio element -->
                 <audio id="page-audio-player" preload="none" style="display:none;"></audio>
                 {% endif %}
@@ -112,8 +181,16 @@
 
             <div id="book-wrapper"
                 style="display:none; justify-content: center; background: #fdfdfd; border-radius: 8px; padding: 30px; box-shadow: inset 0 0 15px rgba(0,0,0,0.05);">
-                <div id="book" style="touch-action: none;">
-                    <!-- Pages will be generated here dynamically -->
+                <div id="book-container-rel">
+                    {% if has_page_audios %}
+                    <!-- Speaker icon button placed on the edge outside the flipbook -->
+                    <button id="btn-play-page-audio" type="button" title="Play page audio">
+                        <span id="page-audio-btn-icon">🔊</span>
+                    </button>
+                    {% endif %}
+                    <div id="book" style="touch-action: none;">
+                        <!-- Pages will be generated here dynamically -->
+                    </div>
                 </div>
             </div>
 
@@ -181,14 +258,39 @@
                     const page1 = await pdf.getPage(1);
                     const v1 = page1.getViewport({ scale: 1 });
 
+                    // Unhide book wrapper first so layout dimensions are fully computed by browser
+                    loadingBook.style.display = 'none';
+                    bookWrapper.style.display = 'flex';
+                    bookNav.style.display = 'flex';
+
                     const isMobile = window.innerWidth <= 768;
-                    const targetHeight = isMobile ? 350 : 550;
-                    const scale = targetHeight / v1.height;
-                    const targetWidth = v1.width * scale;
+                    const aspectRatio = v1.height / v1.width; // PDF aspect ratio
+                    let targetWidth, targetHeight;
+
+                    if (isMobile) {
+                        // On mobile phones: compute exact available width and height
+                        const availWidth = Math.min(window.innerWidth - 30, bookWrapper.clientWidth || 360);
+                        // Each page takes half the 2-page spread
+                        const widthLimit = Math.floor((availWidth - 8) / 2);
+                        // Fit cleanly within mobile screen height without scrolling off
+                        const heightLimit = Math.round(window.innerHeight * 0.48);
+
+                        // Fit proportionally based on PDF page aspect ratio
+                        if (widthLimit * aspectRatio <= heightLimit) {
+                            targetWidth = widthLimit;
+                            targetHeight = Math.round(targetWidth * aspectRatio);
+                        } else {
+                            targetHeight = heightLimit;
+                            targetWidth = Math.round(targetHeight / aspectRatio);
+                        }
+                    } else {
+                        targetHeight = 550;
+                        targetWidth = Math.round(v1.width * (targetHeight / v1.height));
+                    }
 
                     const canvases = {};
 
-                    // Instantly create the structure and canvases
+                    // Instantly create the structure and canvases with matching dimensions
                     for (let i = 1; i <= numPages; i++) {
                         const pageDiv = document.createElement('div');
                         pageDiv.className = 'my-page';
@@ -199,10 +301,11 @@
                             : 'inset 7px 0 30px -7px rgba(0,0,0,0.1)';
 
                         const canvas = document.createElement('canvas');
-                        canvas.height = targetHeight;
                         canvas.width = targetWidth;
-                        canvas.style.width = '100%';
-                        canvas.style.height = '100%';
+                        canvas.height = targetHeight;
+                        canvas.style.width = targetWidth + 'px';
+                        canvas.style.height = targetHeight + 'px';
+                        canvas.style.display = 'block';
 
                         pageDiv.appendChild(canvas);
                         bookContainer.appendChild(pageDiv);
@@ -210,7 +313,7 @@
                         canvases[i] = canvas;
                     }
 
-                    // Init StPageFlip immediately
+                    // Init StPageFlip with exact matching pixel dimensions
                     const pageFlip = new St.PageFlip(bookContainer, {
                         width: targetWidth,
                         height: targetHeight,
@@ -218,23 +321,21 @@
                         showCover: true,
                         drawShadow: true,
                         maxShadowOpacity: 0.5,
-                        usePortrait: true,
+                        usePortrait: false,
                         mobileScrollSupport: false
                     });
 
-                    // Show UI instantly
-                    loadingBook.style.display = 'none';
-                    bookWrapper.style.display = 'flex';
-                    bookNav.style.display = 'flex';
-
                     pageFlip.loadFromHTML(document.querySelectorAll('.my-page'));
 
-                    // Background rendering loop (renders PDF pages onto canvases immediately)
+                    // Background rendering loop (renders PDF pages onto canvases with exact viewport scale)
                     async function renderPagesInBackground() {
                         for (let i = 1; i <= numPages; i++) {
                             try {
                                 const page = await pdf.getPage(i);
-                                const viewport = page.getViewport({ scale: scale });
+                                const scaleX = targetWidth / page.getViewport({ scale: 1 }).width;
+                                const scaleY = targetHeight / page.getViewport({ scale: 1 }).height;
+                                const pageScale = Math.min(scaleX, scaleY);
+                                const viewport = page.getViewport({ scale: pageScale });
                                 const ctx = canvases[i].getContext('2d');
                                 await page.render({
                                     canvasContext: ctx,
@@ -251,16 +352,41 @@
 
                     // Page indicator element
                     const pageIndicator = document.getElementById('page-indicator');
-                    let currentPage = 1;
+                    let currentSpreadPages = [1];
+
+                    // Helper: get 1-indexed pages currently shown on the spread
+                    function getDisplayedPages(index) {
+                        if (index === 0) {
+                            return [1]; // Cover / Front (Page 1)
+                        }
+                        // Open 2-page spreads:
+                        // After page 1 (cover), the first open spread shows PDF Page 2 and Page 3.
+                        // StPageFlip event index starts at 1 for the spread (Page 2 & 3).
+                        const pLeft = index + 1;
+                        const pRight = index + 2;
+                        if (pRight <= numPages) {
+                            return [pLeft, pRight];
+                        } else if (pLeft <= numPages) {
+                            return [pLeft];
+                        } else {
+                            return [numPages];
+                        }
+                    }
 
                     function updatePageIndicator() {
-                        if (pageIndicator) {
-                            {% if current_lang == 'tl' %}
-                            pageIndicator.textContent = `Pahina ${currentPage} ng ${numPages}`;
-                            {% else %}
-                            pageIndicator.textContent = `Page ${currentPage} of ${numPages}`;
-                            {% endif %}
+                        if (!pageIndicator) return;
+                        let text = '';
+                        if (currentSpreadPages.length === 1) {
+                            text = `${currentSpreadPages[0]}`;
+                        } else {
+                            text = `${currentSpreadPages[0]}-${currentSpreadPages[1]}`;
                         }
+
+                        {% if current_lang == 'tl' %}
+                        pageIndicator.textContent = `Pahina ${text} ng ${numPages}`;
+                        {% else %}
+                        pageIndicator.textContent = `Page ${text} of ${numPages}`;
+                        {% endif %}
                     }
                     updatePageIndicator();
 
@@ -292,7 +418,7 @@
                     }
 
                     // ─────────────────────────────────────────────────
-                    // PER-PAGE AUDIO ENGINE  (button-driven)
+                    // PER-PAGE / PER-SPREAD AUDIO ENGINE
                     // ─────────────────────────────────────────────────
                     const pageAudioMap = {};
                     {% if has_page_audios %}
@@ -304,71 +430,69 @@
                     const pageAudioPlayer  = document.getElementById('page-audio-player');
                     const btnPlayPageAudio = document.getElementById('btn-play-page-audio');
                     const pageAudioBtnIcon = document.getElementById('page-audio-btn-icon');
-                    const pageAudioBtnLbl  = document.getElementById('page-audio-btn-label');
 
                     let pageAudioPlaying = false;
 
-                    // Update button appearance for the given page number
-                    function updatePageAudioButton(pageNum) {
-                        if (!btnPlayPageAudio) return;
-                        const hasAudio = !!pageAudioMap[pageNum];
+                    // Finds audio matching either page on the current spread
+                    function getActiveSpreadAudio() {
+                        for (let p of currentSpreadPages) {
+                            if (pageAudioMap[p]) {
+                                return { pageNum: p, url: pageAudioMap[p] };
+                            }
+                        }
+                        return null;
+                    }
 
-                        if (!hasAudio) {
-                            // No audio uploaded for this page
+                    // Update button appearance for the active spread (clean speaker icon only)
+                    function updateSpreadAudioButton() {
+                        if (!btnPlayPageAudio) return;
+                        const activeAudio = getActiveSpreadAudio();
+
+                        if (!activeAudio) {
+                            // No audio uploaded for any page on this spread
                             pageAudioBtnIcon.textContent = '🔇';
-                            {% if current_lang == 'tl' %}
-                            pageAudioBtnLbl.textContent  = 'Walang Audio';
-                            {% else %}
-                            pageAudioBtnLbl.textContent  = 'No Audio for this Page';
-                            {% endif %}
-                            btnPlayPageAudio.style.background  = '#94a3b8';
-                            btnPlayPageAudio.style.boxShadow   = '0 4px 0 #64748b';
-                            btnPlayPageAudio.style.cursor      = 'not-allowed';
+                            btnPlayPageAudio.style.background = '#94a3b8';
+                            btnPlayPageAudio.style.cursor = 'not-allowed';
+                            btnPlayPageAudio.style.opacity = '0.5';
                             btnPlayPageAudio.disabled = true;
+                            btnPlayPageAudio.title = '{% if current_lang == "tl" %}Walang Audio para sa pahinang ito{% else %}No Audio for this page{% endif %}';
                         } else if (pageAudioPlaying) {
                             // Currently playing
                             pageAudioBtnIcon.textContent = '⏸';
-                            {% if current_lang == 'tl' %}
-                            pageAudioBtnLbl.textContent  = 'I-pause ang Audio';
-                            {% else %}
-                            pageAudioBtnLbl.textContent  = 'Pause Audio';
-                            {% endif %}
-                            btnPlayPageAudio.style.background  = '#10b981';
-                            btnPlayPageAudio.style.boxShadow   = '0 4px 0 #059669';
-                            btnPlayPageAudio.style.cursor      = 'pointer';
+                            btnPlayPageAudio.style.background = '#10b981';
+                            btnPlayPageAudio.style.cursor = 'pointer';
+                            btnPlayPageAudio.style.opacity = '1';
                             btnPlayPageAudio.disabled = false;
+                            btnPlayPageAudio.title = '{% if current_lang == "tl" %}I-pause ang Audio{% else %}Pause Audio{% endif %}';
                         } else {
-                            // Stopped / ready
+                            // Ready to play
                             pageAudioBtnIcon.textContent = '🔊';
-                            {% if current_lang == 'tl' %}
-                            pageAudioBtnLbl.textContent  = 'I-play ang Audio';
-                            {% else %}
-                            pageAudioBtnLbl.textContent  = 'Play Page Audio';
-                            {% endif %}
-                            btnPlayPageAudio.style.background  = '#8b5cf6';
-                            btnPlayPageAudio.style.boxShadow   = '0 4px 0 #6d28d9';
-                            btnPlayPageAudio.style.cursor      = 'pointer';
+                            btnPlayPageAudio.style.background = '#8b5cf6';
+                            btnPlayPageAudio.style.cursor = 'pointer';
+                            btnPlayPageAudio.style.opacity = '1';
                             btnPlayPageAudio.disabled = false;
+                            btnPlayPageAudio.title = '{% if current_lang == "tl" %}I-play ang Audio{% else %}Play Page Audio{% endif %}';
                         }
                     }
 
                     // Play/pause toggle on button click
                     if (btnPlayPageAudio && pageAudioPlayer) {
                         btnPlayPageAudio.addEventListener('click', () => {
-                            if (!pageAudioMap[currentPage]) return;
+                            const activeAudio = getActiveSpreadAudio();
+                            if (!activeAudio) return;
 
                             if (pageAudioPlaying) {
                                 // Pause
                                 pageAudioPlayer.pause();
                                 pageAudioPlaying = false;
-                                updatePageAudioButton(currentPage);
+                                updateSpreadAudioButton();
                             } else {
-                                // Load & play current page audio
-                                pageAudioPlayer.src = pageAudioMap[currentPage];
+                                // Load & play current spread audio
+                                pageAudioPlayer.src = activeAudio.url;
                                 pageAudioPlayer.load();
                                 pageAudioPlayer.play().then(() => {
                                     pageAudioPlaying = true;
-                                    updatePageAudioButton(currentPage);
+                                    updateSpreadAudioButton();
                                 }).catch(e => console.warn('Audio play blocked:', e));
                             }
                         });
@@ -376,22 +500,22 @@
                         // When audio finishes naturally
                         pageAudioPlayer.addEventListener('ended', () => {
                             pageAudioPlaying = false;
-                            updatePageAudioButton(currentPage);
+                            updateSpreadAudioButton();
                         });
                     }
 
-                    // On page flip: stop audio, load the new page's audio, update button
+                    // On page flip: calculate spread, stop audio, update indicator & audio button
                     pageFlip.on('flip', (e) => {
-                        currentPage = e.data + 1;
+                        currentSpreadPages = getDisplayedPages(e.data);
                         updatePageIndicator();
 
-                        // Stop whatever is playing
+                        // Stop whatever was playing
                         if (pageAudioPlayer) {
                             pageAudioPlayer.pause();
                             pageAudioPlayer.src = '';
                         }
                         pageAudioPlaying = false;
-                        updatePageAudioButton(currentPage);
+                        updateSpreadAudioButton();
 
                         {% if user.is_authenticated %}
                         if (numPages > 1) {
@@ -404,7 +528,7 @@
                     });
 
                     // Initialise button state for page 1
-                    updatePageAudioButton(currentPage);
+                    updateSpreadAudioButton();
 
                 } catch (err) {
                     console.error('Failed to load flipbook:', err);
