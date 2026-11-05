@@ -873,19 +873,27 @@ def register_view(request):
             )
             
             # Send Email Notification to Student
-            subject = "Registration Submitted - CraftyKids"
+            subject = "Welcome to Crafty Kids - Registration Received"
             website_link = request.build_absolute_uri('/')
-            message_body = (
-                f"Hello {first_name} {last_name},\n\n"
-                f"Thank you for registering on CraftyKids!\n\n"
-                f"We have successfully received your student registration request. "
-                f"Please note that all new accounts require approval by the Main Admin "
-                f"before you can log in. We will send you an email once your account has been reviewed.\n\n"
-                f"You can visit our website here: {website_link}\n\n"
-                f"Thank you,\n"
-                f"CraftyKids Team"
+            from main.email_utils import get_email_template
+            text_body, html_body = get_email_template(
+                title="Registration Received Successfully! 🎨",
+                greeting_name=f"{first_name} {last_name}".strip() or username,
+                body_paragraphs=[
+                    "Thank you for registering with Crafty Kids!",
+                    f"This email confirms that your Gmail address ({email}) has been successfully used to register a new account on our platform.",
+                    "For the safety and security of our students, all new accounts require review and approval by the Main Admin before you can log in. We will send you an email confirmation as soon as your account is approved."
+                ],
+                detail_rows=[
+                    ("Registered Email", email),
+                    ("Username", username),
+                    ("Account Role", "Student"),
+                    ("Account Status", "Pending Admin Approval")
+                ],
+                button_text="Visit Crafty Kids Platform",
+                button_url=website_link
             )
-            send_mail_async(subject, message_body, [email])
+            send_mail_async(subject, text_body, [email], html_message=html_body)
             
             messages.success(request, 'Registration successful! Please wait for the Main Admin to approve your account. We will send you an email if your account was approved, or denied.')
             return redirect('login')
@@ -967,19 +975,27 @@ def teacher_register_view(request):
             )
             
             # Send Email Notification to Teacher
-            subject = "Registration Submitted - CraftyKids"
+            subject = "Welcome to Crafty Kids - Educator Registration Received"
             website_link = request.build_absolute_uri('/')
-            message_body = (
-                f"Hello {first_name} {last_name},\n\n"
-                f"Thank you for registering on CraftyKids!\n\n"
-                f"We have successfully received your teacher registration request. "
-                f"Please note that all new teacher accounts require approval by the Main Admin "
-                f"before you can log in. We will send you an email once your account has been reviewed.\n\n"
-                f"You can visit our website here: {website_link}\n\n"
-                f"Thank you,\n"
-                f"CraftyKids Team"
+            from main.email_utils import get_email_template
+            text_body, html_body = get_email_template(
+                title="Educator Registration Received! 📚",
+                greeting_name=f"{first_name} {last_name}".strip() or username,
+                body_paragraphs=[
+                    "Thank you for registering as an educator on Crafty Kids!",
+                    f"This email confirms that your Gmail address ({email}) has been successfully used to register a Teacher account on our platform.",
+                    "Teacher accounts require credential verification and approval by the Main Admin before activation. You will receive an email confirmation once your account has been reviewed."
+                ],
+                detail_rows=[
+                    ("Registered Email", email),
+                    ("Username", username),
+                    ("Account Role", "Teacher / Educator"),
+                    ("Account Status", "Pending Admin Approval")
+                ],
+                button_text="Visit Crafty Kids Platform",
+                button_url=website_link
             )
-            send_mail_async(subject, message_body, [email])
+            send_mail_async(subject, text_body, [email], html_message=html_body)
             
             messages.success(request, 'Registration successful! Please wait for the Main Admin to approve your account. We will send you an email if your account was approved, or denied.')
             return redirect('login')
@@ -1233,20 +1249,26 @@ def approve_user(request, pk):
         
         # Send Email Notification to the Approved User
         if user.email:
-            subject = "Account Approved - CraftyKids"
+            subject = "Account Approved - Crafty Kids 🎉"
             login_link = request.build_absolute_uri(reverse('login'))
-            message_body = (
-                f"Hello {user.first_name or user.username},\n\n"
-                f"Great news! Your account on CraftyKids has been approved by the Main Admin.\n\n"
-                f"You can now log in to your account and explore all our features:\n"
-                f"{login_link}\n\n"
-                f"Thank you,\n"
-                f"CraftyKids Team"
+            from main.email_utils import get_email_template
+            text_body, html_body = get_email_template(
+                title="Congratulations! Your Account is Approved 🎉",
+                greeting_name=user.first_name or user.username,
+                body_paragraphs=[
+                    "Great news! Your account on Crafty Kids has been officially approved by the Main Admin.",
+                    "You can now log in with your username and password to explore all interactive lessons, quizzes, videos, and learning modules."
+                ],
+                detail_rows=[
+                    ("Username", user.username),
+                    ("Email", user.email),
+                    ("Role", role_display),
+                    ("Account Status", "Active & Approved")
+                ],
+                button_text="Log In to Crafty Kids",
+                button_url=login_link
             )
-            try:
-                send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user.email])
-            except Exception as e:
-                print(f"Failed to send approval email: {e}")
+            send_mail_async(subject, text_body, [user.email], html_message=html_body)
         
         log_audit_event(request, 'approve', user, {'source': 'dashboard'}, target_label=user.username)
         messages.success(request, f'{role_display} {user.username} approved!')
@@ -1330,10 +1352,7 @@ def reject_user(request, pk):
                 f"Thank you,\n"
                 f"CraftyKids Team"
             )
-            try:
-                send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user.email])
-            except Exception as e:
-                print(f"Failed to send rejection email: {e}")
+            send_mail_async(subject, message_body, [user.email])
 
         log_audit_event(request, 'archive', user, {'source': 'dashboard'}, target_label=username)
         messages.success(request, f'{role_display} {username} request denied and account archived.')
@@ -1427,10 +1446,7 @@ def user_permanent_delete(request, pk):
                 f"Thank you,\n"
                 f"CraftyKids Team"
             )
-            try:
-                send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user_email])
-            except Exception as e:
-                print(f"Failed to send account deletion email: {e}")
+            send_mail_async(subject, message_body, [user_email])
 
         log_audit_event(request, 'delete', user, {'source': 'dashboard'}, target_label=username)
         user.delete()
@@ -1820,10 +1836,7 @@ def bulk_archive_action(request):
                             f"Thank you,\n"
                             f"CraftyKids Team"
                         )
-                        try:
-                            send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user_email])
-                        except Exception as e:
-                            print(f"Failed to send bulk account deletion email: {e}")
+                        send_mail_async(subject, message_body, [user_email])
                     log_audit_event(request, 'delete', user, {'source': 'dashboard', 'bulk': True}, target_label=user.username)
                     user.delete()
                     
@@ -1902,10 +1915,24 @@ def bulk_approval_action(request):
                             f"Thank you,\n"
                             f"CraftyKids Team"
                         )
-                        try:
-                            send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user.email])
-                        except Exception as em:
-                            print(f"Failed to send approval email: {em}")
+                        login_link = request.build_absolute_uri(reverse('login'))
+                        from main.email_utils import get_email_template
+                        t_body, h_body = get_email_template(
+                            title="Your Account Has Been Approved! 🎉",
+                            greeting_name=user.first_name or user.username,
+                            body_paragraphs=[
+                                "Great news! Your account on Crafty Kids has been officially approved by the Main Admin.",
+                                "You can now log in to access all interactive lessons, quizzes, and learning materials."
+                            ],
+                            detail_rows=[
+                                ("Username", user.username),
+                                ("Email", user.email),
+                                ("Status", "Active & Approved")
+                            ],
+                            button_text="Log In to Crafty Kids",
+                            button_url=login_link
+                        )
+                        send_mail_async(subject, t_body, [user.email], html_message=h_body)
                     
                     log_audit_event(request, 'approve', user, {'source': 'dashboard', 'bulk': True}, target_label=user.username)
                     
@@ -1925,10 +1952,7 @@ def bulk_approval_action(request):
                             f"Thank you,\n"
                             f"CraftyKids Team"
                         )
-                        try:
-                            send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user.email])
-                        except Exception as e:
-                            print(f"Failed to send bulk rejection email: {e}")
+                        send_mail_async(subject, message_body, [user.email])
                     if hasattr(user, 'profile'):
                         user.profile.is_archived = True
                         user.profile.save()
@@ -2111,15 +2135,22 @@ def forgot_password_view(request):
             PasswordResetCode.objects.filter(user=user).delete()
             PasswordResetCode.objects.create(user=user, code=code)
             
-            subject = "Your Password Reset Code"
-            message = f"Hello {user.first_name or user.username},\n\nYour password reset code is: {code}\nThis code will expire in 15 minutes.\n\nThank you,\nCraftyKids Team"
-            from main.email_utils import send_via_resend
-            sent = send_via_resend(subject, message, [email])
-            if not sent:
-                try:
-                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=True)
-                except Exception:
-                    pass
+            subject = "Your Password Reset Code - Crafty Kids"
+            from main.email_utils import get_email_template
+            text_body, html_body = get_email_template(
+                title="Password Reset Verification Code",
+                greeting_name=user.first_name or user.username,
+                body_paragraphs=[
+                    "We received a request to reset the password for your Crafty Kids account.",
+                    f"Your 6-digit password reset verification code is: <strong style='font-size: 22px; color: #16a34a; letter-spacing: 2px;'>{code}</strong>",
+                    "This code will expire in 15 minutes. If you did not request a password reset, please ignore this email or contact an administrator."
+                ],
+                detail_rows=[
+                    ("Reset Code", code),
+                    ("Valid For", "15 minutes")
+                ]
+            )
+            send_mail_async(subject, text_body, [email], html_message=html_body)
             request.session['reset_email'] = email
             messages.success(request, "A 6-digit password reset code has been sent to your email.")
             return redirect('verify_reset_code')

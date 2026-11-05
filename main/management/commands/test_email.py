@@ -1,7 +1,7 @@
 import sys
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from main.email_utils import send_via_brevo
+from main.email_utils import send_via_brevo, get_email_template
 
 class Command(BaseCommand):
     help = "Tests Brevo HTTPS email delivery and verifies email configuration"
@@ -20,19 +20,35 @@ class Command(BaseCommand):
         self.stdout.write(f"Recipient: {recipient}")
         self.stdout.write("Sending via Brevo HTTPS API (Port 443)...")
 
+        website_url = "https://crafty-production-76d7.up.railway.app"
+
+        text_body, html_body = get_email_template(
+            title="Registration Received Successfully! 🎨",
+            greeting_name="Crafty Explorer",
+            body_paragraphs=[
+                "Thank you for registering with Crafty Kids!",
+                f"This email confirms that your Gmail address ({recipient}) has been successfully used to register a new account on our platform.",
+                "For the safety and security of our students, all new accounts require review and approval by the Main Admin before you can log in. We will send you an email confirmation as soon as your account is approved."
+            ],
+            detail_rows=[
+                ("Registered Email", recipient),
+                ("Username", "test_user"),
+                ("Account Role", "Student"),
+                ("Account Status", "Pending Admin Approval")
+            ],
+            button_text="Visit Crafty Kids Platform",
+            button_url=website_url
+        )
+
         success = send_via_brevo(
-            subject="CraftyKids System: Email Delivery Verified! 🚀",
-            message=(
-                f"Hello!\n\n"
-                f"This is an automated test from Crafty Kids Capstone System running on Railway.\n"
-                f"If you are reading this email, Brevo HTTPS delivery is working 100% and will deliver to ANY valid Gmail address!\n\n"
-                f"- Crafty Kids System"
-            ),
-            recipient_list=[recipient]
+            subject="Welcome to Crafty Kids - Registration Received",
+            message=text_body,
+            recipient_list=[recipient],
+            html_content=html_body
         )
 
         if success:
-            self.stdout.write(self.style.SUCCESS(f"\n🎉 SUCCESS! Test email was successfully accepted by Brevo for delivery to {recipient}!"))
-            self.stdout.write(self.style.SUCCESS("Check your Gmail inbox (and Spam/Junk folder just in case)."))
+            self.stdout.write(self.style.SUCCESS(f"\n🎉 SUCCESS! Professional test email was accepted by Brevo for delivery to {recipient}!"))
+            self.stdout.write(self.style.SUCCESS("Check your Gmail inbox on your phone or computer."))
         else:
             self.stdout.write(self.style.ERROR("\n❌ FAILED! Brevo API key may not be set or lacks permissions."))
