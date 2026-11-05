@@ -174,6 +174,10 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY', '6Lfzuw8uAAAAADLTjIggvyOofIovUvn_7-_93fGo')
 RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY', '6Lfzuw8uAAAAABkzml9pKrQa8bCevE2sj8zQ7McJ')
 
+# Brevo Transactional Email (HTTPS Port 443 - works on Railway without SMTP restrictions)
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
+BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', 'myhcobaling@gmail.com')
+
 # Email Configuration (Gmail SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -182,4 +186,4 @@ EMAIL_USE_TLS = True
 EMAIL_TIMEOUT = 5
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'johnsentasis01@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'fsxjytpqgbaspknp')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'johnsentasis01@gmail.com')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'myhcobaling@gmail.com')
