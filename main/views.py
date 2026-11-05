@@ -2113,14 +2113,16 @@ def forgot_password_view(request):
             
             subject = "Your Password Reset Code"
             message = f"Hello {user.first_name or user.username},\n\nYour password reset code is: {code}\nThis code will expire in 15 minutes.\n\nThank you,\nCraftyKids Team"
-            try:
-                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
-                request.session['reset_email'] = email
-                messages.success(request, "A 6-digit password reset code has been sent to your email.")
-                return redirect('verify_reset_code')
-            except Exception as e:
-                messages.error(request, f"Failed to send email. Please ensure the email configuration is correct. ({str(e)})")
-                return redirect('forgot_password')
+            from main.email_utils import send_via_resend
+            sent = send_via_resend(subject, message, [email])
+            if not sent:
+                try:
+                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=True)
+                except Exception:
+                    pass
+            request.session['reset_email'] = email
+            messages.success(request, "A 6-digit password reset code has been sent to your email.")
+            return redirect('verify_reset_code')
         else:
             messages.error(request, "No account found with that email address.")
             return redirect('forgot_password')
