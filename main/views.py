@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.urls import reverse
 from django.core.mail import send_mail
+from main.email_utils import send_mail_async
 from .audit import log_audit_event
 from .models import AnimationVideo, AuditLog, Flipbook, Category, Announcement, Notification, VideoComment, FlipbookComment, UserProfile, StudentActivity, CalendarEvent, TeacherTask, PasswordResetCode, FlipbookQuiz, FlipbookQuestion, StudentQuizAttempt, FlipbookPageAudio
 from .forms import AnimationVideoForm, FlipbookForm, AnnouncementForm, UserUpdateForm, UserProfileUpdateForm, CalendarEventForm, FlipbookQuizForm, FlipbookQuestionForm
@@ -884,10 +885,7 @@ def register_view(request):
                 f"Thank you,\n"
                 f"CraftyKids Team"
             )
-            try:
-                send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [email])
-            except Exception as e:
-                print(f"Failed to send student registration email: {e}")
+            send_mail_async(subject, message_body, [email])
             
             messages.success(request, 'Registration successful! Please wait for the Main Admin to approve your account. We will send you an email if your account was approved, or denied.')
             return redirect('login')
@@ -981,10 +979,7 @@ def teacher_register_view(request):
                 f"Thank you,\n"
                 f"CraftyKids Team"
             )
-            try:
-                send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [email])
-            except Exception as e:
-                print(f"Failed to send teacher registration email: {e}")
+            send_mail_async(subject, message_body, [email])
             
             messages.success(request, 'Registration successful! Please wait for the Main Admin to approve your account. We will send you an email if your account was approved, or denied.')
             return redirect('login')
