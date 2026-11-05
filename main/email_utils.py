@@ -5,7 +5,7 @@ import urllib.request
 from django.conf import settings
 from django.core.mail import send_mail
 
-BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '').strip()
 BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', 'myhcobaling@gmail.com')
 
 def send_via_brevo(subject, message, recipient_list, from_email=None, html_content=None):
@@ -56,15 +56,18 @@ def send_mail_async(subject, message, recipient_list, from_email=None, html_mess
     print(f"\n==========================================")
     print(f"[OUTGOING EMAIL] To: {recipients}")
     print(f"Subject: {subject}")
-    print(f"Message:\n{message}")
     print(f"==========================================\n")
 
-    def _worker():
-        # 1. Primary: Brevo HTTPS API (port 443, reliable cloud delivery)
+    # 1. Primary: Brevo HTTPS API (fast ~0.5s HTTP call, 100% reliable on cloud)
+    try:
         if send_via_brevo(subject, message, recipients, sender, html_content=html_message):
-            return
+            print(f"[Email Success] Sent to {recipients} via Brevo HTTPS")
+            return None
+    except Exception as e:
+        print(f"[Brevo Direct Exception] {e}")
 
-        # 2. Secondary fallback: SMTP
+    # 2. Fallback in background thread for SMTP
+    def _worker():
         try:
             send_mail(
                 subject,

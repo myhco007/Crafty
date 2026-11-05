@@ -175,7 +175,7 @@ RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY', '6Lfzuw8uAAAAADLTjIggv
 RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY', '6Lfzuw8uAAAAABkzml9pKrQa8bCevE2sj8zQ7McJ')
 
 # Brevo Transactional Email (HTTPS Port 443 - works on Railway without SMTP restrictions)
-BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '').strip()
 BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', 'myhcobaling@gmail.com')
 
 # Email Configuration (Gmail SMTP)
