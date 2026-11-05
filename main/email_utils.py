@@ -153,7 +153,7 @@ def get_email_template(title, greeting_name, body_paragraphs, detail_rows=None, 
                 <!-- Header -->
                 <tr>
                     <td style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 25px 30px; text-align: center;">
-                        <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">🎨 Crafty Kids</h1>
+                        <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">Crafty Kids</h1>
                         <p style="margin: 5px 0 0; color: #dcfce7; font-size: 14px; font-weight: 500;">Interactive Learning & Capstone Platform</p>
                     </td>
                 </tr>

@@ -877,7 +877,7 @@ def register_view(request):
             website_link = request.build_absolute_uri('/')
             from main.email_utils import get_email_template
             text_body, html_body = get_email_template(
-                title="Registration Received Successfully! 🎨",
+                title="Registration Received Successfully",
                 greeting_name=f"{first_name} {last_name}".strip() or username,
                 body_paragraphs=[
                     "Thank you for registering with Crafty Kids!",
@@ -979,7 +979,7 @@ def teacher_register_view(request):
             website_link = request.build_absolute_uri('/')
             from main.email_utils import get_email_template
             text_body, html_body = get_email_template(
-                title="Educator Registration Received! 📚",
+                title="Educator Registration Received",
                 greeting_name=f"{first_name} {last_name}".strip() or username,
                 body_paragraphs=[
                     "Thank you for registering as an educator on Crafty Kids!",
@@ -1249,11 +1249,11 @@ def approve_user(request, pk):
         
         # Send Email Notification to the Approved User
         if user.email:
-            subject = "Account Approved - Crafty Kids 🎉"
+            subject = "Account Approved - Crafty Kids"
             login_link = request.build_absolute_uri(reverse('login'))
             from main.email_utils import get_email_template
             text_body, html_body = get_email_template(
-                title="Congratulations! Your Account is Approved 🎉",
+                title="Congratulations! Your Account is Approved",
                 greeting_name=user.first_name or user.username,
                 body_paragraphs=[
                     "Great news! Your account on Crafty Kids has been officially approved by the Main Admin.",
@@ -1918,7 +1918,7 @@ def bulk_approval_action(request):
                         login_link = request.build_absolute_uri(reverse('login'))
                         from main.email_utils import get_email_template
                         t_body, h_body = get_email_template(
-                            title="Your Account Has Been Approved! 🎉",
+                            title="Your Account Has Been Approved",
                             greeting_name=user.first_name or user.username,
                             body_paragraphs=[
                                 "Great news! Your account on Crafty Kids has been officially approved by the Main Admin.",

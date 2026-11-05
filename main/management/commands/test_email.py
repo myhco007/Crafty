@@ -23,7 +23,7 @@ class Command(BaseCommand):
         website_url = "https://crafty-production-76d7.up.railway.app"
 
         text_body, html_body = get_email_template(
-            title="Registration Received Successfully! 🎨",
+            title="Registration Received Successfully",
             greeting_name="Crafty Explorer",
             body_paragraphs=[
                 "Thank you for registering with Crafty Kids!",
@@ -48,7 +48,7 @@ class Command(BaseCommand):
         )
 
         if success:
-            self.stdout.write(self.style.SUCCESS(f"\n🎉 SUCCESS! Professional test email was accepted by Brevo for delivery to {recipient}!"))
+            self.stdout.write(self.style.SUCCESS(f"\n SUCCESS! Professional test email was accepted by Brevo for delivery to {recipient}!"))
             self.stdout.write(self.style.SUCCESS("Check your Gmail inbox on your phone or computer."))
         else:
             self.stdout.write(self.style.ERROR("\n❌ FAILED! Brevo API key may not be set or lacks permissions."))
