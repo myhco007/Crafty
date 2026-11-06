@@ -4670,7 +4670,12 @@
 
                 `;
 
-                loadFlipbook(mediaUrl);
+                let fetchUrl = mediaUrl;
+                if (mediaUrl.includes('flipbook_pdfs/')) {
+                    const filename = mediaUrl.split('flipbook_pdfs/').pop();
+                    fetchUrl = '/media-proxy/flipbook_pdfs/' + filename;
+                }
+                loadFlipbook(fetchUrl);
 
             }
 

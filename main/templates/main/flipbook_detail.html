@@ -120,7 +120,7 @@
                 {% if current_lang == 'tl' %}Bumalik sa mga Flipbook{% else %}Back to Flipbooks{% endif %}
             </a>
             {% if flipbook.pdf_file %}
-            <a href="{{ flipbook.pdf_file.url }}" target="_blank" rel="noopener" class="viewer-link primary">
+            <a href="{% url 'flipbook_pdf_proxy' flipbook.pk %}" target="_blank" rel="noopener" class="viewer-link primary">
                 {% if current_lang == 'tl' %}Buksan ang PDF sa Bagong Tab{% else %}Open PDF in New Tab{% endif %}
             </a>
             {% endif %}
@@ -203,7 +203,7 @@
             // Load PDF.js worker
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-            const url = '{{ flipbook.pdf_file.url }}';
+            const url = '{% url "flipbook_pdf_proxy" flipbook.pk %}';
             const bookContainer = document.getElementById('book');
             const loadingBook = document.getElementById('loading-book');
             const bookWrapper = document.getElementById('book-wrapper');

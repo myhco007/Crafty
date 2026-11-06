@@ -2327,3 +2327,79 @@ def submit_flipbook_quiz(request):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
+
+
+import mimetypes
+
+def flipbook_pdf_proxy(request, pk):
+    if request.method == 'OPTIONS':
+        resp = HttpResponse()
+        resp['Access-Control-Allow-Origin'] = '*'
+        resp['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+        resp['Access-Control-Allow-Headers'] = '*'
+        return resp
+
+    flipbook = get_object_or_404(Flipbook, pk=pk)
+    if not flipbook.pdf_file:
+        raise Http404("No PDF file found for this flipbook.")
+
+    pdf_url = flipbook.pdf_file.url
+    filename = os.path.basename(flipbook.pdf_file.name)
+
+    if pdf_url.startswith('http://') or pdf_url.startswith('https://'):
+        try:
+            req = urllib.request.Request(pdf_url, headers={'User-Agent': 'CraftyKids/1.0'})
+            remote_resp = urllib.request.urlopen(req, timeout=25)
+            data = remote_resp.read()
+            response = HttpResponse(data, content_type='application/pdf')
+            response['Access-Control-Allow-Origin'] = '*'
+            response['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+            response['Access-Control-Allow-Headers'] = '*'
+            response['Cache-Control'] = 'public, max-age=86400'
+            response['Content-Disposition'] = f'inline; filename="{filename}"'
+            return response
+        except Exception as e:
+            return HttpResponse(f"Error fetching PDF: {e}", status=502)
+    else:
+        try:
+            file_path = flipbook.pdf_file.path
+            if not os.path.exists(file_path):
+                raise Http404("File not found on disk.")
+            with open(file_path, 'rb') as f:
+                data = f.read()
+            response = HttpResponse(data, content_type='application/pdf')
+            response['Access-Control-Allow-Origin'] = '*'
+            response['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+            response['Access-Control-Allow-Headers'] = '*'
+            response['Cache-Control'] = 'public, max-age=86400'
+            response['Content-Disposition'] = f'inline; filename="{filename}"'
+            return response
+        except Exception as e:
+            raise Http404(f"Cannot read file: {e}")
+
+def media_proxy(request, filepath):
+    if request.method == 'OPTIONS':
+        resp = HttpResponse()
+        resp['Access-Control-Allow-Origin'] = '*'
+        resp['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+        resp['Access-Control-Allow-Headers'] = '*'
+        return resp
+
+    base_r2 = getattr(settings, 'CLOUDFLARE_R2_URL', 'https://pub-f88888ca49534716892f76459482d932.r2.dev/').rstrip('/')
+    target_url = f"{base_r2}/{filepath.lstrip('/')}"
+    content_type, _ = mimetypes.guess_type(filepath)
+    if not content_type:
+        content_type = 'application/octet-stream'
+
+    try:
+        req = urllib.request.Request(target_url, headers={'User-Agent': 'CraftyKids/1.0'})
+        remote_resp = urllib.request.urlopen(req, timeout=25)
+        data = remote_resp.read()
+        response = HttpResponse(data, content_type=content_type)
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+        response['Access-Control-Allow-Headers'] = '*'
+        response['Cache-Control'] = 'public, max-age=86400'
+        return response
+    except Exception as e:
+        return HttpResponse(f"Media proxy error: {e}", status=502)
