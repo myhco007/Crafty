@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, Http404, StreamingHttpResponse
+import os
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.http import require_POST
@@ -2348,7 +2349,8 @@ def flipbook_pdf_proxy(request, pk):
 
     if pdf_url.startswith('http://') or pdf_url.startswith('https://'):
         try:
-            req = urllib.request.Request(pdf_url, headers={'User-Agent': 'CraftyKids/1.0'})
+            safe_url = urllib.parse.quote(pdf_url, safe=':/?#[]@!$&\'()*+,;=')
+            req = urllib.request.Request(safe_url, headers={'User-Agent': 'CraftyKids/1.0'})
             remote_resp = urllib.request.urlopen(req, timeout=25)
             data = remote_resp.read()
             response = HttpResponse(data, content_type='application/pdf')
