@@ -130,7 +130,21 @@
                     <div class="form-row">
                         <div class="form-group" style="flex: 1.15;">
                             <label>LRN Number (12-digit)</label>
-                            <input type="text" name="lrn_number" value="{{ form_data.lrn_number|default:'' }}" placeholder="12-digit LRN" pattern="\d{12}" title="LRN must be exactly 12 digits" maxlength="12" minlength="12" autocomplete="off" required>
+                            <input type="text" 
+                                   id="lrn_number_input"
+                                   name="lrn_number" 
+                                   value="{{ form_data.lrn_number|default:'' }}" 
+                                   placeholder="12-digit LRN (numbers only)" 
+                                   pattern="[0-9]{12}" 
+                                   inputmode="numeric" 
+                                   title="LRN must be exactly 12 numeric digits" 
+                                   maxlength="12" 
+                                   minlength="12" 
+                                   autocomplete="off" 
+                                   required 
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12);" 
+                                   onkeypress="return (event.charCode >= 48 && event.charCode <= 57)" 
+                                   onpaste="setTimeout(() => { this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12); }, 0)">
                         </div>
                         <div class="form-group" style="flex: 0.85;">
                             <label>Username</label>
@@ -401,6 +415,35 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        const lrnInputField = document.querySelector('input[name="lrn_number"]');
+        if (lrnInputField) {
+            // Block non-numeric keystrokes in real-time
+            lrnInputField.addEventListener('keydown', function(e) {
+                const controlKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+                if (controlKeys.includes(e.key) || e.ctrlKey || e.metaKey) {
+                    return; // Allow navigation and shortcuts
+                }
+                if (!/^[0-9]$/.test(e.key)) {
+                    e.preventDefault(); // Disallow all characters/letters
+                }
+            });
+
+            // Strip any non-numeric characters immediately on input/drag-and-drop
+            lrnInputField.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12);
+            });
+
+            // Sanitize pasted content
+            lrnInputField.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pastedText = (e.clipboardData || window.clipboardData).getData('text') || '';
+                const cleanDigits = pastedText.replace(/[^0-9]/g, '');
+                const start = this.selectionStart || 0;
+                const end = this.selectionEnd || 0;
+                this.value = (this.value.slice(0, start) + cleanDigits + this.value.slice(end)).slice(0, 12);
+            });
+        }
+
         const emailInput = document.querySelector('input[name="email"]');
         if (emailInput && emailInput.value) {
             validateEmail(emailInput, 'email-warning');

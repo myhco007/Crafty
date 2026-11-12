@@ -797,7 +797,8 @@ def register_view(request):
         suffix     = request.POST.get('suffix', '').strip()
         last_name  = request.POST.get('last_name', '').strip()
         email      = request.POST.get('email')
-        lrn_number = request.POST.get('lrn_number')
+        raw_lrn = request.POST.get('lrn_number', '')
+        lrn_number = re.sub(r'\D', '', raw_lrn) if raw_lrn else ''
         grade_level = request.POST.get('grade_level')
         section    = request.POST.get('section')
         username   = request.POST.get('username')
