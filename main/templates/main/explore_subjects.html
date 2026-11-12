@@ -1,19 +1,84 @@
 {% extends 'main/base.html' %}
 {% load static %}
 
-{% block title %}Explore Subjects - CraftyKids{% endblock %}
+{% block title %}Explore Content - CraftyKids{% endblock %}
 
 {% block page_css %}
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
 <style>
     .subjects-section {
-        padding-top: 48px !important;
+        padding-top: 56px !important;
+        padding-bottom: 70px !important;
+    }
+
+    .cards-row {
+        display: flex;
+        justify-content: center;
+        align-items: stretch; /* Forces equal height/depth across both boxes */
+        gap: 28px;
+        flex-wrap: wrap;
+        max-width: 800px;
+        margin: 0 auto;
     }
 
     .subject-card-link {
         text-decoration: none;
         color: inherit;
-        display: block;
+        display: flex;
+        flex-direction: column;
+        flex: 0 1 270px; /* Equal fixed width */
+        width: 270px;
+        max-width: 100%;
+    }
+
+    .subject-card {
+        background: #ffffff;
+        border-radius: 26px; /* Smooth rounded corners */
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+        padding: 38px 26px;
+        width: 100%;
+        min-height: 295px; /* Equal depth/height */
+        height: 100%;
+        box-sizing: border-box;
+        text-align: center;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        border: 2px solid #86efac;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .subject-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 28px rgba(34, 197, 94, 0.16);
+        border-color: #22c55e;
+    }
+
+    .card-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 auto 16px;
+        flex-shrink: 0;
+    }
+
+    .subject-card h3 {
+        font-family: "Fredoka One", cursive;
+        font-size: 1.45rem;
+        margin: 0 0 10px;
+        color: #143823;
+    }
+
+    .subject-card p {
+        font-size: 0.95rem;
+        color: #4b5563;
+        line-height: 1.5;
+        margin: 0;
     }
 </style>
 {% endblock %}
@@ -58,13 +123,11 @@
         </div>
         <div class="footer-links">
             <h4>Developed For</h4>
-            <strong>Progressive Elementary School</strong>
-            <p>Empowering young minds with creativity and structured learning.</p>
+            <p>Elementary Students &amp; Educators</p>
         </div>
     </div>
     <div class="footer-bottom">
-        <span>&copy; 2026 CraftyKids. All rights reserved.</span>
-        <span>Made with <span class="footer-heart">&#10084;</span> for kids</span>
+        <p>&copy; 2026 CraftyKids. All rights reserved.</p>
     </div>
 </footer>
 {% endblock %}

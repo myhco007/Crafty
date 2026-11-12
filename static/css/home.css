@@ -90,8 +90,9 @@
 /* CARDS */
 .cards-row {
     display: flex;
-    gap: 24px;
+    gap: 28px;
     justify-content: center;
+    align-items: stretch;
     flex-wrap: wrap;
     max-width: 900px;
     margin: 0 auto;
@@ -99,29 +100,38 @@
 
 .subject-card {
     background: var(--white);
-    border-radius: var(--radius);
+    border-radius: 26px;
     box-shadow: var(--shadow);
-    padding: 32px 24px;
-    width: 220px;
+    padding: 38px 26px;
+    width: 270px;
+    min-height: 295px;
+    height: 100%;
+    box-sizing: border-box;
     text-align: center;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
     border: 2px solid var(--green-mid);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
 }
 
 .subject-card:hover {
     transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(34, 197, 94, 0.16);
 }
 
 .subject-card h3 {
     font-family: "Fredoka One", cursive;
-    font-size: 1.2rem;
-    margin: 12px 0 8px;
+    font-size: 1.45rem;
+    margin: 14px 0 8px;
     color: var(--dark);
 }
 
 .subject-card p {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--gray);
+    line-height: 1.5;
 }
 
 /* ICONS */
