@@ -251,7 +251,11 @@
 
             async function initFlipbook() {
                 try {
-                    const pdf = await pdfjsLib.getDocument(url).promise;
+                    const pdf = await pdfjsLib.getDocument({
+                        url: url,
+                        disableRange: true,
+                        disableStream: true
+                    }).promise;
                     const numPages = pdf.numPages;
 
                     // Determine base scale from Page 1 to fit height essentially instantly

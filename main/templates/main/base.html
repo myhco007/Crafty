@@ -59,7 +59,7 @@
             </div>
             <div id="desktop-nav-right" class="nav-right" hidden>
                 {% if user.is_authenticated %}
-                <a href="{% url 'notifications' %}" class="nav-notif" style="position: relative; display: inline-flex; align-items: center;">
+                <a href="{% url 'notifications' %}" class="nav-notif" onclick="document.querySelectorAll('.notif-badge').forEach(function(el){ el.style.display='none'; });" style="position: relative; display: inline-flex; align-items: center;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
                         style="vertical-align: middle;">
@@ -69,7 +69,7 @@
                         <path d="M22 8c0-2.3-.8-4.3-2-6" />
                     </svg>
                     {% if has_unread_notifications %}
-                    <span style="position: absolute; top: -2px; right: -6px; background-color: #ff3b30; color: white; font-size: 0.65rem; font-weight: 800; border-radius: 10px; border: 2px solid var(--white); padding: 0 4px; min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; line-height: 1;">
+                    <span class="notif-badge" style="position: absolute; top: -2px; right: -6px; background-color: #ff3b30; color: white; font-size: 0.65rem; font-weight: 800; border-radius: 10px; border: 2px solid var(--white); padding: 0 4px; min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; line-height: 1;">
                         {% if unread_notifications_count > 99 %}99+{% else %}{{ unread_notifications_count }}{% endif %}
                     </span>
                     {% endif %}
@@ -299,7 +299,7 @@
 
         // Ensure fresh reload if restored from browser back/forward cache (bfcache)
         window.addEventListener('pageshow', function (event) {
-            if (event.persisted) {
+            if (event.persisted || (window.performance && window.performance.getEntriesByType && window.performance.getEntriesByType("navigation")[0]?.type === "back_forward")) {
                 window.location.reload();
             }
         });

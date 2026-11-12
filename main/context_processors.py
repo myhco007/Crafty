@@ -58,17 +58,14 @@ def notifications_processor(request):
 
     qs = get_user_notifications(request.user)
 
-    if is_super_admin(request.user):
-        unread_count = qs.count()
-    else:
-        last_seen = None
-        if hasattr(request.user, 'profile') and request.user.profile.last_seen_notifications:
-            last_seen = request.user.profile.last_seen_notifications
+    last_seen = None
+    if hasattr(request.user, 'profile') and request.user.profile.last_seen_notifications:
+        last_seen = request.user.profile.last_seen_notifications
 
-        if last_seen:
-            unread_count = qs.filter(created_at__gt=last_seen).count()
-        else:
-            unread_count = qs.count()
+    if last_seen:
+        unread_count = qs.filter(created_at__gt=last_seen).count()
+    else:
+        unread_count = qs.count()
 
     return {
         'has_unread_notifications': unread_count > 0,

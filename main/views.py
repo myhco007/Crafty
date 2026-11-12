@@ -211,10 +211,15 @@ def notifications(request):
 
     notifications_list = get_user_notifications(request.user)
 
-    # Update profile to hide the indicator
+    # Update profile to mark all current notifications as viewed
     if hasattr(request.user, 'profile'):
-        request.user.profile.last_seen_notifications = now()
-        request.user.profile.save()
+        profile = request.user.profile
+    else:
+        from .models import UserProfile
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+
+    profile.last_seen_notifications = now()
+    profile.save(update_fields=['last_seen_notifications'])
 
     return render(request, 'main/notifications.html', {'notifications': notifications_list})
 

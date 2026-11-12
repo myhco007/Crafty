@@ -35,3 +35,11 @@
 </div>
 
 {% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.notif-badge').forEach(el => el.remove());
+    });
+</script>
+{% endblock %}
