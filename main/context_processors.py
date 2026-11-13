@@ -11,19 +11,30 @@ def get_user_notifications(user):
         return Notification.objects.none()
 
     # 1. 1 week (7 days) expiry rule:
-    # Automatically delete notifications older than 7 days from the database so they are completely purged
+    # Automatically delete notifications older than 7 days from the database so they are completely purged,
+    # EXCEPT pending approval notifications which must remain active until acted upon.
     one_week_ago = now() - timedelta(days=7)
     try:
-        Notification.objects.filter(created_at__lt=one_week_ago).delete()
+        Notification.objects.filter(created_at__lt=one_week_ago).exclude(
+            title__icontains='Pending'
+        ).exclude(
+            title__icontains='Registration'
+        ).delete()
         Notification.objects.filter(title__icontains='Welcome', link_url__isnull=False).update(link_url=None)
     except Exception:
         pass
 
+    if is_super_admin(user):
+        # Super Admin sees recent notifications (within 7 days) PLUS any pending notifications
+        qs = Notification.objects.filter(
+            Q(created_at__gte=one_week_ago) |
+            Q(title__icontains='Pending') |
+            Q(title__icontains='Registration')
+        )
+        return qs.order_by('-created_at')
+
     # Strictly filter for notifications from the last 7 days only (older notifications will not be seen)
     qs = Notification.objects.filter(created_at__gte=one_week_ago)
-
-    if is_super_admin(user):
-        return qs.order_by('-created_at')
 
     # For registered regular users:
     # 2. Exclude admin-only notifications

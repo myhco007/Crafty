@@ -172,6 +172,57 @@
 
     }
 
+    .grade-filter-pill {
+        padding: 6px 14px;
+        border-radius: 20px;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .grade-filter-pill:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+        border-color: #94a3b8;
+    }
+    .grade-filter-pill.active {
+        background: #10b981;
+        color: #ffffff;
+        border-color: #059669;
+        box-shadow: 0 3px 10px rgba(16, 185, 129, 0.25);
+    }
+    .grade-filter-pill .filter-count {
+        background: #e2e8f0;
+        color: #475569;
+        font-size: 0.72rem;
+        padding: 1px 6px;
+        border-radius: 10px;
+        font-weight: 800;
+    }
+    .grade-filter-pill.active .filter-count {
+        background: #ffffff;
+        color: #059669;
+    }
+    .grade-filter-pill .active-count {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+    .subtab-warning-dot {
+        font-size: 0.85rem;
+        margin-left: 4px;
+        animation: pulseWarning 2s infinite;
+    }
+    @keyframes pulseWarning {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.08); }
+    }
+
 
 
     .kanban-board {
@@ -1785,247 +1836,192 @@
             
 
             <!-- Sleek Glassmorphic Sub-tabs Switcher -->
-
             <div class="pending-tabs-container">
-
                 <button class="pending-tab-btn active" data-tab="accounts" onclick="switchPendingSubTab('accounts')">
-
                     Accounts <span class="pending-tab-badge" id="badge-accounts">{{ pending_users|length }}</span>
-
+                    {% if newest_overall_tab == 'accounts' and pending_users %}
+                    <span class="subtab-warning-dot" title="Newest pending approval">⚠️</span>
+                    {% endif %}
                 </button>
-
                 <button class="pending-tab-btn" data-tab="grades" onclick="switchPendingSubTab('grades')">
-
                     Grade Changes <span class="pending-tab-badge" id="badge-grades">{{ pending_grade_users|length }}</span>
-
                 </button>
-
                 <button class="pending-tab-btn" data-tab="videos" onclick="switchPendingSubTab('videos')">
-
                     Videos <span class="pending-tab-badge" id="badge-videos">{{ pending_videos|length }}</span>
-
+                    {% if newest_overall_tab == 'videos' and pending_videos %}
+                    <span class="subtab-warning-dot" title="Newest pending approval">⚠️</span>
+                    {% endif %}
                 </button>
-
                 <button class="pending-tab-btn" data-tab="flipbooks" onclick="switchPendingSubTab('flipbooks')">
-
                     Flipbooks <span class="pending-tab-badge" id="badge-flipbooks">{{ pending_flipbooks|length }}</span>
-
+                    {% if newest_overall_tab == 'flipbooks' and pending_flipbooks %}
+                    <span class="subtab-warning-dot" title="Newest pending approval">⚠️</span>
+                    {% endif %}
                 </button>
-
             </div>
 
-
-
             <!-- ACCOUNTS SUBTAB -->
-
             <div id="pending-subtab-accounts" class="pending-subtab-content" style="display: none;">
+                <!-- Grade Filter Navigation Pills -->
+                <div class="pending-grade-filters" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; align-items: center;">
+                    <span style="font-size: 0.85rem; font-weight: 800; color: #64748b; margin-right: 4px;">Filter by:</span>
+                    <button type="button" class="grade-filter-pill active" onclick="filterAccountGrade('all', this)" data-filter="all">
+                        All Sections <span class="filter-count">{{ grade_pending_counts.all }}</span>
+                    </button>
+                    <button type="button" class="grade-filter-pill" onclick="filterAccountGrade('grade_1', this)" data-filter="grade_1">
+                        Grade 1 {% if grade_pending_counts.grade_1 %}<span class="filter-count active-count">{{ grade_pending_counts.grade_1 }}</span>{% endif %}
+                    </button>
+                    <button type="button" class="grade-filter-pill" onclick="filterAccountGrade('grade_2', this)" data-filter="grade_2">
+                        Grade 2 {% if grade_pending_counts.grade_2 %}<span class="filter-count active-count">{{ grade_pending_counts.grade_2 }}</span>{% endif %}
+                    </button>
+                    <button type="button" class="grade-filter-pill" onclick="filterAccountGrade('grade_3', this)" data-filter="grade_3">
+                        Grade 3 {% if grade_pending_counts.grade_3 %}<span class="filter-count active-count">{{ grade_pending_counts.grade_3 }}</span>{% endif %}
+                    </button>
+                    <button type="button" class="grade-filter-pill" onclick="filterAccountGrade('grade_4', this)" data-filter="grade_4">
+                        Grade 4 {% if grade_pending_counts.grade_4 %}<span class="filter-count active-count">{{ grade_pending_counts.grade_4 }}</span>{% endif %}
+                    </button>
+                    <button type="button" class="grade-filter-pill" onclick="filterAccountGrade('grade_5', this)" data-filter="grade_5">
+                        Grade 5 {% if grade_pending_counts.grade_5 %}<span class="filter-count active-count">{{ grade_pending_counts.grade_5 }}</span>{% endif %}
+                    </button>
+                    <button type="button" class="grade-filter-pill" onclick="filterAccountGrade('grade_6', this)" data-filter="grade_6">
+                        Grade 6 {% if grade_pending_counts.grade_6 %}<span class="filter-count active-count">{{ grade_pending_counts.grade_6 }}</span>{% endif %}
+                    </button>
+                    <button type="button" class="grade-filter-pill" onclick="filterAccountGrade('teachers', this)" data-filter="teachers">
+                        Teachers {% if grade_pending_counts.teachers %}<span class="filter-count active-count">{{ grade_pending_counts.teachers }}</span>{% endif %}
+                    </button>
+                </div>
 
                 <div class="kanban-board">
-
-                    {% for column_title, column_users in pending_users_by_grade.items %}
-
-                    <div class="kanban-column">
-
-                        <div class="kanban-column-header">
-
-                            <h4 class="kanban-column-title">{{ column_title }}</h4>
-
-                            <span class="kanban-column-count">{{ column_users|length }}</span>
-
+                    {% for group in pending_user_groups %}
+                    <div class="kanban-column account-kanban-item" data-grade-cat="{{ group.grade_cat }}">
+                        <div class="kanban-column-header" {% if group.has_newest %}style="background: #fef2f2; border-bottom: 2px solid #f87171;"{% endif %}>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <h4 class="kanban-column-title" style="{% if group.has_newest %}color: #b91c1c;{% endif %}">{{ group.badge_title }}</h4>
+                                {% if group.has_newest %}
+                                <span class="badge-newest-warning" style="background: #ef4444; color: #fff; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 8px; display: inline-flex; align-items: center; gap: 3px; animation: pulseWarning 2s infinite;">⚠️ NEWEST</span>
+                                {% endif %}
+                            </div>
+                            <span class="kanban-column-count" style="{% if group.has_newest %}background: #ef4444; color: #fff;{% endif %}">{{ group.count }}</span>
                         </div>
 
                         <div class="kanban-column-body" style="padding: 10px 0;">
+                            {% if group.users %}
+                            <div class="compact-approval-card" style="padding: 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); {% if group.has_newest %}border: 2px solid #ef4444; box-shadow: 0 6px 20px rgba(239, 68, 68, 0.18);{% else %}border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.02);{% endif %} min-height: 160px; position: relative; border-radius: 16px;">
+                                {% if group.has_newest %}
+                                <div style="position: absolute; top: -10px; right: 12px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 900; padding: 2px 8px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);">
+                                    🚨 NEWEST APPROVAL
+                                </div>
+                                {% endif %}
 
-                            {% if column_users %}
+                                <div style="font-size: 2.2rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); margin-bottom: 2px;">📁</div>
 
-                            <div class="compact-approval-card" style="padding: 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.02); min-height: 160px;">
-
-                                <div style="font-size: 2.2rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); margin-bottom: 5px;">📁</div>
-
-                                <div style="font-size: 1rem; font-weight: 800; color: #1a202c;">
-
-                                    {% if 'Teacher' in column_title %}
-
-                                        {{ column_title }}
-
-                                    {% else %}
-
-                                        Section {{ column_title }}
-
-                                    {% endif %}
-
+                                <div>
+                                    <div style="font-size: 1.05rem; font-weight: 800; color: #1e293b;">
+                                        {{ group.display_title }}
+                                    </div>
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: {% if 'teacher' in group.grade_cat %}#2563eb{% else %}#059669{% endif %}; margin-top: 2px;">
+                                        {{ group.grade_label }}
+                                    </div>
                                 </div>
 
-                                <div style="font-size: 0.8rem; color: #718096; font-weight: 600;">
-
-                                    <span style="background: #e2e8f0; color: #4a5568; padding: 2px 7px; border-radius: 12px; font-weight: 700; font-size: 0.75rem; margin-right: 4px;">{{ column_users|length }}</span> pending
-
+                                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">
+                                    <span style="background: {% if group.has_newest %}#fee2e2; color: #b91c1c;{% else %}#e2e8f0; color: #4a5568;{% endif %} padding: 2px 8px; border-radius: 12px; font-weight: 800; font-size: 0.75rem; margin-right: 4px;">{{ group.count }}</span> pending account{{ group.count|pluralize }}
                                 </div>
 
-                                <button onclick="openSectionModal('{{ column_title|slugify }}')" class="compact-btn compact-btn-details" style="padding: 8px 16px; width: 100%; font-weight: 800; border-radius: 12px; display: flex; justify-content: center; gap: 6px; border: 1px solid #cbd5e0; background: #fff; cursor: pointer; transition: all 0.2s;">
-
+                                <button onclick="openSectionModal('{{ group.slug }}')" class="compact-btn compact-btn-details" style="padding: 8px 16px; width: 100%; font-weight: 800; border-radius: 12px; display: flex; justify-content: center; gap: 6px; border: 1px solid #cbd5e0; background: #fff; cursor: pointer; transition: all 0.2s;">
                                     View Details
-
                                 </button>
-
                             </div>
-
                             {% else %}
-
                             <div style="text-align: center; padding: 20px; color: #a0aec0; font-size: 0.75rem; border: 1.5px dashed rgba(0,0,0,0.05); border-radius: 12px; background: rgba(0,0,0,0.01);">
-
                                 Empty
-
                             </div>
-
                             {% endif %}
-
                         </div>
-
                     </div>
 
-
-
-                    {% if column_users %}
-
+                    {% if group.users %}
                     <!-- MODAL for Section Details -->
-
-                    <div id="section-modal-{{ column_title|slugify }}" class="modal-overlay" onclick="closeSectionModal('{{ column_title|slugify }}')">
-
-                        <div class="confirm-box" onclick="event.stopPropagation()" style="max-width: 650px; width: 90%; border-radius: 20px; text-align: left; padding: 25px; border-top: 5px solid #10b981;">
-
+                    <div id="section-modal-{{ group.slug }}" class="modal-overlay" onclick="closeSectionModal('{{ group.slug }}')">
+                        <div class="confirm-box" onclick="event.stopPropagation()" style="max-width: 650px; width: 90%; border-radius: 20px; text-align: left; padding: 25px; border-top: 5px solid {% if group.has_newest %}#ef4444{% else %}#10b981{% endif %};">
                             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
-
                                 <div style="display: flex; align-items: center; gap: 12px;">
-
                                     <span style="font-size: 1.8rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">📁</span>
-
                                     <div>
-
-                                        <h2 style="font-size: 1.25rem; font-weight: 800; color: #1a202c; margin: 0;">
-
-                                            {% if 'Teacher' in column_title %}
-
-                                                {{ column_title }} Pending Approvals
-
-                                            {% else %}
-
-                                                Section {{ column_title }} Pending Approvals
-
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <h2 style="font-size: 1.25rem; font-weight: 800; color: #1a202c; margin: 0;">
+                                                {{ group.display_title }} Pending Approvals
+                                            </h2>
+                                            {% if group.has_newest %}
+                                            <span style="background: #ef4444; color: #fff; font-size: 0.68rem; font-weight: 800; padding: 2px 7px; border-radius: 8px;">⚠️ NEWEST</span>
                                             {% endif %}
-
-                                        </h2>
-
+                                        </div>
                                         <p style="font-size: 0.8rem; color: #718096; margin: 0;">Review and manage accounts for this classroom.</p>
-
                                     </div>
-
                                 </div>
-
-                                <button onclick="closeSectionModal('{{ column_title|slugify }}')" style="background: none; border: none; font-size: 1.5rem; color: #a0aec0; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#4a5568'" onmouseout="this.style.color='#a0aec0'">&times;</button>
-
+                                <button onclick="closeSectionModal('{{ group.slug }}')" style="background: none; border: none; font-size: 1.5rem; color: #a0aec0; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#4a5568'" onmouseout="this.style.color='#a0aec0'">&times;</button>
                             </div>
-
-                            
 
                             <!-- Toolbar inside modal -->
-
                             <div style="background: #f7fafc; padding: 12px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; border: 1px solid #edf2f7;">
-
                                 <div style="display: flex; align-items: center; gap: 8px;">
-
-                                    <input type="checkbox" id="select-all-{{ column_title|slugify }}" onchange="toggleSelectAllModal('{{ column_title|slugify }}', this.checked)" style="width: 18px; height: 18px; cursor: pointer; border-radius: 4px; border: 1px solid #cbd5e0;">
-
-                                    <label for="select-all-{{ column_title|slugify }}" style="font-size: 0.85rem; font-weight: 700; color: #4a5568; cursor: pointer; user-select: none;">Select All That Applies</label>
-
+                                    <input type="checkbox" id="select-all-{{ group.slug }}" onchange="toggleSelectAllModal('{{ group.slug }}', this.checked)" style="width: 18px; height: 18px; cursor: pointer; border-radius: 4px; border: 1px solid #cbd5e0;">
+                                    <label for="select-all-{{ group.slug }}" style="font-size: 0.85rem; font-weight: 700; color: #4a5568; cursor: pointer; user-select: none;">Select All That Applies</label>
                                 </div>
-
                                 <div style="display: flex; gap: 8px;">
-
-                                    <button onclick="triggerBulkActionModal('{{ column_title|slugify }}', 'approve')" class="compact-btn compact-btn-approve" style="padding: 7px 14px; border-radius: 8px; font-weight: bold; margin: 0; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; border: 1px solid #a7f3d0; background: #ecfdf5; color: #047857;">Approve Selected</button>
-
-                                    <button onclick="triggerBulkActionModal('{{ column_title|slugify }}', 'deny')" class="compact-btn compact-btn-deny" style="padding: 7px 14px; border-radius: 8px; font-weight: bold; margin: 0; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; border: 1px solid #fecaca; background: #fff5f5; color: #b91c1c;">Cancel Selected</button>
-
+                                    <button onclick="triggerBulkActionModal('{{ group.slug }}', 'approve')" class="compact-btn compact-btn-approve" style="padding: 7px 14px; border-radius: 8px; font-weight: bold; margin: 0; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; border: 1px solid #a7f3d0; background: #ecfdf5; color: #047857;">Approve Selected</button>
+                                    <button onclick="triggerBulkActionModal('{{ group.slug }}', 'deny')" class="compact-btn compact-btn-deny" style="padding: 7px 14px; border-radius: 8px; font-weight: bold; margin: 0; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; border: 1px solid #fecaca; background: #fff5f5; color: #b91c1c;">Cancel Selected</button>
                                 </div>
-
                             </div>
-
-                            
 
                             <!-- Student rows -->
-
                             <div style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
-
-                                {% for pending_user in column_users %}
-
-                                <div class="compact-approval-card" style="display: flex; align-items: center; justify-content: space-between; flex-direction: row; gap: 15px; margin: 0; padding: 12px 15px; background: #fff; border: 1px solid #edf2f7; box-shadow: 0 2px 4px rgba(0,0,0,0.01);">
-
+                                {% for pending_user in group.users %}
+                                <div class="compact-approval-card" style="display: flex; align-items: center; justify-content: space-between; flex-direction: row; gap: 15px; margin: 0; padding: 12px 15px; background: #fff; {% if pending_user.id == newest_pending_user_id %}border: 1.5px solid #ef4444; border-left: 5px solid #ef4444; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.12);{% else %}border: 1px solid #edf2f7; box-shadow: 0 2px 4px rgba(0,0,0,0.01);{% endif %} border-radius: 12px;">
                                     <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
-
-                                        <input type="checkbox" class="card-checkbox modal-checkbox-{{ column_title|slugify }}" value="{{ pending_user.pk }}" style="width: 18px; height: 18px; cursor: pointer; border-radius: 4px;">
-
+                                        <input type="checkbox" class="card-checkbox modal-checkbox-{{ group.slug }}" value="{{ pending_user.pk }}" style="width: 18px; height: 18px; cursor: pointer; border-radius: 4px;">
                                         <div style="min-width: 0; flex: 1;">
-
-                                            <div style="font-weight: 800; color: #2d3748; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ pending_user.username }}">
-
-                                                {{ pending_user.username }}
-
+                                            <div style="display: flex; align-items: center; gap: 6px;">
+                                                <div style="font-weight: 800; color: #2d3748; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ pending_user.username }}">
+                                                    {{ pending_user.username }}
+                                                </div>
+                                                {% if pending_user.id == newest_pending_user_id %}
+                                                <span style="background: #ef4444; color: #ffffff; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 6px; display: inline-flex; align-items: center; gap: 2px; animation: pulseWarning 2s infinite;">⚠️ NEWEST</span>
+                                                {% endif %}
                                             </div>
-
                                             <div style="font-size: 0.75rem; color: #718096; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-
                                                 By: {{ pending_user.get_full_name|default:pending_user.username }}
-
                                             </div>
-
                                             {% if pending_user.profile.lrn_number %}
-
                                             <div style="font-size: 0.7rem; color: #718096; margin-top: 1px;">
-
                                                 LRN: <span style="font-family: monospace; font-weight: 600; color: #4a5568;">{{ pending_user.profile.lrn_number }}</span>
-
                                             </div>
-
                                             {% endif %}
-
                                             <div style="font-size: 0.7rem; color: #a0aec0; margin-top: 2px;">
-
                                                 Joined: {{ pending_user.date_joined|date:'M d, Y h:i A' }}
-
                                             </div>
-
                                         </div>
-
                                     </div>
-
-                                    
 
                                     <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
-
                                         <button onclick="openDetailsModal('{{ pending_user.username|escapejs }}', '{{ pending_user.profile.grade_level|default:'Not specified'|escapejs }}', '{{ pending_user.date_joined|date:'M d, Y h:i A'|escapejs }}', '{{ pending_user.profile.lrn_number|default:''|escapejs }}', '{{ pending_user.profile.role|escapejs }}', '{{ pending_user.email|escapejs }}', '{% if pending_user.profile.faculty_id_image %}{{ pending_user.profile.faculty_id_image.url|escapejs }}{% endif %}', '{{ pending_user.profile.section|default:''|escapejs }}')" class="compact-btn compact-btn-details" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; cursor: pointer;">Details</button>
-
                                         <a href="javascript:void(0)" onclick="openActionModal('{% url "approve_user" pending_user.pk %}', 'Approve Account?', '✅', 'You are about to approve the account for &quot;<strong>{{ pending_user.username }}</strong>&quot;.', 'Yes, Approve!', false)" class="compact-btn compact-btn-approve" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; text-decoration: none;">Approve</a>
-
                                         <a href="javascript:void(0)" onclick="openActionModal('{% url "reject_user" pending_user.pk %}', 'Cancel Registration Request?', '🚫', 'You are about to cancel the registration request for &quot;<strong>{{ pending_user.username }}</strong>&quot;.', 'Yes, Cancel Request!', true)" class="compact-btn compact-btn-deny" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; text-decoration: none;">Cancel</a>
-
                                     </div>
-
                                 </div>
-
                                 {% endfor %}
-
                             </div>
-
                         </div>
-
                     </div>
-
                     {% endif %}
-
+                    {% empty %}
+                    <div style="text-align: center; padding: 40px; color: #a0aec0; width: 100%;">
+                        <div style="font-size: 2.5rem; margin-bottom: 10px;">🎉</div>
+                        <h4 style="font-weight: 800; color: #4a5568; margin-bottom: 5px;">No Pending Accounts</h4>
+                        <p style="font-size: 0.85rem; color: #718096;">All student and teacher accounts have been reviewed.</p>
+                    </div>
                     {% endfor %}
-
                 </div>
-
             </div>
 
 
@@ -2176,13 +2172,21 @@
 
                             {% for video in column_videos %}
 
-                            <div class="compact-approval-card">
+                            <div class="compact-approval-card" style="{% if video.pk == newest_video_id %}border: 2px solid #ef4444; box-shadow: 0 4px 16px rgba(239, 68, 68, 0.18); position: relative;{% endif %}">
+                                {% if video.pk == newest_video_id %}
+                                <div style="position: absolute; top: -10px; right: 10px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);">
+                                    ⚠️ NEWEST
+                                </div>
+                                {% endif %}
 
                                 <div class="card-checkbox-container">
 
                                     <input type="checkbox" class="card-checkbox video-checkbox" value="{{ video.pk }}" onchange="updateSelectedCount('video')">
 
                                     <span class="pending-badge" style="background: #fdf2f8; color: #9d174d;">Video</span>
+                                    {% if video.pk == newest_video_id %}
+                                    <span style="background: #fee2e2; color: #b91c1c; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 6px; border: 1px solid #f87171;">NEW</span>
+                                    {% endif %}
 
                                 </div>
 
@@ -2274,13 +2278,21 @@
 
                             {% for flipbook in column_flipbooks %}
 
-                            <div class="compact-approval-card">
+                            <div class="compact-approval-card" style="{% if flipbook.pk == newest_flipbook_id %}border: 2px solid #ef4444; box-shadow: 0 4px 16px rgba(239, 68, 68, 0.18); position: relative;{% endif %}">
+                                {% if flipbook.pk == newest_flipbook_id %}
+                                <div style="position: absolute; top: -10px; right: 10px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);">
+                                    ⚠️ NEWEST
+                                </div>
+                                {% endif %}
 
                                 <div class="card-checkbox-container">
 
                                     <input type="checkbox" class="card-checkbox flipbook-checkbox" value="{{ flipbook.pk }}" onchange="updateSelectedCount('flipbook')">
 
                                     <span class="pending-badge" style="background: #faf5ff; color: #6b21a8;">Flipbook</span>
+                                    {% if flipbook.pk == newest_flipbook_id %}
+                                    <span style="background: #fee2e2; color: #b91c1c; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 6px; border: 1px solid #f87171;">NEW</span>
+                                    {% endif %}
 
                                 </div>
 
@@ -5045,25 +5057,37 @@
 
         if (item) item.classList.add('active');
 
-        window.location.hash = sectionId;
+        if (!window.location.hash.startsWith('#pending-subtab-')) {
+            window.location.hash = sectionId;
+        }
 
     }
 
 
 
-    // Initialize section immediately to prevent flash
+    // Handle hash navigation including pending subtabs
+    function handleDashboardHash() {
+        const hash = window.location.hash;
+        if (hash.startsWith('#pending-subtab-')) {
+            const subtab = hash.replace('#pending-subtab-', '');
+            showSection('pending');
+            if (typeof switchPendingSubTab === 'function') {
+                switchPendingSubTab(subtab);
+            }
+        } else if (hash.startsWith('#section-')) {
+            const section = hash.replace('#section-', '');
+            showSection(section || 'overview');
+        } else if (hash && hash !== '#') {
+            showSection(hash.replace('#', ''));
+        } else {
+            showSection('overview');
+        }
+    }
 
-    showSection(window.location.hash.replace('#section-', '') || 'overview');
-
-    
+    handleDashboardHash();
 
     // Support browser back/forward buttons
-
-    window.addEventListener('hashchange', () => {
-
-        showSection(window.location.hash.replace('#section-', '') || 'overview');
-
-    });
+    window.addEventListener('hashchange', handleDashboardHash);
 
 
 
@@ -5947,88 +5971,76 @@
 
 
 
-    function switchPendingSubTab(tabName) {
+    function filterAccountGrade(cat, btn) {
+        document.querySelectorAll('.grade-filter-pill').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
 
-        // Hide all subtab content
-
-        document.querySelectorAll('.pending-subtab-content').forEach(el => {
-
-            el.style.display = 'none';
-
+        const items = document.querySelectorAll('.account-kanban-item');
+        items.forEach(item => {
+            if (cat === 'all' || item.getAttribute('data-grade-cat') === cat) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
         });
-
-        
-
-        // Remove active class from all tabs
-
-        document.querySelectorAll('.pending-tab-btn').forEach(btn => {
-
-            btn.classList.remove('active');
-
-        });
-
-        
-
-        // Show selected subtab content
-
-        const targetSubtab = document.getElementById(`pending-subtab-${tabName}`);
-
-        if (targetSubtab) {
-
-            targetSubtab.style.display = 'block';
-
-        }
-
-        
-
-        // Add active class to selected tab button
-
-        const targetBtn = document.querySelector(`.pending-tab-btn[data-tab="${tabName}"]`);
-
-        if (targetBtn) {
-
-            targetBtn.classList.add('active');
-
-        }
-
     }
 
+    function switchPendingSubTab(tabName) {
+        // Hide all subtab content
+        document.querySelectorAll('.pending-subtab-content').forEach(el => {
+            el.style.display = 'none';
+        });
 
+        // Remove active class from all tabs
+        document.querySelectorAll('.pending-tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
 
-    // Auto-select the first pending category tab with count > 0 on load
-
-    document.addEventListener('DOMContentLoaded', () => {
-
-        const tabs = ['accounts', 'grades', 'videos', 'flipbooks'];
-
-        let selectedTab = 'accounts'; // fallback default
-
-        
-
-        for (const tab of tabs) {
-
-            const badge = document.getElementById(`badge-${tab}`);
-
-            if (badge) {
-
-                const count = parseInt(badge.textContent.trim()) || 0;
-
-                if (count > 0) {
-
-                    selectedTab = tab;
-
-                    break;
-
-                }
-
-            }
-
+        // Show selected subtab content
+        const targetSubtab = document.getElementById(`pending-subtab-${tabName}`);
+        if (targetSubtab) {
+            targetSubtab.style.display = 'block';
         }
 
-        
+        // Add active class to selected tab button
+        const targetBtn = document.querySelector(`.pending-tab-btn[data-tab="${tabName}"]`);
+        if (targetBtn) {
+            targetBtn.classList.add('active');
+        }
+    }
+
+    // Auto-select the pending category tab on load (respecting hash or prioritizing newest item)
+    document.addEventListener('DOMContentLoaded', () => {
+        const hash = window.location.hash;
+        if (hash.startsWith('#pending-subtab-')) {
+            const subtab = hash.replace('#pending-subtab-', '');
+            switchPendingSubTab(subtab);
+            return;
+        }
+
+        const preferredTab = '{{ newest_overall_tab|default:"accounts" }}';
+        const preferredBadge = document.getElementById(`badge-${preferredTab}`);
+        const preferredCount = preferredBadge ? (parseInt(preferredBadge.textContent.trim()) || 0) : 0;
+        if (preferredCount > 0) {
+            switchPendingSubTab(preferredTab);
+            return;
+        }
+
+        const tabs = ['accounts', 'grades', 'videos', 'flipbooks'];
+        let selectedTab = 'accounts'; // fallback default
+
+        for (const tab of tabs) {
+            const badge = document.getElementById(`badge-${tab}`);
+            if (badge) {
+                const count = parseInt(badge.textContent.trim()) || 0;
+                if (count > 0) {
+                    selectedTab = tab;
+                    break;
+                }
+            }
+        }
 
         switchPendingSubTab(selectedTab);
-
     });
 
 </script>

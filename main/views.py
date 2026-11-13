@@ -19,6 +19,7 @@ import urllib.parse
 import json
 from django.conf import settings
 import re
+from django.utils.text import slugify
 
 def verify_recaptcha(request):
     recaptcha_response = request.POST.get('g-recaptcha-response')
@@ -126,6 +127,12 @@ def profile_view(request):
                 profile.grade_level = old_grade
                 profile.pending_grade = new_grade
                 messages.success(request, 'Your profile has been updated. Grade change request submitted to Admin.')
+                Notification.objects.create(
+                    title="Pending Grade Change Request",
+                    message=f"Student {request.user.username} requested a grade change from {old_grade} to {new_grade}.",
+                    icon="User",
+                    link_url="/dashboard/#pending-subtab-grades"
+                )
             else:
                 messages.success(request, 'Your profile has been updated successfully!')
                 
@@ -313,9 +320,9 @@ def video_create(request):
             log_audit_event(request, 'create', video, {'source': 'dashboard', 'status': 'pending'})
             Notification.objects.create(
                 title="New Video Pending Approval",
-                message=f"Teacher {request.user.username} uploaded a video '{video.title}' that needs approval.",
+                message=f"Teacher {request.user.username} uploaded a video '{video.title}' ({video.grade}) that needs approval.",
                 icon="Video",
-                link_url="/dashboard/"
+                link_url="/dashboard/#pending-subtab-videos"
             )
             messages.info(request, 'Video uploaded! It will be visible once the Main Admin approves it.')
         else:
@@ -703,9 +710,9 @@ def flipbook_create(request):
             log_audit_event(request, 'create', flipbook, {'source': 'dashboard', 'status': 'pending'})
             Notification.objects.create(
                 title="New Flipbook Pending Approval",
-                message=f"Teacher {request.user.username} uploaded a flipbook '{flipbook.title}' that needs approval.",
+                message=f"Teacher {request.user.username} uploaded a flipbook '{flipbook.title}' ({flipbook.grade}) that needs approval.",
                 icon="Book",
-                link_url="/dashboard/"
+                link_url="/dashboard/#pending-subtab-flipbooks"
             )
             messages.info(request, 'Flipbook uploaded! It will be visible once approved.')
         else:
@@ -903,11 +910,12 @@ def register_view(request):
             # Notify Super Admin
             full_name_combined = f"{first_name} {user.profile.middle_name or ''} {last_name} {suffix or ''}".replace("  ", " ").strip()
             from main.models import Notification
+            grade_sec_text = f"for {grade_level} Section {section}" if (grade_level and section) else ""
             Notification.objects.create(
                 title="New Student Registration",
-                message=f"A new student account '{username}' ({full_name_combined}) is pending approval.",
+                message=f"A new student account '{username}' ({full_name_combined}) {grade_sec_text} is pending approval.".strip(),
                 icon="User",
-                link_url="/dashboard/#section-pending"
+                link_url="/dashboard/#pending-subtab-accounts"
             )
             
             # Send Email Notification to Student
@@ -1009,7 +1017,7 @@ def teacher_register_view(request):
                 title="New Teacher Registration",
                 message=f"A new teacher account '{username}' ({full_name_combined}) is pending approval.",
                 icon="User",
-                link_url="/dashboard/#section-users"
+                link_url="/dashboard/#pending-subtab-accounts"
             )
             
             # Send Email Notification to Teacher
@@ -1087,41 +1095,153 @@ def dashboard(request):
             'archived_events':  CalendarEvent.objects.filter(is_archived=True).order_by('date'),
         }
 
-        # Pre-group pending items by dynamic student sections/grades for vertical Kanban columns
-        pending_users_by_grade = {}
+        # Identify newest pending items across all approval categories
+        newest_pending_user = context['pending_users'].order_by('-date_joined').first()
+        newest_pending_user_id = newest_pending_user.id if newest_pending_user else None
+
+        newest_video = context['pending_videos'].order_by('-created_at').first()
+        newest_video_id = newest_video.id if newest_video else None
+
+        newest_flipbook = context['pending_flipbooks'].order_by('-created_at').first()
+        newest_flipbook_id = newest_flipbook.id if newest_flipbook else None
+
+        # Determine which approval category has the overall newest item
+        latest_times = []
+        if newest_pending_user and newest_pending_user.date_joined:
+            latest_times.append(('accounts', newest_pending_user.date_joined))
+        if newest_video and newest_video.created_at:
+            latest_times.append(('videos', newest_video.created_at))
+        if newest_flipbook and newest_flipbook.created_at:
+            latest_times.append(('flipbooks', newest_flipbook.created_at))
+        
+        newest_overall_tab = max(latest_times, key=lambda x: x[1])[0] if latest_times else 'accounts'
+
+        # Categorize pending accounts from Grade 1 Section 1-3 to Grade 6 Section 1-3, followed by Teachers
+        pending_users_raw = {}
+        grade_pending_counts = {
+            'all': context['pending_users'].count(),
+            'grade_1': 0,
+            'grade_2': 0,
+            'grade_3': 0,
+            'grade_4': 0,
+            'grade_5': 0,
+            'grade_6': 0,
+            'teachers': 0,
+            'others': 0
+        }
+
         for u in context['pending_users']:
-            if u.profile.role == 'TEACHER':
-                if u.profile.grade_level:
-                    group_name = f"Teacher {u.profile.grade_level}"
+            role = getattr(u.profile, 'role', '')
+            section_val = (getattr(u.profile, 'section', '') or '').strip()
+            grade_level_val = (getattr(u.profile, 'grade_level', '') or '').strip()
+
+            if role == 'TEACHER':
+                grade_pending_counts['teachers'] += 1
+                if grade_level_val:
+                    group_key = f"Teacher {grade_level_val}"
+                    grade_cat = 'teachers'
+                    grade_label = grade_level_val
+                    section_label = 'Teacher'
+                    display_title = f"{grade_level_val} Teacher"
+                    badge_title = f"Teacher • {grade_level_val}"
                 else:
-                    group_name = 'Teachers'
-            elif u.profile.section:
-                group_name = u.profile.section
-            elif u.profile.grade_level:
-                group_name = u.profile.grade_level
+                    group_key = 'Teachers'
+                    grade_cat = 'teachers'
+                    grade_label = 'Faculty'
+                    section_label = 'Teacher'
+                    display_title = 'Faculty Teacher'
+                    badge_title = 'Teachers'
             else:
-                group_name = 'Others'
-                
-            if group_name not in pending_users_by_grade:
-                pending_users_by_grade[group_name] = []
-            pending_users_by_grade[group_name].append(u)
-            
-        def get_group_sort_key(group_name):
-            if group_name == 'Teachers':
-                return (999, 'Teachers')
-            if group_name.startswith('Teacher Grade'):
-                import re
-                match = re.search(r'\d+', group_name)
-                num = int(match.group()) if match else 0
-                return (100 + num, group_name)
-            import re
-            match = re.search(r'\d+', group_name)
-            if match:
-                num = int(match.group())
-                return (num, group_name)
-            return (500, group_name)
-            
-        pending_users_by_grade = dict(sorted(pending_users_by_grade.items(), key=lambda x: get_group_sort_key(x[0])))
+                # Student account: standard section format is "{grade}-{sec}", e.g. "1-1", "1-2", "1-3" ... "6-3"
+                sec_match = re.match(r'^(\d+)-(\d+)$', section_val)
+                if sec_match:
+                    g_num = int(sec_match.group(1))
+                    s_num = int(sec_match.group(2))
+                    group_key = f"{g_num}-{s_num}"
+                    grade_cat = f"grade_{g_num}"
+                    grade_label = f"Grade {g_num}"
+                    section_label = f"Section {g_num}-{s_num}"
+                    display_title = f"Grade {g_num} • Section {g_num}-{s_num}"
+                    badge_title = f"Section {g_num}-{s_num}"
+                    if f"grade_{g_num}" in grade_pending_counts:
+                        grade_pending_counts[f"grade_{g_num}"] += 1
+                else:
+                    # Fallback if section is just single digit e.g. "2" and grade_level is "Grade 4"
+                    g_match = re.search(r'\d+', grade_level_val)
+                    s_match = re.search(r'\d+', section_val)
+                    g_num = int(g_match.group()) if g_match else None
+                    s_num = int(s_match.group()) if s_match else None
+                    if g_num and s_num:
+                        group_key = f"{g_num}-{s_num}"
+                        grade_cat = f"grade_{g_num}"
+                        grade_label = f"Grade {g_num}"
+                        section_label = f"Section {g_num}-{s_num}"
+                        display_title = f"Grade {g_num} • Section {g_num}-{s_num}"
+                        badge_title = f"Section {g_num}-{s_num}"
+                        if f"grade_{g_num}" in grade_pending_counts:
+                            grade_pending_counts[f"grade_{g_num}"] += 1
+                    elif g_num:
+                        group_key = f"Grade {g_num}"
+                        grade_cat = f"grade_{g_num}"
+                        grade_label = f"Grade {g_num}"
+                        section_label = f"Grade {g_num}"
+                        display_title = f"Grade {g_num}"
+                        badge_title = f"Grade {g_num}"
+                        if f"grade_{g_num}" in grade_pending_counts:
+                            grade_pending_counts[f"grade_{g_num}"] += 1
+                    else:
+                        group_key = 'Others'
+                        grade_cat = 'others'
+                        grade_label = 'Others'
+                        section_label = 'Other'
+                        display_title = 'Other Accounts'
+                        badge_title = 'Others'
+                        grade_pending_counts['others'] += 1
+
+            if group_key not in pending_users_raw:
+                pending_users_raw[group_key] = {
+                    'key': group_key,
+                    'grade_cat': grade_cat,
+                    'grade_label': grade_label,
+                    'section_label': section_label,
+                    'display_title': display_title,
+                    'badge_title': badge_title,
+                    'users': []
+                }
+            pending_users_raw[group_key]['users'].append(u)
+
+        # Precise sort order:
+        # Grade 1 (1-1, 1-2, 1-3)
+        # Grade 2 (2-1, 2-2, 2-3)
+        # Grade 3 (3-1, 3-2, 3-3)
+        # Grade 4 (4-1, 4-2, 4-3)
+        # Grade 5 (5-1, 5-2, 5-3)
+        # Grade 6 (6-1, 6-2, 6-3)
+        # Teachers (Teacher Grade 1 .. 6, General Teachers)
+        # Others
+        def get_group_sort_order(item):
+            key = item['key']
+            sec_m = re.match(r'^(\d+)-(\d+)$', key)
+            if sec_m:
+                return (1, int(sec_m.group(1)), int(sec_m.group(2)))
+            g_m = re.match(r'^Grade (\d+)$', key)
+            if g_m:
+                return (1, int(g_m.group(1)), 0)
+            t_m = re.match(r'^Teacher Grade (\d+)$', key)
+            if t_m:
+                return (2, int(t_m.group(1)), 0)
+            if key == 'Teachers':
+                return (2, 99, 0)
+            return (3, 99, 0)
+
+        sorted_groups = sorted(pending_users_raw.values(), key=get_group_sort_order)
+        for g in sorted_groups:
+            g['has_newest'] = any(u.id == newest_pending_user_id for u in g['users'])
+            g['count'] = len(g['users'])
+            g['slug'] = slugify(g['key'])
+
+        # Dict format for template backward compatibility
+        pending_users_by_grade = {g['key']: g['users'] for g in sorted_groups}
 
         pending_grade_users_by_grade = {
             'Grade 1': [],
@@ -1192,11 +1312,17 @@ def dashboard(request):
                 announcements_by_grade['All Grades'].append(ann)
 
         context.update({
+            'pending_user_groups': sorted_groups,
             'pending_users_by_grade': pending_users_by_grade,
             'pending_grade_users_by_grade': pending_grade_users_by_grade,
             'pending_videos_by_grade': pending_videos_by_grade,
             'pending_flipbooks_by_grade': pending_flipbooks_by_grade,
             'announcements_by_grade': announcements_by_grade,
+            'newest_pending_user_id': newest_pending_user_id,
+            'newest_video_id': newest_video_id,
+            'newest_flipbook_id': newest_flipbook_id,
+            'newest_overall_tab': newest_overall_tab,
+            'grade_pending_counts': grade_pending_counts,
         })
     else: # TEACHER
         context = {

@@ -34,6 +34,58 @@
         color: #ffffff;
         border-color: #22c55e;
     }
+    .notif-card-pending {
+        border-left: 5px solid #ef4444 !important;
+        background: linear-gradient(to right, #fff5f5, #ffffff 16%) !important;
+    }
+    .notif-card-pending:hover {
+        transform: translateX(6px);
+        box-shadow: 0 8px 24px rgba(239, 68, 68, 0.18) !important;
+        border-left-color: #dc2626 !important;
+    }
+    .notif-action-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #fee2e2;
+        color: #b91c1c;
+        font-size: 0.78rem;
+        font-weight: 800;
+        padding: 4px 12px;
+        border-radius: 12px;
+        border: 1px solid #fca5a5;
+        transition: all 0.2s ease;
+    }
+    .notif-card-clickable:hover .notif-action-badge {
+        background: #ef4444;
+        color: #ffffff;
+        border-color: #ef4444;
+    }
+    .notif-newest-tag {
+        background: #ef4444;
+        color: #ffffff;
+        font-size: 0.68rem;
+        font-weight: 900;
+        padding: 2px 8px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        animation: pulseWarningNotif 2s infinite;
+    }
+    .notif-pending-tag {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+        font-size: 0.68rem;
+        font-weight: 800;
+        padding: 2px 7px;
+        border-radius: 8px;
+    }
+    @keyframes pulseWarningNotif {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.85; transform: scale(1.05); }
+    }
     .btn-show-more:hover {
         background: #16a34a !important;
         transform: translateY(-2px);
@@ -52,24 +104,39 @@
 
     {% for notif in notifications %}
     {% if notif.link_url and "Welcome" not in notif.title %}
-    <a href="{{ notif.link_url }}" class="notif-card notif-card-clickable" data-index="{{ forloop.counter }}" {% if forloop.counter > 5 %}style="display: none;"{% endif %}>
+    <a href="{{ notif.link_url }}" class="notif-card notif-card-clickable {% if 'Pending' in notif.title or 'Registration' in notif.title %}notif-card-pending{% endif %}" data-index="{{ forloop.counter }}" {% if forloop.counter > 5 %}style="display: none;"{% endif %}>
     {% else %}
-    <div class="notif-card" data-index="{{ forloop.counter }}" {% if forloop.counter > 5 %}style="display: none;"{% endif %}>
+    <div class="notif-card {% if 'Pending' in notif.title or 'Registration' in notif.title %}notif-card-pending{% endif %}" data-index="{{ forloop.counter }}" {% if forloop.counter > 5 %}style="display: none;"{% endif %}>
     {% endif %}
         <div class="notif-icon" style="font-size: 1.5rem;">
-            {% if notif.icon == 'Video' %}<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="4" ry="4"/></svg>{% elif notif.icon == 'Book' %}<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>{% elif notif.icon == 'Note' %}<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-35 12 12)"><path d="M16 5 L16 19 L6 15 C 3 14, 3 10, 6 9 Z"></path><line x1="8" y1="10" x2="8" y2="14"></line><path d="M9 16 L7 21 C 6.5 22, 8.5 22, 9 21 L12 17.5"></path><line x1="19" y1="7" x2="22" y2="4"></line><line x1="20" y1="12" x2="24" y2="12"></line><line x1="19" y1="17" x2="22" y2="20"></line></g></svg>{% else %}<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#facc15" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>{% endif %}
+            {% if 'Pending' in notif.title or 'Registration' in notif.title %}
+            <span style="font-size: 1.5rem; filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.25));">⚠️</span>
+            {% elif notif.icon == 'Video' %}<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="4" ry="4"/></svg>{% elif notif.icon == 'Book' %}<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>{% elif notif.icon == 'Note' %}<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-35 12 12)"><path d="M16 5 L16 19 L6 15 C 3 14, 3 10, 6 9 Z"></path><line x1="8" y1="10" x2="8" y2="14"></line><path d="M9 16 L7 21 C 6.5 22, 8.5 22, 9 21 L12 17.5"></path><line x1="19" y1="7" x2="22" y2="4"></line><line x1="20" y1="12" x2="24" y2="12"></line><line x1="19" y1="17" x2="22" y2="20"></line></g></svg>{% else %}<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#facc15" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>{% endif %}
         </div>
         <div class="notif-body">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h4>{{ notif.title }}</h4>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <h4 style="margin: 0;">{{ notif.title }}</h4>
+                    {% if forloop.first and 'Pending' in notif.title or forloop.first and 'Registration' in notif.title %}
+                    <span class="notif-newest-tag">🚨 NEWEST APPROVAL</span>
+                    {% elif 'Pending' in notif.title or 'Registration' in notif.title %}
+                    <span class="notif-pending-tag">⚠️ ACTION REQUIRED</span>
+                    {% endif %}
+                </div>
                 <span class="notif-date" style="font-size:0.8rem; color:var(--gray);">{{ notif.created_at|timesince }} ago</span>
             </div>
             <p>{{ notif.message }}</p>
             {% if notif.link_url and "Welcome" not in notif.title %}
             <div style="margin-top: 8px;">
+                {% if 'Pending' in notif.title or 'Registration' in notif.title %}
+                <span class="notif-action-badge">
+                    ⚠️ Review &amp; Approve Now →
+                </span>
+                {% else %}
                 <span class="notif-link-badge">
                     {% if notif.icon == 'Video' %}Watch Video ▶{% elif notif.icon == 'Book' %}Open Flipbook 📖{% elif notif.icon == 'Note' %}View Announcement 📢{% else %}View Details →{% endif %}
                 </span>
+                {% endif %}
             </div>
             {% endif %}
         </div>
