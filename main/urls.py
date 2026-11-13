@@ -100,4 +100,5 @@ urlpatterns = [
     path('dashboard/archive/bulk-action/', views.bulk_archive_action, name='bulk_archive_action'),
     path('dashboard/approve/bulk-action/', views.bulk_approval_action, name='bulk_approval_action'),
     path('dashboard/announcements/bulk-archive/', views.bulk_archive_announcements, name='bulk_archive_announcements'),
+    path('dashboard/mark-pending-viewed/', views.mark_pending_viewed, name='mark_pending_viewed'),
 ]

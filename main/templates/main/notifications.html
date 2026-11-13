@@ -118,7 +118,7 @@
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <h4 style="margin: 0;">{{ notif.title }}</h4>
                     {% if forloop.first and 'Pending' in notif.title or forloop.first and 'Registration' in notif.title %}
-                    <span class="notif-newest-tag">🚨 NEWEST APPROVAL</span>
+                    <span class="notif-newest-tag">🚨 LATEST APPROVAL</span>
                     {% elif 'Pending' in notif.title or 'Registration' in notif.title %}
                     <span class="notif-pending-tag">⚠️ ACTION REQUIRED</span>
                     {% endif %}

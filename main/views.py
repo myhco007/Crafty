@@ -1095,26 +1095,47 @@ def dashboard(request):
             'archived_events':  CalendarEvent.objects.filter(is_archived=True).order_by('date'),
         }
 
-        # Identify newest pending items across all approval categories
-        newest_pending_user = context['pending_users'].order_by('-date_joined').first()
-        newest_pending_user_id = newest_pending_user.id if newest_pending_user else None
+        # Get set of already viewed pending IDs from session
+        viewed_user_ids = set(request.session.get('viewed_pending_user_ids', []))
+        viewed_video_ids = set(request.session.get('viewed_pending_video_ids', []))
+        viewed_flipbook_ids = set(request.session.get('viewed_pending_flipbook_ids', []))
 
-        newest_video = context['pending_videos'].order_by('-created_at').first()
-        newest_video_id = newest_video.id if newest_video else None
+        from django.utils import timezone
+        today = timezone.now().date()
 
-        newest_flipbook = context['pending_flipbooks'].order_by('-created_at').first()
-        newest_flipbook_id = newest_flipbook.id if newest_flipbook else None
+        # Identify latest registration day among pending users
+        latest_user = context['pending_users'].order_by('-date_joined').first()
+        latest_user_date = latest_user.date_joined.date() if (latest_user and latest_user.date_joined) else None
+        has_user_today = any(u.date_joined and u.date_joined.date() == today for u in context['pending_users'])
+        target_user_date = today if has_user_today else latest_user_date
 
-        # Determine which approval category has the overall newest item
-        latest_times = []
-        if newest_pending_user and newest_pending_user.date_joined:
-            latest_times.append(('accounts', newest_pending_user.date_joined))
-        if newest_video and newest_video.created_at:
-            latest_times.append(('videos', newest_video.created_at))
-        if newest_flipbook and newest_flipbook.created_at:
-            latest_times.append(('flipbooks', newest_flipbook.created_at))
-        
-        newest_overall_tab = max(latest_times, key=lambda x: x[1])[0] if latest_times else 'accounts'
+        # Mark all users who registered on the latest/same day and are not yet viewed as is_latest
+        for u in context['pending_users']:
+            u_date = u.date_joined.date() if u.date_joined else None
+            is_same_day = (u_date is not None and target_user_date is not None and u_date == target_user_date)
+            u.is_latest = bool(is_same_day and u.id not in viewed_user_ids)
+
+        # Videos: find latest creation day
+        latest_video = context['pending_videos'].order_by('-created_at').first()
+        latest_video_date = latest_video.created_at.date() if (latest_video and latest_video.created_at) else None
+        has_video_today = any(v.created_at and v.created_at.date() == today for v in context['pending_videos'])
+        target_video_date = today if has_video_today else latest_video_date
+
+        for v in context['pending_videos']:
+            v_date = v.created_at.date() if v.created_at else None
+            is_same_day = (v_date is not None and target_video_date is not None and v_date == target_video_date)
+            v.is_latest = bool(is_same_day and v.id not in viewed_video_ids)
+
+        # Flipbooks: find latest creation day
+        latest_flipbook = context['pending_flipbooks'].order_by('-created_at').first()
+        latest_flipbook_date = latest_flipbook.created_at.date() if (latest_flipbook and latest_flipbook.created_at) else None
+        has_flipbook_today = any(f.created_at and f.created_at.date() == today for f in context['pending_flipbooks'])
+        target_flipbook_date = today if has_flipbook_today else latest_flipbook_date
+
+        for f in context['pending_flipbooks']:
+            f_date = f.created_at.date() if f.created_at else None
+            is_same_day = (f_date is not None and target_flipbook_date is not None and f_date == target_flipbook_date)
+            f.is_latest = bool(is_same_day and f.id not in viewed_flipbook_ids)
 
         # Categorize pending accounts from Grade 1 Section 1-3 to Grade 6 Section 1-3, followed by Teachers
         pending_users_raw = {}
@@ -1236,12 +1257,29 @@ def dashboard(request):
 
         sorted_groups = sorted(pending_users_raw.values(), key=get_group_sort_order)
         for g in sorted_groups:
-            g['has_newest'] = any(u.id == newest_pending_user_id for u in g['users'])
+            g['has_latest'] = any(getattr(u, 'is_latest', False) for u in g['users'])
+            g['latest_count'] = sum(1 for u in g['users'] if getattr(u, 'is_latest', False))
+            g['user_ids'] = [u.id for u in g['users']]
             g['count'] = len(g['users'])
             g['slug'] = slugify(g['key'])
 
         # Dict format for template backward compatibility
         pending_users_by_grade = {g['key']: g['users'] for g in sorted_groups}
+
+        grade_latest_counts = {
+            'all': sum(1 for u in context['pending_users'] if getattr(u, 'is_latest', False)),
+            'grade_1': sum(1 for g in sorted_groups if g['grade_cat'] == 'grade_1' for u in g['users'] if getattr(u, 'is_latest', False)),
+            'grade_2': sum(1 for g in sorted_groups if g['grade_cat'] == 'grade_2' for u in g['users'] if getattr(u, 'is_latest', False)),
+            'grade_3': sum(1 for g in sorted_groups if g['grade_cat'] == 'grade_3' for u in g['users'] if getattr(u, 'is_latest', False)),
+            'grade_4': sum(1 for g in sorted_groups if g['grade_cat'] == 'grade_4' for u in g['users'] if getattr(u, 'is_latest', False)),
+            'grade_5': sum(1 for g in sorted_groups if g['grade_cat'] == 'grade_5' for u in g['users'] if getattr(u, 'is_latest', False)),
+            'grade_6': sum(1 for g in sorted_groups if g['grade_cat'] == 'grade_6' for u in g['users'] if getattr(u, 'is_latest', False)),
+            'teachers': sum(1 for g in sorted_groups if g['grade_cat'] == 'teachers' for u in g['users'] if getattr(u, 'is_latest', False)),
+        }
+
+        accounts_has_latest = any(g['has_latest'] for g in sorted_groups)
+        videos_has_latest = any(getattr(v, 'is_latest', False) for v in context['pending_videos'])
+        flipbooks_has_latest = any(getattr(f, 'is_latest', False) for f in context['pending_flipbooks'])
 
         pending_grade_users_by_grade = {
             'Grade 1': [],
@@ -1318,11 +1356,11 @@ def dashboard(request):
             'pending_videos_by_grade': pending_videos_by_grade,
             'pending_flipbooks_by_grade': pending_flipbooks_by_grade,
             'announcements_by_grade': announcements_by_grade,
-            'newest_pending_user_id': newest_pending_user_id,
-            'newest_video_id': newest_video_id,
-            'newest_flipbook_id': newest_flipbook_id,
-            'newest_overall_tab': newest_overall_tab,
+            'accounts_has_latest': accounts_has_latest,
+            'videos_has_latest': videos_has_latest,
+            'flipbooks_has_latest': flipbooks_has_latest,
             'grade_pending_counts': grade_pending_counts,
+            'grade_latest_counts': grade_latest_counts,
         })
     else: # TEACHER
         context = {
@@ -2206,6 +2244,47 @@ def bulk_archive_announcements(request):
             pass
             
     return JsonResponse({'status': 'success', 'message': f'Successfully archived {count} announcement(s).'})
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+@require_POST
+def mark_pending_viewed(request):
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        data = request.POST
+
+    item_type = data.get('type')  # 'user', 'video', 'flipbook'
+    raw_ids = data.get('ids', [])
+    if isinstance(raw_ids, str):
+        raw_ids = [i.strip() for i in raw_ids.split(',') if i.strip()]
+    elif isinstance(raw_ids, int):
+        raw_ids = [raw_ids]
+
+    clean_ids = []
+    for x in raw_ids:
+        try:
+            clean_ids.append(int(x))
+        except (ValueError, TypeError):
+            pass
+
+    if item_type == 'user':
+        viewed = set(request.session.get('viewed_pending_user_ids', []))
+        viewed.update(clean_ids)
+        request.session['viewed_pending_user_ids'] = list(viewed)
+        request.session.modified = True
+    elif item_type == 'video':
+        viewed = set(request.session.get('viewed_pending_video_ids', []))
+        viewed.update(clean_ids)
+        request.session['viewed_pending_video_ids'] = list(viewed)
+        request.session.modified = True
+    elif item_type == 'flipbook':
+        viewed = set(request.session.get('viewed_pending_flipbook_ids', []))
+        viewed.update(clean_ids)
+        request.session['viewed_pending_flipbook_ids'] = list(viewed)
+        request.session.modified = True
+
+    return JsonResponse({'status': 'success', 'viewed_count': len(clean_ids)})
 
 # Teacher Tasks API
 from django.views.decorators.http import require_POST
