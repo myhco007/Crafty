@@ -258,6 +258,45 @@ def video_list(request):
     videos = videos.order_by('-created_at', '-id')
     return render(request, 'main/video_list.html', {'videos': videos, 'active': category, 'selected_grade': grade, 'selected_craft': craft_category})
 
+def notify_content_published(obj, content_type='video'):
+    """
+    Creates a notification targeted to the specific grade of newly approved/uploaded content.
+    Includes teacher's name, content title, grade, and direct clickable link.
+    """
+    author = getattr(obj, 'author', None)
+    if author:
+        author_name = f"{author.first_name} {author.last_name}".strip() or author.username
+        if not author_name.lower().startswith('teacher'):
+            teacher_name = f"Teacher {author_name}"
+        else:
+            teacher_name = author_name
+    else:
+        teacher_name = "Teacher"
+
+    grade = getattr(obj, 'grade', 'All Grades') or 'All Grades'
+    grade_label = "all grades" if grade == 'All Grades' else grade
+
+    if content_type == 'video':
+        title = "New Video Tutorial 🎬"
+        message = f"{teacher_name} uploaded a new video tutorial \"{obj.title}\" for {grade_label}. Click to watch and start crafting!"
+        icon = "Video"
+        link_url = reverse('video_detail', args=[obj.pk])
+    else:
+        title = "New Flipbook Lesson 📖"
+        message = f"{teacher_name} uploaded a new flipbook tutorial \"{obj.title}\" for {grade_label}. Click to read and learn!"
+        icon = "Book"
+        link_url = reverse('flipbook_detail', args=[obj.pk])
+
+    Notification.objects.create(
+        title=title,
+        message=message,
+        icon=icon,
+        link_url=link_url,
+        grade=grade,
+        target_audience='All'
+    )
+
+
 @login_required(login_url='login')
 @user_passes_test(is_staff_or_teacher, login_url='home')
 def video_create(request):
@@ -284,11 +323,7 @@ def video_create(request):
             video.save()
             form.save_m2m()
             log_audit_event(request, 'create', video, {'source': 'dashboard', 'status': 'approved'})
-            Notification.objects.create(
-                title="New Video Uploaded",
-                message=f"A new video tutorial '{video.title}' is now available.",
-                icon="Video"
-            )
+            notify_content_published(video, 'video')
         return redirect('/dashboard/#section-videos' if request.user.is_staff else 'video_list')
     return render(request, 'main/video_form.html', {'form': form, 'title': 'Add Video'})
 
@@ -678,11 +713,7 @@ def flipbook_create(request):
             flipbook.save()
             form.save_m2m()
             log_audit_event(request, 'create', flipbook, {'source': 'dashboard', 'status': 'approved'})
-            Notification.objects.create(
-                title="New Flipbook Uploaded",
-                message=f"A new flipbook tutorial '{flipbook.title}' is now available.",
-                icon="Book"
-            )
+            notify_content_published(flipbook, 'flipbook')
 
         # Save per-page audio files
         _save_page_audios(request, flipbook)
@@ -1222,8 +1253,10 @@ def approve_content(request, model_type, pk):
     if request.method == 'POST':
         if model_type == 'video':
             AnimationVideo.objects.filter(pk=pk).update(is_approved=True)
+            notify_content_published(obj, 'video')
         elif model_type == 'flipbook':
             Flipbook.objects.filter(pk=pk).update(is_approved=True)
+            notify_content_published(obj, 'flipbook')
             
         log_audit_event(request, 'approve', obj, {'source': 'dashboard'})
         messages.success(request, f'{model_type.capitalize()} approved!')
@@ -1535,9 +1568,12 @@ def announcement_create(request):
         announcement = form.save()
         log_audit_event(request, 'create', announcement, {'source': 'dashboard'})
         Notification.objects.create(
-            title="New Announcement",
+            title="New Announcement 📢",
             message=announcement.title,
-            icon="Note"
+            icon="Note",
+            link_url=f"/announcements/#announcement-{announcement.id}",
+            grade=announcement.grade or 'All Grades',
+            target_audience='All'
         )
         messages.success(request, 'Announcement created!')
         return redirect('/dashboard/#section-announcements')
@@ -1985,6 +2021,7 @@ def bulk_approval_action(request):
                 video = get_object_or_404(AnimationVideo, pk=pk)
                 if action == 'approve':
                     AnimationVideo.objects.filter(pk=pk).update(is_approved=True)
+                    notify_content_published(video, 'video')
                     log_audit_event(request, 'approve', video, {'source': 'dashboard', 'bulk': True})
                 elif action == 'deny':
                     log_audit_event(request, 'delete', video, {'source': 'dashboard', 'bulk': True})
@@ -1994,6 +2031,7 @@ def bulk_approval_action(request):
                 flipbook = get_object_or_404(Flipbook, pk=pk)
                 if action == 'approve':
                     Flipbook.objects.filter(pk=pk).update(is_approved=True)
+                    notify_content_published(flipbook, 'flipbook')
                     log_audit_event(request, 'approve', flipbook, {'source': 'dashboard', 'bulk': True})
                 elif action == 'deny':
                     log_audit_event(request, 'delete', flipbook, {'source': 'dashboard', 'bulk': True})

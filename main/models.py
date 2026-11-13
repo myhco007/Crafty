@@ -365,6 +365,7 @@ class Notification(models.Model):
     # Optional: target specific user (e.g. Super Admin)
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
     target_audience = models.CharField(max_length=20, choices=[('All', 'All'), ('Teacher', 'Teacher')], default='All')
+    grade = models.CharField(max_length=20, choices=GRADE_CHOICES, default='All Grades', blank=True, null=True)
 
     class Meta:
         ordering = ['-created_at']

@@ -260,7 +260,7 @@
 <div class="announcement-list-section">
     <div class="announcements-container" id="announcements-list">
         {% for ann in announcements %}
-        <div class="announcement-card" data-category="{{ ann.category }}">
+        <div class="announcement-card" id="announcement-{{ ann.id }}" data-category="{{ ann.category }}">
             <div class="card-content-wrapper">
                 <div class="card-header">
                     <div style="display:flex; gap:10px; align-items:center;">
@@ -483,6 +483,17 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         updateDisplay();
+        if (window.location.hash && window.location.hash.startsWith('#announcement-')) {
+            const annId = window.location.hash.replace('#announcement-', '');
+            const targetBtn = document.getElementById('btn-read-' + annId);
+            if (targetBtn) {
+                targetBtn.click();
+                const card = document.getElementById('announcement-' + annId);
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
     });
 </script>
 {% endblock %}

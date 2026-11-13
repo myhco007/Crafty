@@ -28,12 +28,26 @@ def get_user_notifications(user):
     # 2. Exclude admin-only notifications
     qs = qs.exclude(title__icontains='Pending').exclude(title__icontains='Registration')
 
-    # 3. Only show targeted notifications for this user OR global notifications created AFTER user registered
+    # 3. Only show targeted notifications for this user OR grade-matched notifications created AFTER user registered
     user_joined = user.date_joined
-    qs = qs.filter(
-        Q(recipient=user) |
-        Q(recipient__isnull=True, created_at__gte=user_joined)
-    )
+    is_teacher = hasattr(user, 'profile') and user.profile.role == 'TEACHER'
+    
+    if is_teacher:
+        qs = qs.filter(
+            Q(recipient=user) |
+            Q(recipient__isnull=True, created_at__gte=user_joined)
+        )
+    else:
+        # Students / Clients: strictly filter by student's grade level
+        user_grade = getattr(user.profile, 'grade_level', None) if hasattr(user, 'profile') else None
+        grade_q = Q(grade='All Grades') | Q(grade__isnull=True) | Q(grade='')
+        if user_grade:
+            grade_q |= Q(grade=user_grade)
+
+        qs = qs.filter(
+            Q(recipient=user) |
+            (Q(recipient__isnull=True, created_at__gte=user_joined) & grade_q)
+        )
 
     # 4. If user has no targeted welcome notification yet, create 1 welcome notification
     if not Notification.objects.filter(recipient=user, title__icontains='Welcome').exists():
@@ -46,10 +60,16 @@ def get_user_notifications(user):
             link_url="/home/"
         )
         # Re-fetch after creation
+        user_grade = getattr(user.profile, 'grade_level', None) if hasattr(user, 'profile') else None
+        grade_q = Q(grade='All Grades') | Q(grade__isnull=True) | Q(grade='')
+        if user_grade:
+            grade_q |= Q(grade=user_grade)
+
         qs = Notification.objects.filter(created_at__gte=one_week_ago).exclude(
             title__icontains='Pending'
         ).exclude(title__icontains='Registration').filter(
-            Q(recipient=user) | Q(recipient__isnull=True, created_at__gte=user_joined)
+            Q(recipient=user) |
+            (Q(recipient__isnull=True, created_at__gte=user_joined) & grade_q)
         )
 
     return qs.order_by('-created_at')

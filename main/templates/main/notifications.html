@@ -4,6 +4,36 @@
 {% block page_css %}
 <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
 <style>
+    .notif-card-clickable {
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-left-color 0.2s ease;
+    }
+    .notif-card-clickable:hover {
+        transform: translateX(6px);
+        box-shadow: 0 8px 24px rgba(34, 197, 94, 0.14);
+        border-left-color: #16a34a !important;
+    }
+    .notif-link-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #f0fdf4;
+        color: #16a34a;
+        font-size: 0.78rem;
+        font-weight: 800;
+        padding: 3px 10px;
+        border-radius: 12px;
+        border: 1px solid #bbf7d0;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+    .notif-card-clickable:hover .notif-link-badge {
+        background: #22c55e;
+        color: #ffffff;
+        border-color: #22c55e;
+    }
     .btn-show-more:hover {
         background: #16a34a !important;
         transform: translateY(-2px);
@@ -21,7 +51,11 @@
     <p class="subtitle">Stay updated with the latest news and activities.</p>
 
     {% for notif in notifications %}
+    {% if notif.link_url %}
+    <a href="{{ notif.link_url }}" class="notif-card notif-card-clickable" data-index="{{ forloop.counter }}" {% if forloop.counter > 5 %}style="display: none;"{% endif %}>
+    {% else %}
     <div class="notif-card" data-index="{{ forloop.counter }}" {% if forloop.counter > 5 %}style="display: none;"{% endif %}>
+    {% endif %}
         <div class="notif-icon" style="font-size: 1.5rem;">
             {% if notif.icon == 'Video' %}<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="4" ry="4"/></svg>{% elif notif.icon == 'Book' %}<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>{% elif notif.icon == 'Note' %}<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-35 12 12)"><path d="M16 5 L16 19 L6 15 C 3 14, 3 10, 6 9 Z"></path><line x1="8" y1="10" x2="8" y2="14"></line><path d="M9 16 L7 21 C 6.5 22, 8.5 22, 9 21 L12 17.5"></path><line x1="19" y1="7" x2="22" y2="4"></line><line x1="20" y1="12" x2="24" y2="12"></line><line x1="19" y1="17" x2="22" y2="20"></line></g></svg>{% else %}<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#facc15" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>{% endif %}
         </div>
@@ -31,8 +65,15 @@
                 <span class="notif-date" style="font-size:0.8rem; color:var(--gray);">{{ notif.created_at|timesince }} ago</span>
             </div>
             <p>{{ notif.message }}</p>
+            {% if notif.link_url %}
+            <div style="margin-top: 8px;">
+                <span class="notif-link-badge">
+                    {% if notif.icon == 'Video' %}Watch Video ▶{% elif notif.icon == 'Book' %}Open Flipbook 📖{% elif notif.icon == 'Note' %}View Announcement 📢{% else %}View Details →{% endif %}
+                </span>
+            </div>
+            {% endif %}
         </div>
-    </div>
+    {% if notif.link_url %}</a>{% else %}</div>{% endif %}
     {% empty %}
     <div style="text-align: center; padding: 40px; color: var(--gray); background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);">
         <p style="font-weight: 700;">No notifications at this time.</p>
