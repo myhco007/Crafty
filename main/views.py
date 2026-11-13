@@ -1262,6 +1262,7 @@ def dashboard(request):
             g['user_ids'] = [u.id for u in g['users']]
             g['count'] = len(g['users'])
             g['slug'] = slugify(g['key'])
+            g['latest_date'] = max((u.date_joined for u in g['users']), default=None)
 
         # Dict format for template backward compatibility
         pending_users_by_grade = {g['key']: g['users'] for g in sorted_groups}
