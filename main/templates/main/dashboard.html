@@ -2024,29 +2024,6 @@
                 </div>
             </div>
 
-                                    <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
-                                        <button onclick="openDetailsModal('{{ pending_user.username|escapejs }}', '{{ pending_user.profile.grade_level|default:'Not specified'|escapejs }}', '{{ pending_user.date_joined|date:'M d, Y h:i A'|escapejs }}', '{{ pending_user.profile.lrn_number|default:''|escapejs }}', '{{ pending_user.profile.role|escapejs }}', '{{ pending_user.email|escapejs }}', '{% if pending_user.profile.faculty_id_image %}{{ pending_user.profile.faculty_id_image.url|escapejs }}{% endif %}', '{{ pending_user.profile.section|default:''|escapejs }}')" class="compact-btn compact-btn-details" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; cursor: pointer;">Details</button>
-                                        <a href="javascript:void(0)" onclick="openActionModal('{% url "approve_user" pending_user.pk %}', 'Approve Account?', '✅', 'You are about to approve the account for &quot;<strong>{{ pending_user.username }}</strong>&quot;.', 'Yes, Approve!', false)" class="compact-btn compact-btn-approve" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; text-decoration: none;">Approve</a>
-                                        <a href="javascript:void(0)" onclick="openActionModal('{% url "reject_user" pending_user.pk %}', 'Cancel Registration Request?', '🚫', 'You are about to cancel the registration request for &quot;<strong>{{ pending_user.username }}</strong>&quot;.', 'Yes, Cancel Request!', true)" class="compact-btn compact-btn-deny" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; text-decoration: none;">Cancel</a>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% empty %}
-                    <div style="text-align: center; padding: 40px; color: #a0aec0; width: 100%;">
-                        <div style="font-size: 2.5rem; margin-bottom: 10px;">🎉</div>
-                        <h4 style="font-weight: 800; color: #4a5568; margin-bottom: 5px;">No Pending Accounts</h4>
-                        <p style="font-size: 0.85rem; color: #718096;">All student and teacher accounts have been reviewed.</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-
-
             <!-- GRADE CHANGES SUBTAB -->
 
             <div id="pending-subtab-grades" class="pending-subtab-content" style="display: none;">
