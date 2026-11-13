@@ -158,15 +158,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Media files (uploads)
 CLOUDFLARE_R2_URL = 'https://pub-f88888ca49534716892f76459482d932.r2.dev/'
-if os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('MYSQL_URL') or os.environ.get('DATABASE_URL'):
-    MEDIA_URL = CLOUDFLARE_R2_URL
-else:
-    MEDIA_URL = '/media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Upload Limits (allow up to 500 MB for video tutorials and multi-page PDF flipbooks)
-DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000
-FILE_UPLOAD_MAX_MEMORY_SIZE = 524288000
+# Upload Limits (allow up to 500 MB request body, but stream to disk to protect server RAM)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500 MB maximum request payload
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880    # 5 MB: stream uploads directly to disk in chunks to prevent server OOM hangs!
 
 # Allow iframes from same origin for viewing PDFs
 X_FRAME_OPTIONS = 'SAMEORIGIN'

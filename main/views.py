@@ -2393,6 +2393,19 @@ def media_proxy(request, filepath):
         resp['Access-Control-Allow-Headers'] = '*'
         return resp
 
+    # 1. Check if the file exists on the local filesystem (uploaded content)
+    local_path = os.path.join(settings.MEDIA_ROOT, filepath)
+    if os.path.exists(local_path) and os.path.isfile(local_path):
+        content_type, _ = mimetypes.guess_type(local_path)
+        from django.http import FileResponse
+        response = FileResponse(open(local_path, 'rb'), content_type=content_type or 'application/octet-stream')
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+        response['Access-Control-Allow-Headers'] = '*'
+        response['Cache-Control'] = 'public, max-age=86400'
+        return response
+
+    # 2. Fallback to Cloudflare R2 for seed data and pre-uploaded assets
     base_r2 = getattr(settings, 'CLOUDFLARE_R2_URL', 'https://pub-f88888ca49534716892f76459482d932.r2.dev/').rstrip('/')
     target_url = f"{base_r2}/{filepath.lstrip('/')}"
     content_type, _ = mimetypes.guess_type(filepath)

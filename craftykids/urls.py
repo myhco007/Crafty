@@ -2,9 +2,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from main import views as main_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('media/<path:filepath>', main_views.media_proxy, name='media_serve'),
     path('', include('main.urls')),
 ]
 

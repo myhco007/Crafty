@@ -12,7 +12,7 @@
         <p class="upload-sub">Share a cool animated DIY video with the kids!</p>
     </div>
 
-    <form method="POST" enctype="multipart/form-data" novalidate>
+    <form method="POST" enctype="multipart/form-data" novalidate id="upload-form">
         {% csrf_token %}
 
         {% for field in form %}
@@ -37,11 +37,150 @@
             </div>
         {% endfor %}
 
+        <!-- Upload Progress Indicator -->
+        <div id="upload-progress-container" style="display: none; margin-top: 24px; padding: 18px 22px; background: #f0fdf4; border: 2px solid #86efac; border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span id="upload-progress-status" style="font-weight: 800; color: #166534; font-size: 0.95rem;">
+                    ⏳ Uploading video... Please wait
+                </span>
+                <span id="upload-progress-percent" style="font-weight: 800; color: #15803d; font-size: 0.95rem;">
+                    0%
+                </span>
+            </div>
+            <div style="width: 100%; height: 14px; background: #dcfce7; border-radius: 10px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+                <div id="upload-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #22c55e, #16a34a); border-radius: 10px; transition: width 0.2s ease;"></div>
+            </div>
+            <div id="upload-progress-bytes" style="margin-top: 8px; font-size: 0.85rem; color: #4b5563; text-align: right;">
+                0 MB / 0 MB
+            </div>
+            <p style="margin: 6px 0 0; font-size: 0.82rem; color: #6b7280; text-align: center;">
+                💡 Please do not close or refresh this tab while your upload is in progress.
+            </p>
+        </div>
+
         <div class="form-actions">
             <a href="{% url 'dashboard' %}" class="btn-cancel">Cancel</a>
             <button type="submit" class="btn-upload-submit">Save Video</button>
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('upload-form');
+    if (!form) return;
+
+    const submitBtn = form.querySelector('.btn-upload-submit');
+    const progressContainer = document.getElementById('upload-progress-container');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const progressPercent = document.getElementById('upload-progress-percent');
+    const progressStatus = document.getElementById('upload-progress-status');
+    const progressBytes = document.getElementById('upload-progress-bytes');
+
+    // Instant file size check on file selection
+    const fileInputs = form.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const sizeMB = this.files[0].size / (1024 * 1024);
+                if (sizeMB > 500) {
+                    alert(`The selected file "${this.files[0].name}" is ${sizeMB.toFixed(1)} MB. The maximum allowed upload size is 500 MB. Please choose a smaller file.`);
+                    this.value = '';
+                }
+            }
+        });
+    });
+
+    form.addEventListener('submit', function(e) {
+        let hasFiles = false;
+        let totalBytes = 0;
+        fileInputs.forEach(input => {
+            if (input.files && input.files.length > 0) {
+                hasFiles = true;
+                for (let i = 0; i < input.files.length; i++) {
+                    totalBytes += input.files[i].size;
+                }
+            }
+        });
+
+        // Small/no files proceed immediately
+        if (!hasFiles || totalBytes < 500000) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+            return;
+        }
+
+        e.preventDefault();
+
+        if (totalBytes > 524288000) {
+            alert('Total upload size exceeds 500 MB limit. Please select a smaller file.');
+            return;
+        }
+
+        progressContainer.style.display = 'block';
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.6';
+        submitBtn.style.cursor = 'not-allowed';
+        submitBtn.textContent = 'Uploading...';
+
+        const formData = new FormData(form);
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', function(event) {
+            if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                progressBar.style.width = percent + '%';
+                progressPercent.textContent = percent + '%';
+                const loadedMB = (event.loaded / (1024 * 1024)).toFixed(1);
+                const totalMB = (event.total / (1024 * 1024)).toFixed(1);
+                progressBytes.textContent = `${loadedMB} MB / ${totalMB} MB`;
+
+                if (percent >= 100) {
+                    progressStatus.textContent = '⚙️ Upload complete! Saving and processing on server...';
+                } else {
+                    progressStatus.textContent = `⏳ Uploading video (${percent}%)... Please wait`;
+                }
+            }
+        });
+
+        xhr.addEventListener('load', function() {
+            if (xhr.status >= 200 && xhr.status < 400) {
+                if (xhr.responseURL && xhr.responseURL !== window.location.href) {
+                    window.location.href = xhr.responseURL;
+                } else {
+                    document.open();
+                    document.write(xhr.responseText);
+                    document.close();
+                }
+            } else {
+                alert('Upload failed with server status: ' + xhr.status + '. Please try again.');
+                resetUploadUI();
+            }
+        });
+
+        xhr.addEventListener('error', function() {
+            alert('Network error occurred during upload. Please check your connection and try again.');
+            resetUploadUI();
+        });
+
+        xhr.addEventListener('abort', function() {
+            alert('Upload was canceled.');
+            resetUploadUI();
+        });
+
+        function resetUploadUI() {
+            progressContainer.style.display = 'none';
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+            submitBtn.textContent = 'Save Video';
+        }
+
+        xhr.open('POST', form.action || window.location.href);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.send(formData);
+    });
+});
+</script>
 
 {% endblock %}
