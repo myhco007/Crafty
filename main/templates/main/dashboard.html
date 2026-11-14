@@ -1862,31 +1862,6 @@
 
             <!-- ACCOUNTS SUBTAB -->
             <div id="pending-subtab-accounts" class="pending-subtab-content" style="display: none;">
-                <!-- Search Bar for Pending Accounts -->
-                <div class="pending-accounts-search-container" style="margin-bottom: 18px;">
-                    <div style="display: flex; gap: 12px; align-items: center; max-width: 620px; width: 100%;">
-                        <div style="position: relative; flex: 1;">
-                            <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 1rem; color: #94a3b8; pointer-events: none;">🔍</span>
-                            <input type="text" id="pendingAccountsSearchInput" placeholder="Search pending accounts by name, username, section, or LRN..." 
-                                oninput="handlePendingAccountsSearch(this.value)" 
-                                style="width: 100%; padding: 11px 40px 11px 44px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box; box-shadow: 0 2px 6px rgba(0,0,0,0.03);"
-                                onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.15)';"
-                                onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.03)';">
-                            <button type="button" id="clearPendingSearchBtn" onclick="clearPendingAccountsSearch()" style="display: none; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; color: #64748b; font-size: 0.85rem; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="Clear search">✕</button>
-                        </div>
-                        <span id="pendingSearchMatchCount" style="font-size: 0.85rem; font-weight: 700; color: #64748b; white-space: nowrap;"></span>
-                    </div>
-
-                    <!-- Instant Search Results Panel -->
-                    <div id="pendingSearchResultsPanel" style="display: none; margin-top: 12px; max-width: 780px; background: #ffffff; border-radius: 16px; border: 1.5px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.08); padding: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;">
-                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Search Results (<span id="pendingSearchResultCountNum">0</span>)</span>
-                            <span style="font-size: 0.75rem; color: #94a3b8;">Matching pending accounts</span>
-                        </div>
-                        <div id="pendingSearchResultsList" style="display: flex; flex-direction: column; gap: 10px; max-height: 340px; overflow-y: auto; padding-right: 4px;"></div>
-                    </div>
-                </div>
-
                 <!-- Grade Filter Navigation Pills -->
                 <div class="pending-grade-filters" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; align-items: center;">
                     <span style="font-size: 0.85rem; font-weight: 800; color: #64748b; margin-right: 4px;">Filter by:</span>
@@ -6042,139 +6017,6 @@
 
     }
 
-    const PENDING_ACCOUNTS_DATA = [
-        {% for group in pending_user_groups %}
-            {% for u in group.users %}
-            {
-                id: {{ u.id }},
-                username: "{{ u.username|escapejs }}",
-                fullName: "{{ u.get_full_name|default:u.username|escapejs }}",
-                role: "{{ u.profile.role|escapejs }}",
-                roleDisplay: "{% if u.profile.role == 'TEACHER' %}Teacher{% else %}Student{% endif %}",
-                grade: "{{ u.profile.grade_level|default:''|escapejs }}",
-                section: "{{ u.profile.section|default:''|escapejs }}",
-                lrn: "{{ u.profile.lrn_number|default:''|escapejs }}",
-                email: "{{ u.email|default:''|escapejs }}",
-                facultyIdUrl: "{% if u.profile.faculty_id_image %}{{ u.profile.faculty_id_image.url|escapejs }}{% endif %}",
-                registeredDate: "{{ u.date_joined|date:'F d, Y'|escapejs }}",
-                registeredTime: "{{ u.date_joined|date:'h:i A'|escapejs }}",
-                registeredFull: "{{ u.date_joined|date:'F d, Y \a\t h:i A'|escapejs }}",
-                groupSlug: "{{ group.slug|escapejs }}",
-                groupTitle: "{{ group.display_title|escapejs }}",
-                approveUrl: "{% url 'approve_user' u.pk %}",
-                rejectUrl: "{% url 'reject_user' u.pk %}",
-                isLatest: {% if u.is_latest %}true{% else %}false{% endif %}
-            },
-            {% endfor %}
-        {% endfor %}
-    ];
-
-    function handlePendingAccountsSearch(query) {
-        const input = document.getElementById('pendingAccountsSearchInput');
-        const clearBtn = document.getElementById('clearPendingSearchBtn');
-        const countSpan = document.getElementById('pendingSearchMatchCount');
-        const panel = document.getElementById('pendingSearchResultsPanel');
-        const list = document.getElementById('pendingSearchResultsList');
-        const countNum = document.getElementById('pendingSearchResultCountNum');
-
-        if (!query || query.trim() === '') {
-            if (clearBtn) clearBtn.style.display = 'none';
-            if (countSpan) countSpan.innerText = '';
-            if (panel) panel.style.display = 'none';
-            if (list) list.innerHTML = '';
-
-            // Restore section items according to active grade pill
-            const activePill = document.querySelector('.grade-filter-pill.active');
-            const cat = activePill ? activePill.getAttribute('data-filter') : 'all';
-            document.querySelectorAll('.account-kanban-item').forEach(item => {
-                if (cat === 'all' || item.getAttribute('data-grade-cat') === cat) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-            return;
-        }
-
-        if (clearBtn) clearBtn.style.display = 'flex';
-        const q = query.trim().toLowerCase();
-
-        const matches = PENDING_ACCOUNTS_DATA.filter(u => {
-            return (u.username && u.username.toLowerCase().includes(q)) ||
-                   (u.fullName && u.fullName.toLowerCase().includes(q)) ||
-                   (u.lrn && u.lrn.toLowerCase().includes(q)) ||
-                   (u.section && u.section.toLowerCase().includes(q)) ||
-                   (u.grade && u.grade.toLowerCase().includes(q)) ||
-                   (u.groupTitle && u.groupTitle.toLowerCase().includes(q)) ||
-                   (u.email && u.email.toLowerCase().includes(q)) ||
-                   (u.registeredDate && u.registeredDate.toLowerCase().includes(q));
-        });
-
-        if (countSpan) countSpan.innerText = `${matches.length} found`;
-        if (countNum) countNum.innerText = matches.length;
-
-        if (panel && list) {
-            panel.style.display = 'block';
-            if (matches.length === 0) {
-                list.innerHTML = `<div style="text-align: center; padding: 25px; color: #94a3b8; font-weight: 700; font-size: 0.88rem;">No pending accounts found matching "${query.replace(/</g, '&lt;').replace(/>/g, '&gt;')}".</div>`;
-            } else {
-                list.innerHTML = matches.map(u => {
-                    const safeUser = u.username.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    const safeName = u.fullName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    const safeGroup = u.groupTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    const safeLrn = u.lrn ? u.lrn.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
-                    const avatarLetter = (u.username && u.username.length > 0) ? u.username.charAt(0).toUpperCase() : 'U';
-
-                    return `
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; flex-wrap: wrap;">
-                        <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
-                            <div style="width: 38px; height: 38px; border-radius: 50%; background: #10b981; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.95rem; flex-shrink: 0;">
-                                ${avatarLetter}
-                            </div>
-                            <div style="min-width: 0;">
-                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                    <strong style="color: #1e293b; font-size: 0.95rem;">${safeUser}</strong>
-                                    <span style="font-size: 0.72rem; background: #e0f2fe; color: #0369a1; padding: 2px 7px; border-radius: 6px; font-weight: 800;">${safeGroup}</span>
-                                    ${u.isLatest ? '<span style="background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 6px;">⚠️ LATEST</span>' : ''}
-                                </div>
-                                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">
-                                    Name: ${safeName} ${safeLrn ? `• LRN: <span style="font-family: monospace; font-weight: 700; color: #334155;">${safeLrn}</span>` : ''}
-                                </div>
-                                <div style="font-size: 0.74rem; color: #334155; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
-                                    <span>🕒 Registered:</span> <strong>${u.registeredDate}</strong> at <strong>${u.registeredTime}</strong>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
-                            <button onclick="openDetailsModal('${u.username.replace(/'/g, "\\'")}', '${(u.grade || 'Not specified').replace(/'/g, "\\'")}', '${u.registeredFull.replace(/'/g, "\\'")}', '${u.lrn.replace(/'/g, "\\'")}', '${u.role.replace(/'/g, "\\'")}', '${u.email.replace(/'/g, "\\'")}', '${u.facultyIdUrl.replace(/'/g, "\\'")}', '${u.section.replace(/'/g, "\\'")}')" class="compact-btn compact-btn-details" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; cursor: pointer;">Details</button>
-                            <button onclick="openSectionModal('${u.groupSlug}')" class="compact-btn" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; cursor: pointer; font-weight: 700;">Open Folder 📁</button>
-                            <a href="javascript:void(0)" onclick="openActionModal('${u.approveUrl}', 'Approve Account?', '✅', 'You are about to approve the account for &quot;<strong>${safeUser}</strong>&quot;.', 'Yes, Approve!', false)" class="compact-btn compact-btn-approve" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; text-decoration: none;">Approve</a>
-                            <a href="javascript:void(0)" onclick="openActionModal('${u.rejectUrl}', 'Cancel Registration Request?', '🚫', 'You are about to cancel the registration request for &quot;<strong>${safeUser}</strong>&quot;.', 'Yes, Cancel Request!', true)" class="compact-btn compact-btn-deny" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; text-decoration: none;">Cancel</a>
-                        </div>
-                    </div>
-                    `;
-                }).join('');
-            }
-        }
-
-        // Also filter the section folders
-        const matchingSlugs = new Set(matches.map(m => m.groupSlug));
-        document.querySelectorAll('.account-kanban-item').forEach(item => {
-            const slug = item.getAttribute('data-slug');
-            if (matchingSlugs.has(slug)) {
-                item.style.display = '';
-            } else {
-                item.style.display = 'none';
-            }
-        });
-    }
-
-    function clearPendingAccountsSearch() {
-        const input = document.getElementById('pendingAccountsSearchInput');
-        if (input) input.value = '';
-        handlePendingAccountsSearch('');
-    }
-
     function filterManageAccountsTable(query) {
         const input = document.getElementById('manageUsersSearchInput');
         const clearBtn = document.getElementById('clearManageUsersSearchBtn');
@@ -6214,18 +6056,6 @@
     function filterAccountGrade(cat, btn) {
         document.querySelectorAll('.grade-filter-pill').forEach(b => b.classList.remove('active'));
         if (btn) btn.classList.add('active');
-
-        // Clear search input if user clicks a filter pill
-        const searchInput = document.getElementById('pendingAccountsSearchInput');
-        if (searchInput && searchInput.value) {
-            searchInput.value = '';
-            const clearBtn = document.getElementById('clearPendingSearchBtn');
-            const countSpan = document.getElementById('pendingSearchMatchCount');
-            const panel = document.getElementById('pendingSearchResultsPanel');
-            if (clearBtn) clearBtn.style.display = 'none';
-            if (countSpan) countSpan.innerText = '';
-            if (panel) panel.style.display = 'none';
-        }
 
         const items = document.querySelectorAll('.account-kanban-item');
         items.forEach(item => {
