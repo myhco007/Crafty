@@ -17,7 +17,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 20px;
+        padding: 30px 16px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.28s ease;
@@ -32,17 +34,38 @@
         background: #ffffff;
         border-radius: 28px;
         width: 100%;
-        max-width: 520px;
-        max-height: 90vh;
+        max-width: 500px;
+        max-height: calc(88vh - 20px);
         overflow-y: auto;
+        overflow-x: hidden;
         box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
         position: relative;
-        padding: 30px;
+        padding: 24px 24px 22px;
+        margin: auto;
         transform: scale(0.92) translateY(12px);
         transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
         scrollbar-width: thin;
-        scrollbar-color: #cbd5e1 transparent;
+        scrollbar-color: #cbd5e1 #f8fafc;
         box-sizing: border-box;
+    }
+
+    .home-ann-dialog::-webkit-scrollbar,
+    .home-ann-overlay::-webkit-scrollbar {
+        width: 8px;
+    }
+    .home-ann-dialog::-webkit-scrollbar-track,
+    .home-ann-overlay::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 10px;
+    }
+    .home-ann-dialog::-webkit-scrollbar-thumb,
+    .home-ann-overlay::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+    .home-ann-dialog::-webkit-scrollbar-thumb:hover,
+    .home-ann-overlay::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
     }
 
     .home-ann-overlay.show .home-ann-dialog {
@@ -50,23 +73,26 @@
     }
 
     .home-ann-close-btn {
-        position: absolute;
-        top: 18px;
-        right: 18px;
-        width: 38px;
-        height: 38px;
+        position: sticky;
+        top: 0;
+        float: right;
+        margin-top: -6px;
+        margin-right: -6px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         border: none;
         background: #f1f5f9;
         color: #64748b;
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         line-height: 1;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.2s ease;
-        z-index: 10;
+        z-index: 20;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
     }
 
     .home-ann-close-btn:hover {
@@ -81,14 +107,15 @@
         border-radius: 20px;
         border: 1.5px solid #edf2f7;
         overflow: hidden;
-        margin-bottom: 20px;
+        margin-bottom: 18px;
         text-align: center;
         box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        clear: both;
     }
 
     .home-ann-image {
         width: 100%;
-        max-height: 320px;
+        max-height: 280px;
         object-fit: contain;
         display: block;
         margin: 0 auto;
@@ -99,6 +126,7 @@
         align-items: center;
         gap: 12px;
         margin-bottom: 12px;
+        clear: both;
     }
 
     .home-ann-badge {
@@ -143,20 +171,17 @@
     .home-ann-title {
         font-family: 'Fredoka One', cursive;
         color: var(--dark, #1e293b);
-        font-size: 1.55rem;
+        font-size: 1.45rem;
         line-height: 1.3;
-        margin: 0 0 12px 0;
+        margin: 0 0 10px 0;
     }
 
     .home-ann-body {
         color: #475569;
-        font-size: 0.98rem;
-        line-height: 1.65;
-        margin-bottom: 24px;
-        max-height: 160px;
-        overflow-y: auto;
-        padding-right: 6px;
-        scrollbar-width: thin;
+        font-size: 0.96rem;
+        line-height: 1.6;
+        margin-bottom: 22px;
+        word-break: break-word;
     }
 
     .home-ann-actions {
@@ -221,7 +246,7 @@
     </div>
 </section>
 
-{% if latest_announcement %}
+{% if user.is_authenticated and latest_announcement %}
 <!-- Smart Image Announcement Pop-up Modal -->
 <div id="home-announcement-modal" class="home-ann-overlay" aria-hidden="true" style="display: none;">
     <div class="home-ann-dialog" role="dialog" aria-modal="true" aria-labelledby="home-ann-title">
@@ -272,7 +297,7 @@
 {% endblock %}
 
 {% block scripts %}
-{% if latest_announcement %}
+{% if user.is_authenticated and latest_announcement %}
 <script>
 (function() {
     const annId = "{{ latest_announcement.id }}";
