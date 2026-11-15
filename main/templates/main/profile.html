@@ -748,6 +748,9 @@
                 <div class="form-group">
                     <label for="id_grade_level">Grade Level</label>
                     {{ p_form.grade_level }}
+                    <small style="color: #64748b; font-size: 0.78rem; margin-top: 4px; display: block;">
+                        * You can advance to a higher grade level, but downgrading to a lower grade level is disabled.
+                    </small>
                     {% if user.profile.pending_grade %}
                     <small
                         style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; color: #d97706; font-weight: bold; background: #fffbeb; padding: 8px 12px; border-radius: 8px; border: 1px solid #fef3c7;">
@@ -905,6 +908,22 @@
     }
 
     function submitProfileForm() {
+        const gradeSelect = document.getElementById('id_grade_level');
+        const currentGrade = "{{ user.profile.grade_level|default:''|escapejs }}";
+        if (gradeSelect && currentGrade) {
+            const extractGradeNum = (str) => {
+                const match = (str || '').match(/\d+/);
+                return match ? parseInt(match[0], 10) : 0;
+            };
+            const currentNum = extractGradeNum(currentGrade);
+            const selectedNum = extractGradeNum(gradeSelect.value);
+            if (currentNum > 0 && selectedNum > 0 && selectedNum < currentNum) {
+                alert('Downgrading your grade level is not allowed. You can only request an upgrade to higher grades.');
+                const modal = document.getElementById('save-confirm-modal');
+                if (modal) modal.style.display = 'none';
+                return;
+            }
+        }
         document.getElementById('edit-profile-form').submit();
     }
 
@@ -1013,6 +1032,46 @@
                     reader.readAsDataURL(this.files[0]);
                 }
             });
+        }
+
+        // Prevent grade level downgrade for student accounts
+        const gradeSelect = document.getElementById('id_grade_level');
+        const currentGrade = "{{ user.profile.grade_level|default:''|escapejs }}";
+
+        if (gradeSelect && currentGrade) {
+            const extractGradeNum = (str) => {
+                const match = (str || '').match(/\d+/);
+                return match ? parseInt(match[0], 10) : 0;
+            };
+
+            const currentNum = extractGradeNum(currentGrade);
+
+            if (currentNum > 0) {
+                Array.from(gradeSelect.options).forEach(opt => {
+                    const optVal = opt.value;
+                    const optNum = extractGradeNum(optVal);
+
+                    // If option is empty placeholder or lower grade level
+                    if (!optVal || (optNum > 0 && optNum < currentNum)) {
+                        opt.disabled = true;
+                        opt.style.color = '#94a3b8';
+                        opt.style.backgroundColor = '#f1f5f9';
+                        opt.style.cursor = 'not-allowed';
+                        if (!opt.text.includes('(Cannot downgrade)') && optVal) {
+                            opt.text = opt.text + ' (Cannot downgrade)';
+                        }
+                    }
+                });
+
+                // Extra safety: revert if user selects a lower grade via keyboard
+                gradeSelect.addEventListener('change', function () {
+                    const selectedNum = extractGradeNum(this.value);
+                    if (!this.value || (selectedNum > 0 && selectedNum < currentNum)) {
+                        this.value = currentGrade;
+                        alert('Downgrading your grade level is not allowed. You can only request an upgrade to higher grades.');
+                    }
+                });
+            }
         }
     });
 </script>

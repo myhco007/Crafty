@@ -108,6 +108,17 @@ def profile_view(request):
         if u_form.is_valid() and p_form.is_valid():
             new_grade = p_form.cleaned_data.get('grade_level')
             if new_grade != old_grade and request.user.profile.role == 'CLIENT':
+                # Prevent downgrade
+                if old_grade and new_grade:
+                    import re
+                    old_m = re.search(r'\d+', str(old_grade))
+                    new_m = re.search(r'\d+', str(new_grade))
+                    old_num = int(old_m.group()) if old_m else 0
+                    new_num = int(new_m.group()) if new_m else 0
+                    if old_num > 0 and new_num > 0 and new_num < old_num:
+                        messages.error(request, f"Downgrading from {old_grade} to {new_grade} is not allowed. You can only request an upgrade to higher grades.")
+                        return redirect('profile')
+
                 from django.utils import timezone
                 from datetime import timedelta
                 

@@ -96,6 +96,20 @@ class UserProfileUpdateForm(forms.ModelForm):
         if 'grade_level' in self.fields:
             self.fields['grade_level'].choices = [('', '---------')] + STUDENT_GRADE_CHOICES
 
+    def clean_grade_level(self):
+        new_grade = self.cleaned_data.get('grade_level')
+        if self.instance and self.instance.pk and getattr(self.instance, 'role', None) == 'CLIENT':
+            old_grade = self.instance.grade_level
+            if old_grade and new_grade:
+                import re
+                old_m = re.search(r'\d+', str(old_grade))
+                new_m = re.search(r'\d+', str(new_grade))
+                old_num = int(old_m.group()) if old_m else 0
+                new_num = int(new_m.group()) if new_m else 0
+                if old_num > 0 and new_num > 0 and new_num < old_num:
+                    raise forms.ValidationError(f"Downgrading from {old_grade} to {new_grade} is not allowed. You can only advance to higher grades.")
+        return new_grade
+
 
 
 class CalendarEventForm(forms.ModelForm):
