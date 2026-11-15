@@ -1898,7 +1898,7 @@
                             <div style="display: flex; align-items: center; gap: 6px;">
                                 <h4 class="kanban-column-title" id="col-title-{{ group.slug }}" style="{% if group.has_latest %}color: #b91c1c;{% endif %}">{{ group.badge_title }}</h4>
                                 {% if group.has_latest %}
-                                <span class="badge-newest-warning latest-indicator-{{ group.slug }}" style="background: #ef4444; color: #fff; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 8px; display: inline-flex; align-items: center; gap: 3px; animation: pulseWarning 2s infinite;">⚠️ LATEST</span>
+                                <span class="badge-newest-warning latest-indicator-{{ group.slug }}" style="background: #ef4444; color: #fff; width: 18px; height: 18px; border-radius: 50%; font-size: 0.72rem; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; animation: pulseWarning 2s infinite;" title="New Pending Approval">!</span>
                                 {% endif %}
                             </div>
                             <span class="kanban-column-count" id="col-count-{{ group.slug }}" style="{% if group.has_latest %}background: #ef4444; color: #fff;{% endif %}">{{ group.count }}</span>
@@ -1908,8 +1908,8 @@
                             {% if group.users %}
                             <div class="compact-approval-card" id="account-card-{{ group.slug }}" style="padding: 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); {% if group.has_latest %}border: 2px solid #ef4444; box-shadow: 0 6px 20px rgba(239, 68, 68, 0.18);{% else %}border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.02);{% endif %} min-height: 160px; position: relative; border-radius: 16px;">
                                 {% if group.has_latest %}
-                                <div class="latest-ribbon latest-indicator-{{ group.slug }}" style="position: absolute; top: -10px; right: 12px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 900; padding: 2px 8px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);">
-                                    🚨 LATEST APPROVAL
+                                <div class="latest-ribbon latest-indicator-{{ group.slug }}" style="position: absolute; top: -10px; right: 12px; background: #ef4444; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4); animation: pulseWarning 2s infinite;" title="New Pending Approval">
+                                    !
                                 </div>
                                 {% endif %}
 
@@ -1959,7 +1959,7 @@
                                                 {{ group.display_title }} Pending Approvals
                                             </h2>
                                             {% if group.has_latest %}
-                                            <span class="latest-indicator-{{ group.slug }}" style="background: #ef4444; color: #fff; font-size: 0.68rem; font-weight: 800; padding: 2px 7px; border-radius: 8px;">⚠️ LATEST</span>
+                                            <span class="latest-indicator-{{ group.slug }}" style="background: #ef4444; color: #fff; width: 18px; height: 18px; border-radius: 50%; font-size: 0.72rem; font-weight: 900; display: inline-flex; align-items: center; justify-content: center;" title="New Pending Approval">!</span>
                                             {% endif %}
                                         </div>
                                         <p style="font-size: 0.8rem; color: #718096; margin: 0;">Review and manage accounts for this classroom.</p>
@@ -1992,7 +1992,7 @@
                                                     {{ pending_user.username }}
                                                 </div>
                                                 {% if pending_user.is_latest %}
-                                                <span class="user-badge-{{ pending_user.id }}" style="background: #ef4444; color: #ffffff; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 6px; display: inline-flex; align-items: center; gap: 2px; animation: pulseWarning 2s infinite;">⚠️ LATEST</span>
+                                                <span class="user-badge-{{ pending_user.id }}" style="background: #ef4444; color: #ffffff; width: 16px; height: 16px; border-radius: 50%; font-size: 0.65rem; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; animation: pulseWarning 2s infinite;" title="New Approval">!</span>
                                                 {% endif %}
                                             </div>
                                             <div style="font-size: 0.75rem; color: #718096; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -2182,8 +2182,8 @@
 
                             <div class="compact-approval-card" id="video-card-{{ video.pk }}" style="{% if video.is_latest %}border: 2px solid #ef4444; box-shadow: 0 4px 16px rgba(239, 68, 68, 0.18); position: relative;{% endif %}">
                                 {% if video.is_latest %}
-                                <div class="latest-ribbon" style="position: absolute; top: -10px; right: 10px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);">
-                                    ⚠️ LATEST
+                                <div class="latest-ribbon" style="position: absolute; top: -10px; right: 10px; background: #ef4444; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4); animation: pulseWarning 2s infinite;" title="New Video">
+                                    !
                                 </div>
                                 {% endif %}
 
@@ -2192,9 +2192,6 @@
                                     <input type="checkbox" class="card-checkbox video-checkbox" value="{{ video.pk }}" onchange="updateSelectedCount('video')">
 
                                     <span class="pending-badge" style="background: #fdf2f8; color: #9d174d;">Video</span>
-                                    {% if video.is_latest %}
-                                    <span class="latest-content-badge" style="background: #fee2e2; color: #b91c1c; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 6px; border: 1px solid #f87171;">LATEST</span>
-                                    {% endif %}
 
                                 </div>
 
@@ -2288,8 +2285,8 @@
 
                             <div class="compact-approval-card" id="flipbook-card-{{ flipbook.pk }}" style="{% if flipbook.is_latest %}border: 2px solid #ef4444; box-shadow: 0 4px 16px rgba(239, 68, 68, 0.18); position: relative;{% endif %}">
                                 {% if flipbook.is_latest %}
-                                <div class="latest-ribbon" style="position: absolute; top: -10px; right: 10px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);">
-                                    ⚠️ LATEST
+                                <div class="latest-ribbon" style="position: absolute; top: -10px; right: 10px; background: #ef4444; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4); animation: pulseWarning 2s infinite;" title="New Flipbook">
+                                    !
                                 </div>
                                 {% endif %}
 
@@ -2298,9 +2295,6 @@
                                     <input type="checkbox" class="card-checkbox flipbook-checkbox" value="{{ flipbook.pk }}" onchange="updateSelectedCount('flipbook')">
 
                                     <span class="pending-badge" style="background: #faf5ff; color: #6b21a8;">Flipbook</span>
-                                    {% if flipbook.is_latest %}
-                                    <span class="latest-content-badge" style="background: #fee2e2; color: #b91c1c; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 6px; border: 1px solid #f87171;">LATEST</span>
-                                    {% endif %}
 
                                 </div>
 
