@@ -347,6 +347,7 @@ class Announcement(models.Model):
     viewed_by = models.ManyToManyField(User, related_name='viewed_announcements', blank=True)
     target_audience = models.CharField(max_length=20, choices=[('Student', 'Student'), ('Teacher', 'Teacher')], default='Student')
     grade = models.CharField(max_length=20, choices=GRADE_CHOICES, default='All Grades')
+    attachment = models.FileField(upload_to='announcements/', blank=True, null=True)
 
     class Meta:
         ordering = ['-created_at']

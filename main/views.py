@@ -1739,7 +1739,7 @@ def announcement_list(request):
 @login_required(login_url='login')
 @user_passes_test(is_super_admin, login_url='home')
 def announcement_create(request):
-    form = AnnouncementForm(request.POST or None)
+    form = AnnouncementForm(request.POST or None, request.FILES or None)
     if form.is_valid():
         announcement = form.save()
         log_audit_event(request, 'create', announcement, {'source': 'dashboard'})
@@ -1760,7 +1760,7 @@ def announcement_create(request):
 @user_passes_test(is_super_admin, login_url='home')
 def announcement_edit(request, pk):
     announcement = get_object_or_404(Announcement, pk=pk)
-    form = AnnouncementForm(request.POST or None, instance=announcement)
+    form = AnnouncementForm(request.POST or None, request.FILES or None, instance=announcement)
     if form.is_valid():
         announcement = form.save()
         log_audit_event(request, 'update', announcement, {'source': 'dashboard'})

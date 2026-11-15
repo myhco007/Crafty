@@ -74,7 +74,10 @@ class FlipbookForm(forms.ModelForm):
 class AnnouncementForm(forms.ModelForm):
     class Meta:
         model = Announcement
-        fields = ['title', 'content', 'category', 'target_audience', 'grade', 'is_active']
+        fields = ['title', 'content', 'category', 'target_audience', 'grade', 'attachment', 'is_active']
+        labels = {
+            'attachment': 'Attachment (Image, PDF, Document)',
+        }
 
 from django.contrib.auth.models import User
 from .models import UserProfile
