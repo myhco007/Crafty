@@ -2660,22 +2660,50 @@ def media_proxy(request, filepath):
         response['Cache-Control'] = 'public, max-age=86400'
         return response
 
+    # 1b. Check alternative local folders for the filename
+    filename = os.path.basename(filepath)
+    alt_local_dirs = ['announcements', 'flipbooks', 'thumbnails', 'events', 'avatars', '']
+    for folder in alt_local_dirs:
+        alt_path = os.path.join(settings.MEDIA_ROOT, folder, filename) if folder else os.path.join(settings.MEDIA_ROOT, filename)
+        if os.path.exists(alt_path) and os.path.isfile(alt_path):
+            content_type, _ = mimetypes.guess_type(alt_path)
+            from django.http import FileResponse
+            response = FileResponse(open(alt_path, 'rb'), content_type=content_type or 'application/octet-stream')
+            response['Access-Control-Allow-Origin'] = '*'
+            response['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+            response['Access-Control-Allow-Headers'] = '*'
+            response['Cache-Control'] = 'public, max-age=86400'
+            return response
+
     # 2. Fallback to Cloudflare R2 for seed data and pre-uploaded assets
     base_r2 = getattr(settings, 'CLOUDFLARE_R2_URL', 'https://pub-f88888ca49534716892f76459482d932.r2.dev/').rstrip('/')
-    target_url = f"{base_r2}/{filepath.lstrip('/')}"
-    content_type, _ = mimetypes.guess_type(filepath)
-    if not content_type:
-        content_type = 'application/octet-stream'
+    
+    r2_candidates = [filepath.lstrip('/')]
+    if filepath.startswith('announcements/'):
+        r2_candidates.extend([
+            f"flipbooks/{filename}",
+            f"thumbnails/{filename}",
+            f"events/{filename}",
+            filename
+        ])
 
-    try:
-        req = urllib.request.Request(target_url, headers={'User-Agent': 'CraftyKids/1.0'})
-        remote_resp = urllib.request.urlopen(req, timeout=25)
-        data = remote_resp.read()
-        response = HttpResponse(data, content_type=content_type)
-        response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
-        response['Access-Control-Allow-Headers'] = '*'
-        response['Cache-Control'] = 'public, max-age=86400'
-        return response
-    except Exception as e:
-        return HttpResponse(f"Media proxy error: {e}", status=502)
+    for cand in r2_candidates:
+        target_url = f"{base_r2}/{cand}"
+        content_type, _ = mimetypes.guess_type(cand)
+        if not content_type:
+            content_type = 'application/octet-stream'
+
+        try:
+            req = urllib.request.Request(target_url, headers={'User-Agent': 'CraftyKids/1.0'})
+            remote_resp = urllib.request.urlopen(req, timeout=15)
+            data = remote_resp.read()
+            response = HttpResponse(data, content_type=content_type)
+            response['Access-Control-Allow-Origin'] = '*'
+            response['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+            response['Access-Control-Allow-Headers'] = '*'
+            response['Cache-Control'] = 'public, max-age=86400'
+            return response
+        except Exception:
+            continue
+
+    return HttpResponse("File not found", status=404)
