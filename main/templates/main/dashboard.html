@@ -3127,7 +3127,12 @@
                 <!-- Search bar for Registered Accounts -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
                     <div style="position: relative; flex: 1; max-width: 520px;">
-                        <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 1rem; color: #94a3b8; pointer-events: none;">🔍</span>
+                        <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: #1e293b;">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="butt" stroke-linejoin="miter">
+                                <circle cx="10.5" cy="10.5" r="7.5" />
+                                <line x1="16" y1="16" x2="21.5" y2="21.5" stroke-width="2.6" stroke-linecap="square" />
+                            </svg>
+                        </span>
                         <input type="text" id="manageUsersSearchInput" placeholder="Search accounts by username, full name, email, role, or date..." 
                             oninput="filterManageAccountsTable(this.value)" 
                             style="width: 100%; padding: 10px 40px 10px 44px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;"
