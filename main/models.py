@@ -355,6 +355,19 @@ class Announcement(models.Model):
     def __str__(self):
         return self.title
 
+    @property
+    def image_url(self):
+        if self.attachment:
+            url_str = str(self.attachment.url).lower()
+            image_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg')
+            if any(url_str.endswith(ext) or (ext + '?') in url_str for ext in image_extensions):
+                return self.attachment.url
+        return None
+
+    @property
+    def has_image(self):
+        return bool(self.image_url)
+
 
 class Notification(models.Model):
     title = models.CharField(max_length=200)

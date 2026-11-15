@@ -85,7 +85,23 @@ def _save_page_audios(request, flipbook):
 
 
 def home(request):
-    return render(request, 'main/home.html')
+    announcements = Announcement.objects.filter(is_active=True, is_archived=False)
+    
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        profile = request.user.profile
+        if profile.role == 'CLIENT':
+            from django.db.models import Q
+            grade_filter = Q(grade='All Grades')
+            if profile.grade_level:
+                grade_filter |= Q(grade=profile.grade_level)
+            announcements = announcements.filter(target_audience='Student').filter(grade_filter)
+        elif profile.role == 'TEACHER':
+            announcements = announcements.filter(target_audience__in=['Student', 'Teacher'])
+    else:
+        announcements = announcements.filter(target_audience='Student', grade='All Grades')
+        
+    latest_announcement = announcements.order_by('-created_at').first()
+    return render(request, 'main/home.html', {'latest_announcement': latest_announcement})
 
 def about(request):
     return render(request, 'main/about.html')

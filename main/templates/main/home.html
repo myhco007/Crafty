@@ -3,6 +3,209 @@
 {% block title %}Progressive Elementary School{% endblock %}
 {% block page_css %}
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
+<style>
+    .home-ann-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.28s ease;
+    }
+
+    .home-ann-overlay.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .home-ann-dialog {
+        background: #ffffff;
+        border-radius: 28px;
+        width: 100%;
+        max-width: 520px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        position: relative;
+        padding: 30px;
+        transform: scale(0.92) translateY(12px);
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+        box-sizing: border-box;
+    }
+
+    .home-ann-overlay.show .home-ann-dialog {
+        transform: scale(1) translateY(0);
+    }
+
+    .home-ann-close-btn {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: none;
+        background: #f1f5f9;
+        color: #64748b;
+        font-size: 1.5rem;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        z-index: 10;
+    }
+
+    .home-ann-close-btn:hover {
+        background: #fee2e2;
+        color: #ef4444;
+        transform: rotate(90deg);
+    }
+
+    .home-ann-image-box {
+        width: 100%;
+        background: #f8fafc;
+        border-radius: 20px;
+        border: 1.5px solid #edf2f7;
+        overflow: hidden;
+        margin-bottom: 20px;
+        text-align: center;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .home-ann-image {
+        width: 100%;
+        max-height: 320px;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .home-ann-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .home-ann-badge {
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .home-ann-badge.update {
+        background-color: #e5f5e9;
+        color: var(--green-dark, #1a7d43);
+    }
+
+    .home-ann-badge.event {
+        background-color: #f3f0ff;
+        color: #6a4cff;
+    }
+
+    .home-ann-badge.activity {
+        background-color: #fff0f5;
+        color: var(--pink, #ff6b9e);
+    }
+
+    .home-ann-badge.holiday {
+        background-color: #fff4e6;
+        color: #ff8c00;
+    }
+
+    .home-ann-date {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-weight: 600;
+    }
+
+    .home-ann-title {
+        font-family: 'Fredoka One', cursive;
+        color: var(--dark, #1e293b);
+        font-size: 1.55rem;
+        line-height: 1.3;
+        margin: 0 0 12px 0;
+    }
+
+    .home-ann-body {
+        color: #475569;
+        font-size: 0.98rem;
+        line-height: 1.65;
+        margin-bottom: 24px;
+        max-height: 160px;
+        overflow-y: auto;
+        padding-right: 6px;
+        scrollbar-width: thin;
+    }
+
+    .home-ann-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        margin-top: 10px;
+    }
+
+    .home-ann-gotit-btn {
+        width: 100%;
+        background-color: #2ECC71;
+        color: #ffffff;
+        border: none;
+        border-radius: 30px;
+        padding: 13px 28px;
+        font-size: 1.15rem;
+        font-weight: bold;
+        font-family: 'Fredoka One', cursive;
+        cursor: pointer;
+        transition: all 0.22s ease;
+        box-shadow: 0 4px 14px rgba(46, 204, 113, 0.35);
+        letter-spacing: 0.5px;
+    }
+
+    .home-ann-gotit-btn:hover {
+        background-color: #27ae60;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(46, 204, 113, 0.45);
+    }
+
+    .home-ann-gotit-btn:active {
+        transform: translateY(0);
+    }
+
+    .home-ann-history-link {
+        font-size: 0.88rem;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 700;
+        transition: color 0.2s ease;
+    }
+
+    .home-ann-history-link:hover {
+        color: var(--green, #23aa5c);
+        text-decoration: underline;
+    }
+</style>
 {% endblock %}
 {% block content %}
 
@@ -18,6 +221,153 @@
     </div>
 </section>
 
+{% if latest_announcement %}
+<!-- Smart Image Announcement Pop-up Modal -->
+<div id="home-announcement-modal" class="home-ann-overlay" aria-hidden="true" style="display: none;">
+    <div class="home-ann-dialog" role="dialog" aria-modal="true" aria-labelledby="home-ann-title">
+        <button type="button" class="home-ann-close-btn" id="home-ann-close-btn" aria-label="Close Announcement">&times;</button>
+        
+        <div class="home-ann-content-wrapper">
+            {% if latest_announcement.has_image %}
+            <div class="home-ann-image-box">
+                <img src="{{ latest_announcement.image_url }}" alt="{{ latest_announcement.title }}" class="home-ann-image">
+            </div>
+            {% endif %}
+
+            <div class="home-ann-meta">
+                <span class="home-ann-badge {{ latest_announcement.category|lower }}">
+                    {% if latest_announcement.category == 'Update' %}📌{% elif latest_announcement.category == 'Event' %}🎉{% elif latest_announcement.category == 'Activity' %}🎨{% elif latest_announcement.category == 'Holiday' %}🏖️{% else %}📢{% endif %}
+                    {{ latest_announcement.category }}
+                </span>
+                <span class="home-ann-date">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    {{ latest_announcement.created_at|date:"M j, Y" }}
+                </span>
+            </div>
+
+            <h2 id="home-ann-title" class="home-ann-title">{{ latest_announcement.title }}</h2>
+
+            <div class="home-ann-body">
+                {{ latest_announcement.content|linebreaks }}
+            </div>
+
+            <div class="home-ann-actions">
+                <button type="button" class="home-ann-gotit-btn" id="home-ann-gotit-btn">
+                    Got it!
+                </button>
+                <a href="{% url 'announcement_list' %}#announcement-{{ latest_announcement.id }}" class="home-ann-history-link">
+                    View past announcements &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{% if latest_announcement %}
+<script>
+(function() {
+    const annId = "{{ latest_announcement.id }}";
+    const hasImage = {% if latest_announcement.has_image %}true{% else %}false{% endif %};
+    const storageKey = 'dismissed_announcement_' + annId;
+    const isDismissed = localStorage.getItem(storageKey) === 'true';
+
+    const modal = document.getElementById('home-announcement-modal');
+    const closeBtn = document.getElementById('home-ann-close-btn');
+    const gotitBtn = document.getElementById('home-ann-gotit-btn');
+    const bellBtn = document.getElementById('header-notif-bell');
+
+    function openModal() {
+        if (!modal) return;
+        modal.style.display = 'flex';
+        void modal.offsetWidth; // force reflow for smooth animation
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(saveDismissed = true) {
+        if (!modal) return;
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        setTimeout(() => {
+            if (!modal.classList.contains('show')) {
+                modal.style.display = 'none';
+            }
+        }, 300);
+
+        if (saveDismissed) {
+            try {
+                localStorage.setItem(storageKey, 'true');
+            } catch (e) {
+                console.warn('localStorage error:', e);
+            }
+        }
+    }
+
+    // Dismiss handlers
+    if (gotitBtn) {
+        gotitBtn.addEventListener('click', () => closeModal(true));
+    }
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => closeModal(true));
+    }
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal(true);
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal && modal.classList.contains('show')) {
+            closeModal(true);
+        }
+    });
+
+    // 1. Smart Trigger Conditions
+    if (hasImage && !isDismissed) {
+        // Automatically open modal if valid image URL and not dismissed
+        setTimeout(openModal, 600);
+    } else if (!hasImage) {
+        // Text-only: do NOT trigger modal automatically. Show red notification badge on bell icon!
+        if (bellBtn) {
+            let badge = bellBtn.querySelector('.notif-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'notif-badge dynamic-ann-badge';
+                badge.style.cssText = 'position: absolute; top: -2px; right: -6px; background-color: #ff3b30; color: white; font-size: 0.65rem; font-weight: 800; border-radius: 10px; border: 2px solid var(--white); padding: 0 4px; min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; line-height: 1;';
+                badge.innerText = '1';
+                bellBtn.appendChild(badge);
+            } else {
+                badge.style.display = 'flex';
+            }
+        }
+    }
+
+    // 3. Header Bell Sync:
+    // Connect bell icon so users can click anytime to reopen the modal manually
+    if (bellBtn) {
+        bellBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const badge = bellBtn.querySelector('.notif-badge');
+            if (badge) badge.style.display = 'none';
+            openModal();
+        });
+    }
+})();
+</script>
+{% endif %}
 {% endblock %}
 
 {% block footer %}
