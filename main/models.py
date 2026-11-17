@@ -467,6 +467,28 @@ class StudentActivity(models.Model):
         return f"{self.user.username} completed activity on {self.completed_at}"
 
 
+class ContentTrackRecord(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='content_track_records')
+    video = models.ForeignKey('AnimationVideo', on_delete=models.CASCADE, null=True, blank=True, related_name='track_records')
+    flipbook = models.ForeignKey('Flipbook', on_delete=models.CASCADE, null=True, blank=True, related_name='track_records')
+    view_count = models.PositiveIntegerField(default=1)
+    is_completed = models.BooleanField(default=False)
+    first_viewed_at = models.DateTimeField(auto_now_add=True)
+    last_viewed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-last_viewed_at']
+        indexes = [
+            models.Index(fields=['student', 'flipbook']),
+            models.Index(fields=['student', 'video']),
+            models.Index(fields=['last_viewed_at']),
+        ]
+
+    def __str__(self):
+        title = self.flipbook.title if self.flipbook else (self.video.title if self.video else "Unknown")
+        return f"{self.student.username} - {title} ({self.view_count} views)"
+
+
 class CalendarEvent(models.Model):
     EVENT_TYPES = [
         ('Event', 'Event'),

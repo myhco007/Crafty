@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.core.mail import send_mail
 from main.email_utils import send_mail_async
 from .audit import log_audit_event
-from .models import AnimationVideo, AuditLog, Flipbook, Category, Announcement, Notification, VideoComment, FlipbookComment, UserProfile, StudentActivity, CalendarEvent, TeacherTask, PasswordResetCode, FlipbookQuiz, FlipbookQuestion, StudentQuizAttempt, FlipbookPageAudio
+from .models import AnimationVideo, AuditLog, Flipbook, Category, Announcement, Notification, VideoComment, FlipbookComment, UserProfile, StudentActivity, CalendarEvent, TeacherTask, PasswordResetCode, FlipbookQuiz, FlipbookQuestion, StudentQuizAttempt, FlipbookPageAudio, ContentTrackRecord
 from .forms import AnimationVideoForm, FlipbookForm, AnnouncementForm, UserUpdateForm, UserProfileUpdateForm, CalendarEventForm, FlipbookQuizForm, FlipbookQuestionForm
 
 import urllib.request
@@ -20,6 +20,8 @@ import json
 from django.conf import settings
 import re
 from django.utils.text import slugify
+from django.utils import timezone
+from django.db.models import F, Q, Count, Max
 
 def verify_recaptcha(request):
     recaptcha_response = request.POST.get('g-recaptcha-response')
@@ -424,6 +426,18 @@ def video_detail(request, pk):
         if user_grade:
             from django.db.models import Q
             more_videos = more_videos.filter(Q(grade=user_grade) | Q(grade='All Grades'))
+
+        # Track viewing record for student
+        track_rec, created = ContentTrackRecord.objects.get_or_create(
+            student=request.user,
+            video=video,
+            defaults={'view_count': 1, 'is_completed': is_completed}
+        )
+        if not created:
+            ContentTrackRecord.objects.filter(pk=track_rec.pk).update(
+                view_count=F('view_count') + 1,
+                last_viewed_at=timezone.now()
+            )
             
     more_videos = more_videos.order_by('-created_at')
     
@@ -556,6 +570,19 @@ def flipbook_detail(request, pk):
     for pa in flipbook.page_audios.all():
         if pa.audio_file:
             page_audio_map[pa.page_number] = pa.audio_file.url
+
+    # Track viewing record for student
+    if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.role == 'CLIENT':
+        track_rec, created = ContentTrackRecord.objects.get_or_create(
+            student=request.user,
+            flipbook=flipbook,
+            defaults={'view_count': 1, 'is_completed': is_completed}
+        )
+        if not created:
+            ContentTrackRecord.objects.filter(pk=track_rec.pk).update(
+                view_count=F('view_count') + 1,
+                last_viewed_at=timezone.now()
+            )
 
     context = {
         'flipbook': flipbook,
@@ -1403,6 +1430,126 @@ def dashboard(request):
             'calendar_events': CalendarEvent.objects.filter(is_archived=False).order_by('date'),
             'archived_events': CalendarEvent.objects.filter(is_archived=True).order_by('date'),
         }
+
+        # Teacher Track Records
+        track_records_qs = ContentTrackRecord.objects.filter(
+            Q(flipbook__author=request.user) | Q(video__author=request.user)
+        ).select_related('student', 'student__profile', 'flipbook', 'video').order_by('-last_viewed_at')
+        
+        track_groups_raw = {}
+        track_grade_counts = {
+            'all': 0,
+            'grade_1': 0,
+            'grade_2': 0,
+            'grade_3': 0,
+            'grade_4': 0,
+            'grade_5': 0,
+            'grade_6': 0,
+            'others': 0,
+        }
+        total_tracked_views = 0
+        all_tracked_student_ids = set()
+
+        for rec in track_records_qs:
+            student = rec.student
+            profile = getattr(student, 'profile', None)
+            section_val = (profile.section or '').strip() if profile else ''
+            grade_level_val = (profile.grade_level or '').strip() if profile else ''
+            
+            # Grouping by Section & Grade
+            sec_match = re.match(r'^(\d+)-(\d+)$', section_val)
+            if sec_match:
+                g_num = int(sec_match.group(1))
+                s_num = int(sec_match.group(2))
+                group_key = f"{g_num}-{s_num}"
+                grade_cat = f"grade_{g_num}"
+                grade_label = f"Grade {g_num}"
+                section_label = f"Section {g_num}-{s_num}"
+                display_title = f"Grade {g_num} • Section {g_num}-{s_num}"
+                badge_title = f"Section {g_num}-{s_num}"
+                sort_order = (1, g_num, s_num)
+            else:
+                g_match = re.search(r'\d+', grade_level_val)
+                s_match = re.search(r'\d+', section_val)
+                g_num = int(g_match.group()) if g_match else None
+                s_num = int(s_match.group()) if s_match else None
+                if g_num and s_num:
+                    group_key = f"{g_num}-{s_num}"
+                    grade_cat = f"grade_{g_num}"
+                    grade_label = f"Grade {g_num}"
+                    section_label = f"Section {g_num}-{s_num}"
+                    display_title = f"Grade {g_num} • Section {g_num}-{s_num}"
+                    badge_title = f"Section {g_num}-{s_num}"
+                    sort_order = (1, g_num, s_num)
+                elif g_num and section_val:
+                    group_key = f"Grade {g_num} - {section_val}"
+                    grade_cat = f"grade_{g_num}"
+                    grade_label = f"Grade {g_num}"
+                    section_label = f"Section {section_val}"
+                    display_title = f"Grade {g_num} • Section {section_val}"
+                    badge_title = f"Section {section_val}"
+                    sort_order = (1, g_num, 90)
+                elif g_num:
+                    group_key = f"Grade {g_num}"
+                    grade_cat = f"grade_{g_num}"
+                    grade_label = f"Grade {g_num}"
+                    section_label = f"Grade {g_num}"
+                    display_title = f"Grade {g_num}"
+                    badge_title = f"Grade {g_num}"
+                    sort_order = (1, g_num, 99)
+                else:
+                    group_key = 'Others'
+                    grade_cat = 'others'
+                    grade_label = 'Others'
+                    section_label = 'Other'
+                    display_title = 'Other Students'
+                    badge_title = 'Others'
+                    sort_order = (3, 99, 99)
+
+            if group_key not in track_groups_raw:
+                track_groups_raw[group_key] = {
+                    'key': group_key,
+                    'slug': slugify(group_key) or 'others',
+                    'grade_cat': grade_cat,
+                    'grade_label': grade_label,
+                    'section_label': section_label,
+                    'display_title': display_title,
+                    'badge_title': badge_title,
+                    'sort_order': sort_order,
+                    'records': [],
+                    'student_ids': set(),
+                    'total_views': 0,
+                    'latest_date': None,
+                }
+            
+            g_dict = track_groups_raw[group_key]
+            g_dict['records'].append(rec)
+            g_dict['student_ids'].add(student.id)
+            g_dict['total_views'] += rec.view_count
+            if not g_dict['latest_date'] or rec.last_viewed_at > g_dict['latest_date']:
+                g_dict['latest_date'] = rec.last_viewed_at
+            
+            total_tracked_views += rec.view_count
+            all_tracked_student_ids.add(student.id)
+
+        sorted_track_groups = sorted(track_groups_raw.values(), key=lambda x: x['sort_order'])
+        for g in sorted_track_groups:
+            g['student_count'] = len(g['student_ids'])
+            cat = g['grade_cat']
+            if cat in track_grade_counts:
+                track_grade_counts[cat] += g['student_count']
+            else:
+                track_grade_counts['others'] += g['student_count']
+
+        track_grade_counts['all'] = len(all_tracked_student_ids)
+
+        context.update({
+            'track_records': track_records_qs,
+            'track_record_groups': sorted_track_groups,
+            'track_grade_counts': track_grade_counts,
+            'total_tracked_students': len(all_tracked_student_ids),
+            'total_tracked_views': total_tracked_views,
+        })
         
     context['teacher_tasks'] = TeacherTask.objects.filter(user=request.user).order_by('created_at')
     
@@ -1884,6 +2031,14 @@ def mark_completed(request):
                 request.user.profile.points += 50
                 request.user.profile.save()
                 points_earned = 50
+            if hasattr(request.user, 'profile') and request.user.profile.role == 'CLIENT':
+                tr, _ = ContentTrackRecord.objects.get_or_create(
+                    student=request.user,
+                    video=video,
+                    defaults={'view_count': 1, 'is_completed': True}
+                )
+                tr.is_completed = True
+                tr.save(update_fields=['is_completed', 'last_viewed_at'])
             return JsonResponse({
                 'status': 'success',
                 'message': 'Video completion recorded!',
@@ -1898,6 +2053,14 @@ def mark_completed(request):
                 request.user.profile.points += 50
                 request.user.profile.save()
                 points_earned = 50
+            if hasattr(request.user, 'profile') and request.user.profile.role == 'CLIENT':
+                tr, _ = ContentTrackRecord.objects.get_or_create(
+                    student=request.user,
+                    flipbook=flipbook,
+                    defaults={'view_count': 1, 'is_completed': True}
+                )
+                tr.is_completed = True
+                tr.save(update_fields=['is_completed', 'last_viewed_at'])
             return JsonResponse({
                 'status': 'success',
                 'message': 'Flipbook completion recorded!',

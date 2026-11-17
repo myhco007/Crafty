@@ -1185,6 +1185,10 @@
 
         {% if role == 'TEACHER' %}
 
+        <a href="#section-track-records" data-section="track-records" class="db-sidebar-item"
+
+            onclick="showSection('track-records'); return false;">Track Records</a>
+
         <a href="#section-tasks" data-section="tasks" class="db-sidebar-item"
 
             onclick="showSection('tasks'); return false;">Tasks</a>
@@ -2947,6 +2951,342 @@
 
 
         {% if role == 'TEACHER' %}
+
+        <!-- TRACK RECORDS SECTION -->
+        <div id="section-track-records" class="db-section" style="display:none;">
+            <div class="db-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;">
+                <div>
+                    <div class="db-page-badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">Analytics</div>
+                    <h1 class="db-title" style="margin-top: 4px;">Track Records</h1>
+                    <p class="db-sub">Monitor students viewing and reading your created flipbooks and videos.</p>
+                </div>
+                
+                <!-- Content Filter & View Toggle -->
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px; background: #fff; padding: 7px 14px; border-radius: 12px; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                        <span style="font-size: 0.85rem; font-weight: 800; color: #475569;">Filter Content:</span>
+                        <select id="trackContentSelect" onchange="filterTrackByContent(this.value)" style="border: none; background: transparent; font-weight: 700; color: #1e293b; font-size: 0.88rem; outline: none; cursor: pointer; max-width: 250px;">
+                            <option value="all">All Content (Flipbooks & Videos)</option>
+                            {% if my_flipbooks %}
+                            <optgroup label="📖 Flipbooks">
+                                {% for fb in my_flipbooks %}
+                                <option value="flipbook_{{ fb.id }}">📖 {{ fb.title }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endif %}
+                            {% if my_videos %}
+                            <optgroup label="🎬 Videos">
+                                {% for vid in my_videos %}
+                                <option value="video_{{ vid.id }}">🎬 {{ vid.title }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <!-- View Toggle: Cards vs Table -->
+                    <div style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                        <button type="button" id="trackViewBtnCards" onclick="switchTrackView('cards')" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 0.82rem; font-weight: 800; cursor: pointer; background: #fff; color: #059669; box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 5px;">
+                            📁 Classrooms
+                        </button>
+                        <button type="button" id="trackViewBtnTable" onclick="switchTrackView('table')" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 0.82rem; font-weight: 800; cursor: pointer; background: transparent; color: #64748b; display: flex; align-items: center; gap: 5px;">
+                            📋 All Records Table
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grade Filter Navigation Pills (Matching Pending Approvals) -->
+            <div class="track-grade-filters" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 25px; align-items: center;">
+                <span style="font-size: 0.85rem; font-weight: 800; color: #64748b; margin-right: 4px;">Filter by:</span>
+                <button type="button" class="grade-filter-pill track-pill active" onclick="filterTrackGrade('all', this)" data-filter="all">
+                    All Sections <span class="filter-count" id="track-count-all">{{ track_grade_counts.all }}</span>
+                </button>
+                <button type="button" class="grade-filter-pill track-pill" onclick="filterTrackGrade('grade_1', this)" data-filter="grade_1">
+                    Grade 1 {% if track_grade_counts.grade_1 %}<span class="filter-count">{{ track_grade_counts.grade_1 }}</span>{% endif %}
+                </button>
+                <button type="button" class="grade-filter-pill track-pill" onclick="filterTrackGrade('grade_2', this)" data-filter="grade_2">
+                    Grade 2 {% if track_grade_counts.grade_2 %}<span class="filter-count">{{ track_grade_counts.grade_2 }}</span>{% endif %}
+                </button>
+                <button type="button" class="grade-filter-pill track-pill" onclick="filterTrackGrade('grade_3', this)" data-filter="grade_3">
+                    Grade 3 {% if track_grade_counts.grade_3 %}<span class="filter-count">{{ track_grade_counts.grade_3 }}</span>{% endif %}
+                </button>
+                <button type="button" class="grade-filter-pill track-pill" onclick="filterTrackGrade('grade_4', this)" data-filter="grade_4">
+                    Grade 4 {% if track_grade_counts.grade_4 %}<span class="filter-count">{{ track_grade_counts.grade_4 }}</span>{% endif %}
+                </button>
+                <button type="button" class="grade-filter-pill track-pill" onclick="filterTrackGrade('grade_5', this)" data-filter="grade_5">
+                    Grade 5 {% if track_grade_counts.grade_5 %}<span class="filter-count">{{ track_grade_counts.grade_5 }}</span>{% endif %}
+                </button>
+                <button type="button" class="grade-filter-pill track-pill" onclick="filterTrackGrade('grade_6', this)" data-filter="grade_6">
+                    Grade 6 {% if track_grade_counts.grade_6 %}<span class="filter-count">{{ track_grade_counts.grade_6 }}</span>{% endif %}
+                </button>
+                {% if track_grade_counts.others %}
+                <button type="button" class="grade-filter-pill track-pill" onclick="filterTrackGrade('others', this)" data-filter="others">
+                    Others <span class="filter-count">{{ track_grade_counts.others }}</span>
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- FOLDERS VIEW (Classroom section cards, matching Pending Approvals layout) -->
+            <div id="track-view-cards" class="track-view-content">
+                <div class="kanban-board">
+                    {% for group in track_record_groups %}
+                    <div class="kanban-column track-kanban-item" id="track-col-{{ group.slug }}" data-grade-cat="{{ group.grade_cat }}" data-slug="{{ group.slug }}">
+                        <div class="kanban-column-header">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <h4 class="kanban-column-title">{{ group.badge_title }}</h4>
+                            </div>
+                            <span class="kanban-column-count track-col-count" id="track-col-count-{{ group.slug }}">{{ group.student_count }}</span>
+                        </div>
+
+                        <div class="kanban-column-body" style="padding: 10px 0;">
+                            <div class="compact-approval-card" style="padding: 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.02); min-height: 160px; position: relative; border-radius: 16px;">
+                                <div style="font-size: 2.2rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); margin-bottom: 2px;">📁</div>
+
+                                <div>
+                                    <div style="font-size: 1.05rem; font-weight: 800; color: #1e293b;">
+                                        {{ group.display_title }}
+                                    </div>
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: #059669; margin-top: 2px;">
+                                        {{ group.grade_label }}
+                                    </div>
+                                </div>
+
+                                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">
+                                    <span style="background: #e2e8f0; color: #4a5568; padding: 2px 8px; border-radius: 12px; font-weight: 800; font-size: 0.75rem; margin-right: 4px;">{{ group.student_count }}</span> student{{ group.student_count|pluralize }} • <span style="font-weight: 700; color: #059669;">{{ group.total_views }} view{{ group.total_views|pluralize }}</span>
+                                </div>
+
+                                {% if group.latest_date %}
+                                <div style="font-size: 0.72rem; color: #475569; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 4px; background: #f8fafc; padding: 4px 8px; border-radius: 8px; border: 1px solid #f1f5f9; width: 100%; box-sizing: border-box;" title="Latest Activity">
+                                    <span>🕒</span> <span>{{ group.latest_date|date:'F d, Y • h:i A' }}</span>
+                                </div>
+                                {% endif %}
+
+                                <button type="button" onclick="openTrackModal('{{ group.slug }}')" class="compact-btn compact-btn-details" style="padding: 8px 16px; width: 100%; font-weight: 800; border-radius: 12px; display: flex; justify-content: center; gap: 6px; border: 1px solid #cbd5e0; background: #fff; cursor: pointer; transition: all 0.2s;">
+                                    View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MODAL FOR SECTION DETAILS -->
+                    <div id="track-modal-{{ group.slug }}" class="modal-overlay" onclick="closeTrackModal('{{ group.slug }}')" style="display: none;">
+                        <div class="confirm-box" onclick="event.stopPropagation()" style="max-width: 900px; width: 95%; border-radius: 20px; text-align: left; padding: 25px; border-top: 5px solid #10b981;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 1.8rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">📁</span>
+                                    <div>
+                                        <h2 style="font-size: 1.25rem; font-weight: 800; color: #1a202c; margin: 0;">
+                                            {{ group.display_title }} Viewing Records
+                                        </h2>
+                                        <p style="font-size: 0.8rem; color: #718096; margin: 0;">Students in this classroom who read or watched your content.</p>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="closeTrackModal('{{ group.slug }}')" style="background: none; border: none; font-size: 1.5rem; color: #a0aec0; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#4a5568'" onmouseout="this.style.color='#a0aec0'">&times;</button>
+                            </div>
+
+                            <!-- Toolbar & Search -->
+                            <div style="background: #f8fafc; padding: 12px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; flex-wrap: wrap; border: 1px solid #e2e8f0;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px;">
+                                    <span style="font-size: 0.9rem; color: #94a3b8;">🔍</span>
+                                    <input type="text" placeholder="Search student name, LRN, or content..." oninput="searchSectionTrackTable('{{ group.slug }}', this.value)" style="border: 1px solid #cbd5e0; background: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.82rem; width: 100%; outline: none;">
+                                </div>
+                                <div style="font-size: 0.82rem; font-weight: 700; color: #64748b;">
+                                    Total: <strong style="color: #059669;">{{ group.records|length }}</strong> record{{ group.records|length|pluralize }}
+                                </div>
+                            </div>
+
+                            <!-- Table of records for this section -->
+                            <div style="max-height: 420px; overflow-y: auto; overflow-x: auto; border: 1px solid #edf2f7; border-radius: 12px;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left;">
+                                    <thead>
+                                        <tr style="background: #f1f5f9; color: #475569; font-weight: 800; border-bottom: 2px solid #e2e8f0;">
+                                            <th style="padding: 10px 14px;">Student Name</th>
+                                            <th style="padding: 10px 14px;">LRN</th>
+                                            <th style="padding: 10px 14px;">Section & Grade</th>
+                                            <th style="padding: 10px 14px;">Content</th>
+                                            <th style="padding: 10px 14px; text-align: center;">Views</th>
+                                            <th style="padding: 10px 14px; text-align: center;">Status</th>
+                                            <th style="padding: 10px 14px;">Last Viewed</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="track-tbody-{{ group.slug }}">
+                                        {% for rec in group.records %}
+                                        <tr class="track-modal-row track-modal-row-{{ group.slug }}" 
+                                            data-content-key="{% if rec.flipbook %}flipbook_{{ rec.flipbook.id }}{% elif rec.video %}video_{{ rec.video.id }}{% endif %}"
+                                            data-search="{{ rec.student.get_full_name|lower }} {{ rec.student.username|lower }} {{ rec.student.profile.lrn_number|default:''|lower }} {% if rec.flipbook %}{{ rec.flipbook.title|lower }}{% elif rec.video %}{{ rec.video.title|lower }}{% endif %}"
+                                            style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                                            <td style="padding: 10px 14px;">
+                                                <div style="font-weight: 800; color: #1e293b;">
+                                                    {{ rec.student.get_full_name|default:rec.student.username }}
+                                                </div>
+                                                <div style="font-size: 0.72rem; color: #64748b;">
+                                                    @{{ rec.student.username }}
+                                                </div>
+                                            </td>
+                                            <td style="padding: 10px 14px;">
+                                                {% if rec.student.profile.lrn_number %}
+                                                <span style="font-family: monospace; font-weight: 700; color: #334155; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">
+                                                    {{ rec.student.profile.lrn_number }}
+                                                </span>
+                                                {% else %}
+                                                <span style="color: #94a3b8; font-style: italic;">None</span>
+                                                {% endif %}
+                                            </td>
+                                            <td style="padding: 10px 14px;">
+                                                <div style="font-weight: 700; color: #334155;">{{ group.section_label }}</div>
+                                                <div style="font-size: 0.72rem; color: #64748b;">{{ group.grade_label }}</div>
+                                            </td>
+                                            <td style="padding: 10px 14px;">
+                                                {% if rec.flipbook %}
+                                                <div style="display: flex; align-items: center; gap: 6px;">
+                                                    <span style="background: #e0f2fe; color: #0284c7; padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 0.7rem;">📖 Flipbook</span>
+                                                    <span style="font-weight: 700; color: #1e293b; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ rec.flipbook.title }}">{{ rec.flipbook.title }}</span>
+                                                </div>
+                                                {% elif rec.video %}
+                                                <div style="display: flex; align-items: center; gap: 6px;">
+                                                    <span style="background: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 0.7rem;">🎬 Video</span>
+                                                    <span style="font-weight: 700; color: #1e293b; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ rec.video.title }}">{{ rec.video.title }}</span>
+                                                </div>
+                                                {% endif %}
+                                            </td>
+                                            <td style="padding: 10px 14px; text-align: center;">
+                                                <span style="background: #f3e8ff; color: #7e22ce; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.75rem;">
+                                                    {{ rec.view_count }} view{{ rec.view_count|pluralize }}
+                                                </span>
+                                            </td>
+                                            <td style="padding: 10px 14px; text-align: center;">
+                                                {% if rec.is_completed %}
+                                                <span style="background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.72rem;">
+                                                    ✅ Completed
+                                                </span>
+                                                {% else %}
+                                                <span style="background: #f1f5f9; color: #64748b; padding: 3px 8px; border-radius: 8px; font-weight: 700; font-size: 0.72rem;">
+                                                    👀 Viewed
+                                                </span>
+                                                {% endif %}
+                                            </td>
+                                            <td style="padding: 10px 14px; color: #475569; font-size: 0.75rem;">
+                                                {{ rec.last_viewed_at|date:'M d, Y • h:i A' }}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div style="text-align: center; padding: 50px 20px; color: #94a3b8; width: 100%;">
+                        <div style="font-size: 3rem; margin-bottom: 12px;">📊</div>
+                        <h4 style="font-weight: 800; color: #475569; margin-bottom: 6px; font-size: 1.15rem;">No Track Records Found</h4>
+                        <p style="font-size: 0.88rem; color: #64748b; max-width: 450px; margin: 0 auto;">When students read your flipbooks or watch your videos, their viewing records and classroom sections will appear here.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ALL RECORDS FULL TABLE VIEW -->
+            <div id="track-view-table" class="track-view-content" style="display: none;">
+                <div style="background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                    <!-- Search & Filter bar for table -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 15px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex: 1; max-width: 400px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 6px 12px; border-radius: 10px;">
+                            <span style="color: #94a3b8;">🔍</span>
+                            <input type="text" id="trackMainTableSearch" placeholder="Search by student, LRN, grade, section, or content..." oninput="filterTrackMainTable(this.value)" style="border: none; background: transparent; width: 100%; outline: none; font-size: 0.85rem; font-weight: 600;">
+                        </div>
+                        <div style="font-size: 0.85rem; color: #64748b; font-weight: 700;">
+                            Showing <span id="track-visible-table-count" style="color: #059669; font-weight: 800;">{{ track_records|length }}</span> of {{ track_records|length }} record{{ track_records|length|pluralize }}
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+                            <thead>
+                                <tr style="background: #f8fafc; color: #475569; font-weight: 800; border-bottom: 2px solid #e2e8f0;">
+                                    <th style="padding: 12px 14px;">Student Name</th>
+                                    <th style="padding: 12px 14px;">LRN</th>
+                                    <th style="padding: 12px 14px;">Grade & Section</th>
+                                    <th style="padding: 12px 14px;">Content Viewed</th>
+                                    <th style="padding: 12px 14px; text-align: center;">Views</th>
+                                    <th style="padding: 12px 14px; text-align: center;">Status</th>
+                                    <th style="padding: 12px 14px;">Last Viewed</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trackMainTableBody">
+                                {% for rec in track_records %}
+                                <tr class="track-main-row" 
+                                    data-grade-cat="{% if rec.student.profile.grade_level %}{{ rec.student.profile.grade_level|slugify|cut:'-' }}{% else %}others{% endif %}"
+                                    data-content-key="{% if rec.flipbook %}flipbook_{{ rec.flipbook.id }}{% elif rec.video %}video_{{ rec.video.id }}{% endif %}"
+                                    data-search="{{ rec.student.get_full_name|lower }} {{ rec.student.username|lower }} {{ rec.student.profile.lrn_number|default:''|lower }} {{ rec.student.profile.grade_level|default:''|lower }} {{ rec.student.profile.section|default:''|lower }} {% if rec.flipbook %}{{ rec.flipbook.title|lower }}{% elif rec.video %}{{ rec.video.title|lower }}{% endif %}"
+                                    style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding: 12px 14px;">
+                                        <div style="font-weight: 800; color: #1e293b;">
+                                            {{ rec.student.get_full_name|default:rec.student.username }}
+                                        </div>
+                                        <div style="font-size: 0.72rem; color: #64748b;">
+                                            @{{ rec.student.username }}
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 14px;">
+                                        {% if rec.student.profile.lrn_number %}
+                                        <span style="font-family: monospace; font-weight: 700; color: #334155; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">
+                                            {{ rec.student.profile.lrn_number }}
+                                        </span>
+                                        {% else %}
+                                        <span style="color: #94a3b8; font-style: italic;">None</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 12px 14px;">
+                                        <div style="font-weight: 700; color: #334155;">{{ rec.student.profile.grade_level|default:'No Grade' }}</div>
+                                        <div style="font-size: 0.75rem; color: #64748b;">Section {{ rec.student.profile.section|default:'None' }}</div>
+                                    </td>
+                                    <td style="padding: 12px 14px;">
+                                        {% if rec.flipbook %}
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <span style="background: #e0f2fe; color: #0284c7; padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 0.7rem;">📖 Flipbook</span>
+                                            <span style="font-weight: 700; color: #1e293b;" title="{{ rec.flipbook.title }}">{{ rec.flipbook.title }}</span>
+                                        </div>
+                                        {% elif rec.video %}
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <span style="background: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 0.7rem;">🎬 Video</span>
+                                            <span style="font-weight: 700; color: #1e293b;" title="{{ rec.video.title }}">{{ rec.video.title }}</span>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center;">
+                                        <span style="background: #f3e8ff; color: #7e22ce; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.75rem;">
+                                            {{ rec.view_count }} view{{ rec.view_count|pluralize }}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center;">
+                                        {% if rec.is_completed %}
+                                        <span style="background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.72rem;">
+                                            ✅ Completed
+                                        </span>
+                                        {% else %}
+                                        <span style="background: #f1f5f9; color: #64748b; padding: 3px 8px; border-radius: 8px; font-weight: 700; font-size: 0.72rem;">
+                                            👀 Viewed
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 12px 14px; color: #475569; font-size: 0.75rem;">
+                                        {{ rec.last_viewed_at|date:'M d, Y • h:i A' }}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 40px; color: #94a3b8;">
+                                        No track records found.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- TASKS SECTION -->
 
@@ -6319,6 +6659,164 @@
 
         switchPendingSubTab(selectedTab);
     });
+
+    // ==========================================
+    // TEACHER TRACK RECORDS JAVASCRIPT
+    // ==========================================
+    let currentTrackGradeFilter = 'all';
+    let currentTrackContentFilter = 'all';
+
+    function openTrackModal(slug) {
+        const modal = document.getElementById(`track-modal-${slug}`);
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeTrackModal(slug) {
+        const modal = document.getElementById(`track-modal-${slug}`);
+        if (modal) modal.style.display = 'none';
+    }
+
+    function switchTrackView(view) {
+        const cardsEl = document.getElementById('track-view-cards');
+        const tableEl = document.getElementById('track-view-table');
+        const btnCards = document.getElementById('trackViewBtnCards');
+        const btnTable = document.getElementById('trackViewBtnTable');
+
+        if (view === 'cards') {
+            if (cardsEl) cardsEl.style.display = 'block';
+            if (tableEl) tableEl.style.display = 'none';
+            if (btnCards) {
+                btnCards.style.background = '#fff';
+                btnCards.style.color = '#059669';
+                btnCards.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+            }
+            if (btnTable) {
+                btnTable.style.background = 'transparent';
+                btnTable.style.color = '#64748b';
+                btnTable.style.boxShadow = 'none';
+            }
+        } else {
+            if (cardsEl) cardsEl.style.display = 'none';
+            if (tableEl) tableEl.style.display = 'block';
+            if (btnTable) {
+                btnTable.style.background = '#fff';
+                btnTable.style.color = '#059669';
+                btnTable.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+            }
+            if (btnCards) {
+                btnCards.style.background = 'transparent';
+                btnCards.style.color = '#64748b';
+                btnCards.style.boxShadow = 'none';
+            }
+        }
+    }
+
+    function filterTrackGrade(cat, btn) {
+        currentTrackGradeFilter = cat;
+        document.querySelectorAll('.track-pill').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        applyTrackFilters();
+    }
+
+    function filterTrackByContent(contentKey) {
+        currentTrackContentFilter = contentKey;
+        applyTrackFilters();
+    }
+
+    function applyTrackFilters() {
+        // 1. Filter folder cards
+        const items = document.querySelectorAll('.track-kanban-item');
+        items.forEach(item => {
+            const gradeCat = item.getAttribute('data-grade-cat');
+            const slug = item.getAttribute('data-slug');
+            const matchGrade = (currentTrackGradeFilter === 'all' || gradeCat === currentTrackGradeFilter);
+
+            // Filter rows inside this section's modal
+            const rows = document.querySelectorAll(`.track-modal-row-${slug}`);
+            let matchingRowCount = 0;
+            rows.forEach(r => {
+                const rowContentKey = r.getAttribute('data-content-key');
+                if (currentTrackContentFilter === 'all' || rowContentKey === currentTrackContentFilter) {
+                    r.style.display = '';
+                    matchingRowCount++;
+                } else {
+                    r.style.display = 'none';
+                }
+            });
+
+            // Update column count badge
+            const countBadge = document.getElementById(`track-col-count-${slug}`);
+            if (countBadge) countBadge.innerText = matchingRowCount;
+
+            if (matchGrade && (currentTrackContentFilter === 'all' || matchingRowCount > 0)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // 2. Filter main table view
+        const mainRows = document.querySelectorAll('.track-main-row');
+        let visibleCount = 0;
+        mainRows.forEach(row => {
+            const gradeCat = row.getAttribute('data-grade-cat');
+            const contentKey = row.getAttribute('data-content-key');
+
+            const matchGrade = (currentTrackGradeFilter === 'all' || gradeCat === currentTrackGradeFilter.replace('_', ''));
+            const matchContent = (currentTrackContentFilter === 'all' || contentKey === currentTrackContentFilter);
+
+            if (matchGrade && matchContent) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const countSpan = document.getElementById('track-visible-table-count');
+        if (countSpan) countSpan.innerText = visibleCount;
+    }
+
+    function searchSectionTrackTable(slug, query) {
+        const q = (query || '').toLowerCase().trim();
+        const rows = document.querySelectorAll(`.track-modal-row-${slug}`);
+        rows.forEach(row => {
+            const searchData = (row.getAttribute('data-search') || '').toLowerCase();
+            const contentKey = row.getAttribute('data-content-key');
+            const matchContent = (currentTrackContentFilter === 'all' || contentKey === currentTrackContentFilter);
+
+            if (matchContent && (!q || searchData.includes(q))) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    function filterTrackMainTable(query) {
+        const q = (query || '').toLowerCase().trim();
+        const rows = document.querySelectorAll('.track-main-row');
+        let visibleCount = 0;
+        rows.forEach(row => {
+            const searchData = (row.getAttribute('data-search') || '').toLowerCase();
+            const gradeCat = row.getAttribute('data-grade-cat');
+            const contentKey = row.getAttribute('data-content-key');
+
+            const matchGrade = (currentTrackGradeFilter === 'all' || gradeCat === currentTrackGradeFilter.replace('_', ''));
+            const matchContent = (currentTrackContentFilter === 'all' || contentKey === currentTrackContentFilter);
+            const matchSearch = (!q || searchData.includes(q));
+
+            if (matchGrade && matchContent && matchSearch) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const countSpan = document.getElementById('track-visible-table-count');
+        if (countSpan) countSpan.innerText = visibleCount;
+    }
 
 </script>
 
