@@ -661,7 +661,21 @@
                         </span>
                         <div class="detail-text">
                             <span class="detail-label">Section</span>
-                            <span class="detail-value">{{ user.profile.section }}</span>
+                            <span class="detail-value">
+                                {{ user.profile.section|default:"Not specified" }}
+                                {% if user.profile.pending_section %}
+                                <br><small
+                                    style="color: #d97706; font-size: 0.8rem; display: flex; align-items: center; margin-top: 4px;">
+                                    <svg style="margin-right: 4px;" width="14" height="14" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    Pending Request: {{ user.profile.pending_section }}
+                                </small>
+                                {% endif %}
+                            </span>
                         </div>
                     </div>
                     {% endif %}
@@ -751,16 +765,32 @@
                     <small style="color: #64748b; font-size: 0.78rem; margin-top: 4px; display: block;">
                         * You can advance to a higher grade level, but downgrading to a lower grade level is disabled.
                     </small>
-                    {% if user.profile.pending_grade %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_section">Section</label>
+                    <select name="section" id="id_section" class="custom-select-grade">
+                        <option value="" disabled>Select Section</option>
+                    </select>
+                    <small style="color: #64748b; font-size: 0.78rem; margin-top: 4px; display: block;">
+                        * Select your section. Changing your section requires approval from the admin.
+                    </small>
+                </div>
+
+                {% if user.profile.pending_grade or user.profile.pending_section %}
+                <div class="form-group">
                     <small
-                        style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; color: #d97706; font-weight: bold; background: #fffbeb; padding: 8px 12px; border-radius: 8px; border: 1px solid #fef3c7;">
-                        <span style="display: flex; align-items: center;">
-                            <svg style="margin-right: 8px;" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; color: #d97706; font-weight: bold; background: #fffbeb; padding: 10px 14px; border-radius: 8px; border: 1px solid #fef3c7;">
+                        <span style="display: flex; align-items: center; gap: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <polyline points="12 6 12 12 16 14"></polyline>
                             </svg>
-                            Pending Request for Change Grade: {{ user.profile.pending_grade }}
+                            Pending Request:
+                            {% if user.profile.pending_grade %}Grade: {{ user.profile.pending_grade }}{% endif %}
+                            {% if user.profile.pending_grade and user.profile.pending_section %} • {% endif %}
+                            {% if user.profile.pending_section %}Section: {{ user.profile.pending_section }}{% endif %}
                         </span>
                         <button type="submit" formaction="{% url 'cancel_grade_request' %}" formnovalidate
                             style="background: transparent; border: 1px solid #d97706; color: #d97706; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.2s;"
@@ -769,8 +799,8 @@
                             Cancel Request
                         </button>
                     </small>
-                    {% endif %}
                 </div>
+                {% endif %}
                 {% endif %}
                 <div class="form-group"
                     style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-top: 30px;">
@@ -1069,6 +1099,63 @@
                     }
                 });
             }
+        }
+
+        // Dynamic Section options based on Grade level in Edit Profile
+        const GRADE_SECTIONS_DATA = {
+            'Grade 1': ['FAITHFUL', 'HELPFUL', 'SIMPLE', 'CHARMING', 'LOYAL', 'CAREFUL'],
+            'Grade 2': ['ADORABLE', 'FRIENDLY', 'JOYFUL', 'THOUGHTFUL', 'DELIGHTFUL'],
+            'Grade 3': ['SMART', 'PUNCTUAL', 'POLITE', 'HUMBLE', 'BLISSFUL'],
+            'Grade 4': ['RESILIENCE', 'HONEST', 'PERSEVERANCE', 'INNOVATIVE', 'OBEDIENT'],
+            'Grade 5': ['EAGER', 'AMIABLE', 'COURTEOUS', 'CHEERFUL'],
+            'Grade 6': ['RESPONSIBLE', 'EXCELLENT', 'COURAGEOUS', 'OPTIMISTIC']
+        };
+
+        const sectionSelect = document.getElementById('id_section');
+        const currentSection = "{{ user.profile.section|default:''|escapejs }}";
+        const pendingSection = "{{ user.profile.pending_section|default:''|escapejs }}";
+
+        function updateProfileSections(gradeVal) {
+            if (!sectionSelect) return;
+            sectionSelect.innerHTML = '';
+
+            const list = GRADE_SECTIONS_DATA[gradeVal];
+            const activeSection = pendingSection || currentSection;
+
+            if (list && list.length > 0) {
+                // If student currently has a section not in list (e.g. legacy "3-3"), keep it as an option labeled (Current)
+                if (activeSection && !list.includes(activeSection.toUpperCase())) {
+                    const legacyOpt = document.createElement('option');
+                    legacyOpt.value = activeSection;
+                    legacyOpt.textContent = activeSection + ' (Current)';
+                    legacyOpt.selected = true;
+                    sectionSelect.appendChild(legacyOpt);
+                }
+
+                list.forEach(secName => {
+                    const opt = document.createElement('option');
+                    opt.value = secName;
+                    opt.textContent = secName;
+                    if (activeSection && activeSection.toUpperCase() === secName.toUpperCase()) {
+                        opt.selected = true;
+                    }
+                    sectionSelect.appendChild(opt);
+                });
+                sectionSelect.disabled = false;
+            } else {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'Select Grade First';
+                sectionSelect.appendChild(opt);
+                sectionSelect.disabled = true;
+            }
+        }
+
+        if (gradeSelect && sectionSelect) {
+            gradeSelect.addEventListener('change', function() {
+                updateProfileSections(this.value);
+            });
+            updateProfileSections(gradeSelect.value);
         }
     });
 </script>

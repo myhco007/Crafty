@@ -128,14 +128,30 @@ def profile_view(request):
             return redirect('profile')
             
         old_grade = request.user.profile.grade_level
+        old_section = request.user.profile.section or ''
         u_form = UserUpdateForm(request.POST, instance=request.user)
         p_form = UserProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
         
         if u_form.is_valid() and p_form.is_valid():
             new_grade = p_form.cleaned_data.get('grade_level')
-            if new_grade != old_grade and request.user.profile.role == 'CLIENT':
-                # Prevent downgrade
-                if old_grade and new_grade:
+            new_section = request.POST.get('section', '').strip().upper()
+
+            is_student = (request.user.profile.role == 'CLIENT')
+            grade_changed = is_student and bool(new_grade and new_grade != old_grade)
+            section_changed = is_student and bool(new_section and new_section != old_section.strip().upper())
+
+            if grade_changed or section_changed:
+                from django.utils import timezone
+                from datetime import timedelta
+                
+                # Check cooldown before saving anything
+                if request.user.profile.grade_change_cooldown:
+                    if timezone.now() < request.user.profile.grade_change_cooldown + timedelta(minutes=2):
+                        messages.error(request, 'You recently cancelled a change request. Please wait a few minutes before trying again.')
+                        return redirect('profile')
+
+                # Prevent downgrade if grade changed
+                if grade_changed and old_grade and new_grade:
                     import re
                     old_m = re.search(r'\d+', str(old_grade))
                     new_m = re.search(r'\d+', str(new_grade))
@@ -145,28 +161,37 @@ def profile_view(request):
                         messages.error(request, f"Downgrading from {old_grade} to {new_grade} is not allowed. You can only request an upgrade to higher grades.")
                         return redirect('profile')
 
-                from django.utils import timezone
-                from datetime import timedelta
-                
-                # Check cooldown before saving anything
-                if request.user.profile.grade_change_cooldown:
-                    if timezone.now() < request.user.profile.grade_change_cooldown + timedelta(minutes=2):
-                        messages.error(request, 'You recently cancelled a grade change request. Please wait a few minutes before trying again.')
-                        return redirect('profile')
-                
-                # Revert the in-memory grade level so the User save signal doesn't save the new grade incorrectly
-                request.user.profile.grade_level = old_grade
-
             u_form.save()
             profile = p_form.save(commit=False)
             
-            if new_grade != old_grade and request.user.profile.role == 'CLIENT':
+            if grade_changed:
                 profile.grade_level = old_grade
                 profile.pending_grade = new_grade
+            if section_changed:
+                profile.section = old_section
+                profile.pending_section = new_section
+
+            if grade_changed and section_changed:
+                messages.success(request, 'Your profile has been updated. Grade and section change requests submitted to Admin for approval.')
+                Notification.objects.create(
+                    title="Pending Grade & Section Change Request",
+                    message=f"Student '{request.user.username}' requested Grade to {new_grade} and Section to {new_section}.",
+                    icon="User",
+                    link_url="/dashboard/#pending-subtab-grades"
+                )
+            elif grade_changed:
                 messages.success(request, 'Your profile has been updated. Grade change request submitted to Admin.')
                 Notification.objects.create(
                     title="Pending Grade Change Request",
                     message=f"Student {request.user.username} requested a grade change from {old_grade} to {new_grade}.",
+                    icon="User",
+                    link_url="/dashboard/#pending-subtab-grades"
+                )
+            elif section_changed:
+                messages.success(request, f'Your profile has been updated. Section change request to {new_section} submitted to Admin for approval.')
+                Notification.objects.create(
+                    title="Pending Section Change Request",
+                    message=f"Student {request.user.username} requested a section change from {old_section or 'None'} to {new_section}.",
                     icon="User",
                     link_url="/dashboard/#pending-subtab-grades"
                 )
@@ -200,11 +225,17 @@ def cancel_grade_request(request):
     if request.method == 'POST':
         from django.utils import timezone
         profile = request.user.profile
+        cancelled_any = False
         if profile.pending_grade:
             profile.pending_grade = None
+            cancelled_any = True
+        if profile.pending_section:
+            profile.pending_section = None
+            cancelled_any = True
+        if cancelled_any:
             profile.grade_change_cooldown = timezone.now()
             profile.save()
-            messages.success(request, 'Grade change request cancelled. You must wait 2 minutes before requesting again.')
+            messages.success(request, 'Change request cancelled. You must wait 2 minutes before requesting again.')
     return redirect('profile')
 
 @login_required
@@ -1144,7 +1175,10 @@ def dashboard(request):
             'total_users':      User.objects.count(),
             'total_categories': Category.objects.count(),
             'pending_users':    User.objects.filter(profile__is_approved=False, is_active=True).exclude(profile__role='SUPER_ADMIN'),
-            'pending_grade_users': User.objects.filter(profile__pending_grade__isnull=False).exclude(profile__pending_grade=''),
+            'pending_grade_users': User.objects.filter(
+                (Q(profile__pending_grade__isnull=False) & ~Q(profile__pending_grade='')) |
+                (Q(profile__pending_section__isnull=False) & ~Q(profile__pending_section=''))
+            ).distinct(),
             'pending_videos':   AnimationVideo.objects.filter(is_approved=False, is_archived=False),
             'pending_flipbooks': Flipbook.objects.filter(is_approved=False, is_archived=False),
             'recent_audit_logs': AuditLog.objects.select_related('actor')[:8],
@@ -1378,7 +1412,7 @@ def dashboard(request):
             'Grade 6': [],
         }
         for u in context['pending_grade_users']:
-            p_grade = u.profile.pending_grade
+            p_grade = u.profile.pending_grade or u.profile.grade_level or 'Grade 1'
             if p_grade in pending_grade_users_by_grade:
                 pending_grade_users_by_grade[p_grade].append(u)
             else:
@@ -1705,18 +1739,34 @@ def approve_user(request, pk):
 def approve_grade(request, pk):
     user = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
-        if hasattr(user, 'profile') and user.profile.pending_grade:
-            user.profile.grade_level = user.profile.pending_grade
-            user.profile.pending_grade = None
-            user.profile.save()
-            log_audit_event(request, 'approve_grade', user, {'source': 'dashboard'}, target_label=user.username)
-            messages.success(request, f'Grade level updated for {user.username}!')
+        if hasattr(user, 'profile'):
+            updates = []
+            if user.profile.pending_grade:
+                user.profile.grade_level = user.profile.pending_grade
+                user.profile.pending_grade = None
+                updates.append('Grade level')
+            if user.profile.pending_section:
+                user.profile.section = user.profile.pending_section
+                user.profile.pending_section = None
+                updates.append('Section')
+            if updates:
+                user.profile.save()
+                log_audit_event(request, 'approve_grade', user, {'source': 'dashboard'}, target_label=user.username)
+                messages.success(request, f"{' and '.join(updates)} updated for {user.username}!")
         return redirect('/dashboard/#section-pending')
     
+    desc_list = []
+    if hasattr(user, 'profile'):
+        if user.profile.pending_grade:
+            desc_list.append(f"Grade to <strong>{user.profile.pending_grade}</strong>")
+        if user.profile.pending_section:
+            desc_list.append(f"Section to <strong>{user.profile.pending_section}</strong>")
+    summary_str = " and ".join(desc_list) if desc_list else "profile changes"
+
     return render(request, 'main/confirm_action.html', {
-        'title': 'Approve Grade Change?',
+        'title': 'Approve Grade / Section Change?',
         'icon': '✅',
-        'message': f'Approve grade change to <strong>{user.profile.pending_grade}</strong> for "<strong>{user.username}</strong>"?',
+        'message': f'Approve {summary_str} for "<strong>{user.username}</strong>"?',
         'btn_text': 'Yes, Approve!',
         'is_destructive': False
     })
@@ -1728,15 +1778,16 @@ def reject_grade(request, pk):
     if request.method == 'POST':
         if hasattr(user, 'profile'):
             user.profile.pending_grade = None
+            user.profile.pending_section = None
             user.profile.save()
             log_audit_event(request, 'reject_grade', user, {'source': 'dashboard'}, target_label=user.username)
-            messages.success(request, f'Grade change rejected for {user.username}.')
+            messages.success(request, f'Grade / Section change request rejected for {user.username}.')
         return redirect('/dashboard/#section-pending')
         
     return render(request, 'main/confirm_action.html', {
-        'title': 'Reject Grade Change?',
+        'title': 'Reject Change Request?',
         'icon': '🚫',
-        'message': f'Reject grade change request for "<strong>{user.username}</strong>"?',
+        'message': f'Reject grade / section change request for "<strong>{user.username}</strong>"?',
         'btn_text': 'Yes, Reject!',
         'is_destructive': True
     })
@@ -2400,14 +2451,19 @@ def bulk_approval_action(request):
             elif model_type == 'grade':
                 user = get_object_or_404(User, pk=pk)
                 if action == 'approve':
-                    if hasattr(user, 'profile') and user.profile.pending_grade:
-                        user.profile.grade_level = user.profile.pending_grade
-                        user.profile.pending_grade = None
+                    if hasattr(user, 'profile') and (user.profile.pending_grade or user.profile.pending_section):
+                        if user.profile.pending_grade:
+                            user.profile.grade_level = user.profile.pending_grade
+                            user.profile.pending_grade = None
+                        if user.profile.pending_section:
+                            user.profile.section = user.profile.pending_section
+                            user.profile.pending_section = None
                         user.profile.save()
                         log_audit_event(request, 'approve_grade', user, {'source': 'dashboard', 'bulk': True}, target_label=user.username)
                 elif action == 'deny':
                     if hasattr(user, 'profile'):
                         user.profile.pending_grade = None
+                        user.profile.pending_section = None
                         user.profile.save()
                         log_audit_event(request, 'reject_grade', user, {'source': 'dashboard', 'bulk': True}, target_label=user.username)
                         

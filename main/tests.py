@@ -263,6 +263,51 @@ class AuditLogTests(TestCase):
         self.assertEqual(student.profile.section, 'SMART')
         self.assertFalse(student.profile.is_approved)
 
+    def test_student_section_change_requires_admin_approval(self):
+        student = User.objects.create_user(
+            username='student_change_sec',
+            email='student_change_sec@gmail.com',
+            password='strong_pass123'
+        )
+        student.profile.is_approved = True
+        student.profile.role = 'CLIENT'
+        student.profile.grade_level = 'Grade 3'
+        student.profile.section = '3-3'
+        student.profile.save()
+
+        self.client.force_login(student)
+        response = self.client.post(
+            reverse('profile'),
+            {
+                'username': 'student_change_sec',
+                'grade_level': 'Grade 3',
+                'section': 'SMART',
+            }
+        )
+        self.assertRedirects(response, reverse('profile'))
+        student.profile.refresh_from_db()
+        self.assertEqual(student.profile.section, '3-3')
+        self.assertEqual(student.profile.pending_section, 'SMART')
+
+        # Admin approves section change
+        super_admin = User.objects.create_superuser(
+            username='admin_approver',
+            password='super_password123',
+            email='admin_approver@gmail.com'
+        )
+        super_admin.profile.role = 'SUPER_ADMIN'
+        super_admin.profile.save()
+        self.client.force_login(super_admin)
+
+        appr_response = self.client.post(
+            reverse('approve_grade', kwargs={'pk': student.pk}),
+            {}
+        )
+        self.assertRedirects(appr_response, '/dashboard/#section-pending')
+        student.profile.refresh_from_db()
+        self.assertEqual(student.profile.section, 'SMART')
+        self.assertIsNone(student.profile.pending_section)
+
     def test_approve_user_sends_email(self):
         from django.core import mail
         mail.outbox = []

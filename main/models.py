@@ -50,6 +50,7 @@ class UserProfile(models.Model):
     section = models.CharField(max_length=50, blank=True, null=True)
     grade_level = models.CharField(max_length=20, choices=GRADE_CHOICES, blank=True, null=True)
     pending_grade = models.CharField(max_length=20, choices=STUDENT_GRADE_CHOICES, blank=True, null=True)
+    pending_section = models.CharField(max_length=50, blank=True, null=True)
     grade_change_cooldown = models.DateTimeField(null=True, blank=True)
     last_seen_notifications = models.DateTimeField(null=True, blank=True)
     faculty_id_image = models.ImageField(upload_to='faculty_ids/', null=True, blank=True)

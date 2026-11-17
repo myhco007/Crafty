@@ -1848,7 +1848,7 @@
                     {% endif %}
                 </button>
                 <button class="pending-tab-btn" data-tab="grades" onclick="switchPendingSubTab('grades')">
-                    Grade Changes <span class="pending-tab-badge" id="badge-grades">{{ pending_grade_users|length }}</span>
+                    Grade &amp; Section Changes <span class="pending-tab-badge" id="badge-grades">{{ pending_grade_users|length }}</span>
                 </button>
                 <button class="pending-tab-btn" data-tab="videos" onclick="switchPendingSubTab('videos')">
                     Videos <span class="pending-tab-badge" id="badge-videos">{{ pending_videos|length }}</span>
@@ -2087,15 +2087,28 @@
 
                                     <input type="checkbox" class="card-checkbox grade-checkbox" value="{{ pending_user.pk }}" onchange="updateSelectedCount('grade')">
 
-                                    <span class="pending-badge" style="background: #e0f2fe; color: #0369a1;">Grade Change</span>
+                                    <span class="pending-badge" style="background: #e0f2fe; color: #0369a1;">
+                                        {% if pending_user.profile.pending_grade and pending_user.profile.pending_section %}
+                                            Grade &amp; Section Change
+                                        {% elif pending_user.profile.pending_section %}
+                                            Section Change
+                                        {% else %}
+                                            Grade Change
+                                        {% endif %}
+                                    </span>
 
                                 </div>
 
                                 <div class="compact-approval-card-title" title="{{ pending_user.username }}">{{ pending_user.username }}</div>
 
-                                <div class="compact-approval-card-meta">Current: {{ pending_user.profile.grade_level|default:"None" }}</div>
+                                <div class="compact-approval-card-meta">Current: {{ pending_user.profile.grade_level|default:"None" }}{% if pending_user.profile.section %} • Sec: {{ pending_user.profile.section }}{% endif %}</div>
 
-                                <div class="compact-approval-card-meta" style="color: #d97706; font-weight: bold;">Req: {{ pending_user.profile.pending_grade }}</div>
+                                <div class="compact-approval-card-meta" style="color: #d97706; font-weight: bold;">
+                                    Req: 
+                                    {% if pending_user.profile.pending_grade %}{{ pending_user.profile.pending_grade }}{% endif %}
+                                    {% if pending_user.profile.pending_grade and pending_user.profile.pending_section %} • {% endif %}
+                                    {% if pending_user.profile.pending_section %}Sec: {{ pending_user.profile.pending_section }}{% endif %}
+                                </div>
 
                                 <div class="compact-approval-card-meta" style="font-size: 0.72rem; color: #475569; margin-top: 3px;">🕒 Joined: {{ pending_user.date_joined|date:'F d, Y \a\t h:i A' }}</div>
 
@@ -2103,9 +2116,9 @@
 
                                     <button onclick="openDetailsModal('{{ pending_user.username|escapejs }}', '{{ pending_user.profile.grade_level|default:'Not specified'|escapejs }}', '{{ pending_user.date_joined|date:'F d, Y \a\t h:i A'|escapejs }}', '{{ pending_user.profile.lrn_number|default:''|escapejs }}', '{{ pending_user.profile.role|escapejs }}', '{{ pending_user.email|escapejs }}', '{% if pending_user.profile.faculty_id_image %}{{ pending_user.profile.faculty_id_image.url|escapejs }}{% endif %}', '{{ pending_user.profile.section|default:''|escapejs }}')" class="compact-btn compact-btn-details">Details</button>
 
-                                    <a href="javascript:void(0)" onclick="openActionModal('{% url "approve_grade" pending_user.pk %}', 'Approve Grade Change?', '✅', 'Approve grade change to <strong>{{ pending_user.profile.pending_grade }}</strong> for &quot;<strong>{{ pending_user.username }}</strong>&quot;?', 'Yes, Approve!', false)" class="compact-btn compact-btn-approve">Approve</a>
+                                    <a href="javascript:void(0)" onclick="openActionModal('{% url "approve_grade" pending_user.pk %}', 'Approve Change?', '✅', 'Approve requested profile update for &quot;<strong>{{ pending_user.username }}</strong>&quot;?{% if pending_user.profile.pending_grade %}<br>Grade: <strong>{{ pending_user.profile.pending_grade }}</strong>{% endif %}{% if pending_user.profile.pending_section %}<br>Section: <strong>{{ pending_user.profile.pending_section }}</strong>{% endif %}', 'Yes, Approve!', false)" class="compact-btn compact-btn-approve">Approve</a>
 
-                                    <a href="javascript:void(0)" onclick="openActionModal('{% url "reject_grade" pending_user.pk %}', 'Reject Grade Change?', '🚫', 'Reject grade change request for &quot;<strong>{{ pending_user.username }}</strong>&quot;?', 'Yes, Reject!', true)" class="compact-btn compact-btn-deny">Reject</a>
+                                    <a href="javascript:void(0)" onclick="openActionModal('{% url "reject_grade" pending_user.pk %}', 'Reject Change?', '🚫', 'Reject requested profile update for &quot;<strong>{{ pending_user.username }}</strong>&quot;?', 'Yes, Reject!', true)" class="compact-btn compact-btn-deny">Reject</a>
 
                                 </div>
 
