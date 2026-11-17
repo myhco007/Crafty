@@ -172,14 +172,17 @@ def profile_view(request):
         u_form = UserUpdateForm(instance=request.user)
         p_form = UserProfileUpdateForm(instance=request.user.profile)
         
-    level_info = request.user.profile.get_level_info() if hasattr(request.user, 'profile') else None
-    badges_info = request.user.profile.get_badges_info() if hasattr(request.user, 'profile') else []
+    # Achievements, trophies, and levels are strictly for student accounts (CLIENT)
+    is_student = hasattr(request.user, 'profile') and request.user.profile.role == 'CLIENT'
+    level_info = request.user.profile.get_level_info() if is_student else None
+    badges_info = request.user.profile.get_badges_info() if is_student else []
 
     context = {
         'u_form': u_form,
         'p_form': p_form,
         'level_info': level_info,
         'badges_info': badges_info,
+        'is_student': is_student,
     }
     return render(request, 'main/profile.html', context)
 

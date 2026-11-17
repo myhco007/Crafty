@@ -68,6 +68,8 @@ class UserProfile(models.Model):
     points = models.PositiveIntegerField(default=0)
 
     def get_level_info(self):
+        if self.role != 'CLIENT':
+            return None
         pts = self.points
         levels = [
             (1, "Novice Crafter", 0, 150),
@@ -112,6 +114,8 @@ class UserProfile(models.Model):
         }
 
     def get_badges_info(self):
+        if self.role != 'CLIENT':
+            return []
         user = self.user
         completed_flipbooks = user.activities.filter(flipbook__isnull=False).count()
         completed_videos = user.activities.filter(video__isnull=False).count()

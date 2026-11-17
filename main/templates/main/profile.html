@@ -588,7 +588,7 @@
                     {% endif %}
                 </div>
 
-                {% if level_info %}
+                {% if level_info and user.profile.role == 'CLIENT' %}
                 <div class="level-progress-box">
                     <div class="level-title-row">
                         <span class="level-badge">Lvl {{ level_info.level }}: {{ level_info.title }}</span>
@@ -689,7 +689,7 @@
     <!-- RIGHT COLUMN: SETTINGS & EDIT -->
     <div class="profile-right">
 
-        {% if badges_info %}
+        {% if badges_info and user.profile.role == 'CLIENT' %}
         <div class="pref-card">
             <h2 class="pref-header">Achievements & Trophies 🏆</h2>
             <div class="trophies-grid">
