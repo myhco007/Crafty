@@ -430,17 +430,15 @@ def video_detail(request, pk):
             from django.db.models import Q
             more_videos = more_videos.filter(Q(grade=user_grade) | Q(grade='All Grades'))
 
-        # Track viewing record for student
+        # Track viewing record for student (only record one time; 1 content = 1 view)
         track_rec, created = ContentTrackRecord.objects.get_or_create(
             student=request.user,
             video=video,
             defaults={'view_count': 1, 'is_completed': is_completed}
         )
-        if not created:
-            ContentTrackRecord.objects.filter(pk=track_rec.pk).update(
-                view_count=F('view_count') + 1,
-                last_viewed_at=timezone.now()
-            )
+        if not created and is_completed and not track_rec.is_completed:
+            track_rec.is_completed = True
+            track_rec.save(update_fields=['is_completed'])
             
     more_videos = more_videos.order_by('-created_at')
     
@@ -574,18 +572,16 @@ def flipbook_detail(request, pk):
         if pa.audio_file:
             page_audio_map[pa.page_number] = pa.audio_file.url
 
-    # Track viewing record for student
+    # Track viewing record for student (only record one time; 1 content = 1 view)
     if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.role == 'CLIENT':
         track_rec, created = ContentTrackRecord.objects.get_or_create(
             student=request.user,
             flipbook=flipbook,
             defaults={'view_count': 1, 'is_completed': is_completed}
         )
-        if not created:
-            ContentTrackRecord.objects.filter(pk=track_rec.pk).update(
-                view_count=F('view_count') + 1,
-                last_viewed_at=timezone.now()
-            )
+        if not created and is_completed and not track_rec.is_completed:
+            track_rec.is_completed = True
+            track_rec.save(update_fields=['is_completed'])
 
     context = {
         'flipbook': flipbook,
@@ -1528,11 +1524,11 @@ def dashboard(request):
             g_dict = track_groups_raw[group_key]
             g_dict['records'].append(rec)
             g_dict['student_ids'].add(student.id)
-            g_dict['total_views'] += rec.view_count
+            g_dict['total_views'] += 1
             if not g_dict['latest_date'] or rec.last_viewed_at > g_dict['latest_date']:
                 g_dict['latest_date'] = rec.last_viewed_at
             
-            total_tracked_views += rec.view_count
+            total_tracked_views += 1
             all_tracked_student_ids.add(student.id)
 
         sorted_track_groups = sorted(track_groups_raw.values(), key=lambda x: x['sort_order'])
