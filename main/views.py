@@ -2786,9 +2786,10 @@ def flipbook_pdf_proxy(request, pk):
     if not flipbook.pdf_file:
         raise Http404("No PDF file found for this flipbook.")
 
-    pdf_url = flipbook.pdf_file.url
     filename = os.path.basename(flipbook.pdf_file.name)
+    pdf_url = flipbook.pdf_file.url
 
+    # 1. If it's a full remote URL (S3, Cloudinary, etc.)
     if pdf_url.startswith('http://') or pdf_url.startswith('https://'):
         try:
             safe_url = urllib.parse.quote(pdf_url, safe=':/?#[]@!$&\'()*+,;=')
@@ -2804,22 +2805,42 @@ def flipbook_pdf_proxy(request, pk):
             return response
         except Exception as e:
             return HttpResponse(f"Error fetching PDF: {e}", status=502)
-    else:
+
+    # 2. Try media_proxy with multiple candidate paths (checks local MEDIA_ROOT, alternative folders, and Cloudflare R2)
+    candidates = [
+        flipbook.pdf_file.name.lstrip('/'),
+        f"flipbook_pdfs/{filename}",
+        f"flipbooks/{filename}",
+        filename,
+    ]
+    for cand in candidates:
         try:
-            file_path = flipbook.pdf_file.path
-            if not os.path.exists(file_path):
-                raise Http404("File not found on disk.")
-            with open(file_path, 'rb') as f:
-                data = f.read()
-            response = HttpResponse(data, content_type='application/pdf')
-            response['Access-Control-Allow-Origin'] = '*'
-            response['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
-            response['Access-Control-Allow-Headers'] = '*'
-            response['Cache-Control'] = 'public, max-age=86400'
-            response['Content-Disposition'] = f'inline; filename="{filename}"'
-            return response
-        except Exception as e:
-            raise Http404(f"Cannot read file: {e}")
+            resp = media_proxy(request, cand)
+            if resp.status_code == 200:
+                resp['Content-Type'] = 'application/pdf'
+                resp['Content-Disposition'] = f'inline; filename="{filename}"'
+                resp['Access-Control-Allow-Origin'] = '*'
+                resp['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+                resp['Access-Control-Allow-Headers'] = '*'
+                return resp
+        except Exception:
+            pass
+
+    # 3. Direct local file check fallback
+    try:
+        file_path = flipbook.pdf_file.path
+        if file_path and os.path.exists(file_path):
+            from django.http import FileResponse
+            resp = FileResponse(open(file_path, 'rb'), content_type='application/pdf')
+            resp['Access-Control-Allow-Origin'] = '*'
+            resp['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+            resp['Access-Control-Allow-Headers'] = '*'
+            resp['Content-Disposition'] = f'inline; filename="{filename}"'
+            return resp
+    except Exception:
+        pass
+
+    raise Http404(f"PDF file '{filename}' could not be located on disk or cloud storage.")
 
 def media_proxy(request, filepath):
     if request.method == 'OPTIONS':
@@ -2843,7 +2864,7 @@ def media_proxy(request, filepath):
 
     # 1b. Check alternative local folders for the filename
     filename = os.path.basename(filepath)
-    alt_local_dirs = ['announcements', 'flipbooks', 'thumbnails', 'events', 'avatars', '']
+    alt_local_dirs = ['flipbook_pdfs', 'flipbooks', 'announcements', 'thumbnails', 'events', 'avatars', '']
     for folder in alt_local_dirs:
         alt_path = os.path.join(settings.MEDIA_ROOT, folder, filename) if folder else os.path.join(settings.MEDIA_ROOT, filename)
         if os.path.exists(alt_path) and os.path.isfile(alt_path):
@@ -2865,6 +2886,12 @@ def media_proxy(request, filepath):
             f"flipbooks/{filename}",
             f"thumbnails/{filename}",
             f"events/{filename}",
+            filename
+        ])
+    if 'flipbook' in filepath.lower() or filename.lower().endswith('.pdf'):
+        r2_candidates.extend([
+            f"flipbook_pdfs/{filename}",
+            f"flipbooks/{filename}",
             filename
         ])
 

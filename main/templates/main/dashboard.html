@@ -5504,8 +5504,29 @@
 
 
         try {
+            let pdf = null;
+            const urlsToTry = [
+                url,
+                url.replace('/media-proxy/', '/media/'),
+                url.replace('/media/', '/media-proxy/')
+            ];
+            const uniqueUrls = [...new Set(urlsToTry.filter(Boolean))];
 
-            const pdf = await pdfjsLib.getDocument(url).promise;
+            let lastErr = null;
+            for (const u of uniqueUrls) {
+                try {
+                    pdf = await pdfjsLib.getDocument({
+                        url: u,
+                        disableRange: true,
+                        disableStream: true
+                    }).promise;
+                    if (pdf) break;
+                } catch (e) {
+                    lastErr = e;
+                }
+            }
+
+            if (!pdf) throw (lastErr || new Error('Could not load PDF'));
 
             const numPages = pdf.numPages;
 

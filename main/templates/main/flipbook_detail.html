@@ -251,11 +251,34 @@
 
             async function initFlipbook() {
                 try {
-                    const pdf = await pdfjsLib.getDocument({
-                        url: url,
-                        disableRange: true,
-                        disableStream: true
-                    }).promise;
+                    let pdf = null;
+                    const urlsToTry = [
+                        '{% url "flipbook_pdf_proxy" flipbook.pk %}',
+                        '{{ flipbook.pdf_file.url }}',
+                        '/media/{{ flipbook.pdf_file.name }}',
+                        '/media-proxy/{{ flipbook.pdf_file.name }}'
+                    ];
+                    const uniqueUrls = [...new Set(urlsToTry.filter(Boolean))];
+
+                    let lastErr = null;
+                    for (const u of uniqueUrls) {
+                        try {
+                            pdf = await pdfjsLib.getDocument({
+                                url: u,
+                                disableRange: true,
+                                disableStream: true
+                            }).promise;
+                            if (pdf) break;
+                        } catch (e) {
+                            console.warn('Failed loading PDF from ' + u + ':', e);
+                            lastErr = e;
+                        }
+                    }
+
+                    if (!pdf) {
+                        throw lastErr || new Error('Could not load PDF document.');
+                    }
+
                     const numPages = pdf.numPages;
 
                     // Determine base scale from Page 1 to fit height essentially instantly
