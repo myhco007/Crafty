@@ -23,6 +23,15 @@ from django.utils.text import slugify
 from django.utils import timezone
 from django.db.models import F, Q, Count, Max
 
+GRADE_SECTIONS = {
+    'Grade 1': ['FAITHFUL', 'HELPFUL', 'SIMPLE', 'CHARMING', 'LOYAL', 'CAREFUL'],
+    'Grade 2': ['ADORABLE', 'FRIENDLY', 'JOYFUL', 'THOUGHTFUL', 'DELIGHTFUL'],
+    'Grade 3': ['SMART', 'PUNCTUAL', 'POLITE', 'HUMBLE', 'BLISSFUL'],
+    'Grade 4': ['RESILIENCE', 'HONEST', 'PERSEVERANCE', 'INNOVATIVE', 'OBEDIENT'],
+    'Grade 5': ['EAGER', 'AMIABLE', 'COURTEOUS', 'CHEERFUL'],
+    'Grade 6': ['RESPONSIBLE', 'EXCELLENT', 'COURAGEOUS', 'OPTIMISTIC'],
+}
+
 def verify_recaptcha(request):
     recaptcha_response = request.POST.get('g-recaptcha-response')
     if not recaptcha_response:
@@ -929,8 +938,8 @@ def register_view(request):
             messages.error(request, 'LRN Number must be exactly 12 digits.')
         elif UserProfile.objects.filter(lrn_number=lrn_number, is_approved=True, is_archived=False).exists():
             messages.error(request, 'This LRN Number is already registered by another user. Please use a different one.')
-        elif not section or not re.match(r'^[1-3]$', section):
-            messages.error(request, 'Section must be a single number from 1 to 3.')
+        elif not section or (GRADE_SECTIONS.get(grade_level) and section.strip().upper() not in GRADE_SECTIONS.get(grade_level, []) and not re.match(r'^[1-3]$', section.strip())):
+            messages.error(request, 'Please select a valid section for your grade level.')
         elif not verify_recaptcha(request):
             messages.error(request, 'CAPTCHA verification failed. Please prove you are human.')
         else:
@@ -946,10 +955,16 @@ def register_view(request):
             if grade_level:
                 user.profile.grade_level = grade_level
             if section:
-                # Combine grade level number with section number (e.g. "Grade 1" & "3" -> "1-3")
-                grade_match = re.search(r'\d+', grade_level) if grade_level else None
-                grade_num = grade_match.group() if grade_match else '1'
-                user.profile.section = f"{grade_num}-{section}"
+                clean_sec_up = section.strip().upper()
+                valid_secs = GRADE_SECTIONS.get(grade_level, [])
+                if clean_sec_up in valid_secs:
+                    user.profile.section = clean_sec_up
+                elif re.match(r'^[1-3]$', section.strip()):
+                    grade_match = re.search(r'\d+', grade_level) if grade_level else None
+                    grade_num = grade_match.group() if grade_match else '1'
+                    user.profile.section = f"{grade_num}-{section.strip()}"
+                else:
+                    user.profile.section = clean_sec_up
             user.profile.save()
             
             # Profile defaults to CLIENT, which is correct here
@@ -962,7 +977,8 @@ def register_view(request):
             # Notify Super Admin
             full_name_combined = f"{first_name} {user.profile.middle_name or ''} {last_name} {suffix or ''}".replace("  ", " ").strip()
             from main.models import Notification
-            grade_sec_text = f"for {grade_level} Section {section}" if (grade_level and section) else ""
+            sec_name_display = user.profile.section or section
+            grade_sec_text = f"for {grade_level} Section {sec_name_display}" if (grade_level and sec_name_display) else ""
             Notification.objects.create(
                 title="New Student Registration",
                 message=f"A new student account '{username}' ({full_name_combined}) {grade_sec_text} is pending approval.".strip(),
@@ -1253,6 +1269,18 @@ def dashboard(request):
                         badge_title = f"Section {g_num}-{s_num}"
                         if f"grade_{g_num}" in grade_pending_counts:
                             grade_pending_counts[f"grade_{g_num}"] += 1
+                    elif g_num and section_val:
+                        clean_sec = section_val.strip()
+                        clean_sec_upper = clean_sec.upper()
+                        sec_display = clean_sec if clean_sec.lower().startswith('section') else f"Section {clean_sec}"
+                        group_key = f"Grade {g_num} - {clean_sec_upper}"
+                        grade_cat = f"grade_{g_num}"
+                        grade_label = f"Grade {g_num}"
+                        section_label = sec_display
+                        display_title = f"Grade {g_num} • {sec_display}"
+                        badge_title = sec_display
+                        if f"grade_{g_num}" in grade_pending_counts:
+                            grade_pending_counts[f"grade_{g_num}"] += 1
                     elif g_num:
                         group_key = f"Grade {g_num}"
                         grade_cat = f"grade_{g_num}"
@@ -1297,6 +1325,13 @@ def dashboard(request):
             sec_m = re.match(r'^(\d+)-(\d+)$', key)
             if sec_m:
                 return (1, int(sec_m.group(1)), int(sec_m.group(2)))
+            named_m = re.match(r'^Grade (\d+) - (.+)$', key)
+            if named_m:
+                g_n = int(named_m.group(1))
+                s_name = named_m.group(2).upper()
+                sec_list = GRADE_SECTIONS.get(f"Grade {g_n}", [])
+                idx = sec_list.index(s_name) + 1 if s_name in sec_list else 50
+                return (1, g_n, idx)
             g_m = re.match(r'^Grade (\d+)$', key)
             if g_m:
                 return (1, int(g_m.group(1)), 0)
@@ -1481,13 +1516,19 @@ def dashboard(request):
                     badge_title = f"Section {g_num}-{s_num}"
                     sort_order = (1, g_num, s_num)
                 elif g_num and section_val:
-                    group_key = f"Grade {g_num} - {section_val}"
+                    clean_sec = section_val.strip()
+                    clean_sec_upper = clean_sec.upper()
+                    sec_display = clean_sec if clean_sec.lower().startswith('section') else f"Section {clean_sec}"
+                    sec_list = GRADE_SECTIONS.get(f"Grade {g_num}", [])
+                    sec_idx = sec_list.index(clean_sec_upper) + 1 if clean_sec_upper in sec_list else 50
+
+                    group_key = f"Grade {g_num} - {clean_sec_upper}"
                     grade_cat = f"grade_{g_num}"
                     grade_label = f"Grade {g_num}"
-                    section_label = f"Section {section_val}"
-                    display_title = f"Grade {g_num} • Section {section_val}"
-                    badge_title = f"Section {section_val}"
-                    sort_order = (1, g_num, 90)
+                    section_label = sec_display
+                    display_title = f"Grade {g_num} • {sec_display}"
+                    badge_title = sec_display
+                    sort_order = (1, g_num, sec_idx)
                 elif g_num:
                     group_key = f"Grade {g_num}"
                     grade_cat = f"grade_{g_num}"

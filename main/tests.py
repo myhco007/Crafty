@@ -240,6 +240,29 @@ class AuditLogTests(TestCase):
         messages = list(response.context['messages'])
         self.assertTrue(any('already registered' in str(m) for m in messages))
 
+    @patch('main.views.verify_recaptcha', return_value=True)
+    def test_register_student_named_section(self, mock_recaptcha):
+        response = self.client.post(
+            reverse('register'),
+            {
+                'first_name': 'Maria',
+                'no_middle_name': '1',
+                'last_name': 'Santos',
+                'email': 'maria_santos@gmail.com',
+                'username': 'mariasantos',
+                'lrn_number': '112233445566',
+                'grade_level': 'Grade 3',
+                'section': 'SMART',
+                'password1': 'strong_pass123',
+                'password2': 'strong_pass123',
+            },
+        )
+        self.assertRedirects(response, reverse('login'))
+        student = User.objects.get(username='mariasantos')
+        self.assertEqual(student.profile.grade_level, 'Grade 3')
+        self.assertEqual(student.profile.section, 'SMART')
+        self.assertFalse(student.profile.is_approved)
+
     def test_approve_user_sends_email(self):
         from django.core import mail
         mail.outbox = []

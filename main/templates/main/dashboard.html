@@ -3232,7 +3232,17 @@
                                     </td>
                                     <td style="padding: 12px 14px;">
                                         <div style="font-weight: 700; color: #334155;">{{ rec.student.profile.grade_level|default:'No Grade' }}</div>
-                                        <div style="font-size: 0.75rem; color: #64748b;">Section {{ rec.student.profile.section|default:'None' }}</div>
+                                        <div style="font-size: 0.75rem; color: #64748b;">
+                                            {% if rec.student.profile.section %}
+                                                {% if "section" in rec.student.profile.section|lower %}
+                                                    {{ rec.student.profile.section }}
+                                                {% else %}
+                                                    Section {{ rec.student.profile.section }}
+                                                {% endif %}
+                                            {% else %}
+                                                Section None
+                                            {% endif %}
+                                        </div>
                                     </td>
                                     <td style="padding: 12px 14px;">
                                         {% if rec.flipbook %}

@@ -108,9 +108,9 @@
 
                     <!-- Row 3: Grade Level & Section -->
                     <div class="form-row">
-                        <div class="form-group" style="flex: 1.25;">
+                        <div class="form-group" style="flex: 1;">
                             <label>Grade level</label>
-                            <select name="grade_level" required class="custom-select-grade">
+                            <select name="grade_level" id="gradeLevelSelect" required class="custom-select-grade">
                                 <option value="" disabled {% if not form_data.grade_level %}selected{% endif %}>Select Grade Level</option>
                                 <option value="Grade 1" {% if form_data.grade_level == 'Grade 1' %}selected{% endif %}>Grade 1</option>
                                 <option value="Grade 2" {% if form_data.grade_level == 'Grade 2' %}selected{% endif %}>Grade 2</option>
@@ -120,9 +120,11 @@
                                 <option value="Grade 6" {% if form_data.grade_level == 'Grade 6' %}selected{% endif %}>Grade 6</option>
                             </select>
                         </div>
-                        <div class="form-group" style="flex: 0.75;">
+                        <div class="form-group" style="flex: 1;">
                             <label>Section</label>
-                            <input type="text" name="section" value="{{ form_data.section|default:'' }}" placeholder="1-3" pattern="[1-3]" title="Section must be a single number from 1 to 3." maxlength="1" oninput="this.value=this.value.replace(/[^1-3]/g,'')" autocomplete="off" required>
+                            <select name="section" id="sectionSelect" required class="custom-select-grade">
+                                <option value="" disabled selected>Select Grade First</option>
+                            </select>
                         </div>
                     </div>
 
@@ -470,7 +472,7 @@
                 if (lrnInput) lrnInput.classList.add('input-error');
             }
             if (text.includes('section')) {
-                const sectionInput = document.querySelector('input[name="section"]');
+                const sectionInput = document.querySelector('select[name="section"], input[name="section"]');
                 if (sectionInput) sectionInput.classList.add('input-error');
             }
             if (text.includes('password') || text.includes('passwords do not match')) {
@@ -487,6 +489,65 @@
                 }
             }
         });
+
+        // Dynamic Section options based on Grade level
+        const GRADE_SECTIONS_DATA = {
+            'Grade 1': ['FAITHFUL', 'HELPFUL', 'SIMPLE', 'CHARMING', 'LOYAL', 'CAREFUL'],
+            'Grade 2': ['ADORABLE', 'FRIENDLY', 'JOYFUL', 'THOUGHTFUL', 'DELIGHTFUL'],
+            'Grade 3': ['SMART', 'PUNCTUAL', 'POLITE', 'HUMBLE', 'BLISSFUL'],
+            'Grade 4': ['RESILIENCE', 'HONEST', 'PERSEVERANCE', 'INNOVATIVE', 'OBEDIENT'],
+            'Grade 5': ['EAGER', 'AMIABLE', 'COURTEOUS', 'CHEERFUL'],
+            'Grade 6': ['RESPONSIBLE', 'EXCELLENT', 'COURAGEOUS', 'OPTIMISTIC']
+        };
+
+        const gradeSelect = document.getElementById('gradeLevelSelect');
+        const sectionSelect = document.getElementById('sectionSelect');
+        const savedSection = "{{ form_data.section|default:'' }}";
+
+        function updateSectionDropdown(gradeVal, preselectVal) {
+            if (!sectionSelect) return;
+            sectionSelect.innerHTML = '';
+
+            const list = GRADE_SECTIONS_DATA[gradeVal];
+            if (list && list.length > 0) {
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.disabled = true;
+                placeholder.textContent = 'Select Section';
+                if (!preselectVal) placeholder.selected = true;
+                sectionSelect.appendChild(placeholder);
+
+                list.forEach(secName => {
+                    const opt = document.createElement('option');
+                    opt.value = secName;
+                    opt.textContent = secName;
+                    if (preselectVal && preselectVal.toUpperCase() === secName.toUpperCase()) {
+                        opt.selected = true;
+                    }
+                    sectionSelect.appendChild(opt);
+                });
+                sectionSelect.disabled = false;
+            } else {
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.disabled = true;
+                placeholder.selected = true;
+                placeholder.textContent = 'Select Grade First';
+                sectionSelect.appendChild(placeholder);
+                sectionSelect.disabled = true;
+            }
+        }
+
+        if (gradeSelect) {
+            gradeSelect.addEventListener('change', function() {
+                updateSectionDropdown(this.value, null);
+            });
+            if (gradeSelect.value) {
+                updateSectionDropdown(gradeSelect.value, savedSection);
+            } else {
+                updateSectionDropdown('', null);
+            }
+        }
     });
 
     function togglePasswordVisibility(fieldId, button) {
