@@ -221,6 +221,101 @@ def profile_view(request):
     return render(request, 'main/profile.html', context)
 
 @login_required(login_url='login')
+def edit_profile_view(request):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'CLIENT':
+        return redirect('profile')
+
+    if request.method == 'POST':
+        if 'remove_pfp' in request.POST:
+            request.user.profile.profile_picture.delete(save=True)
+            messages.success(request, 'Profile picture removed successfully!')
+            return redirect('edit_profile')
+            
+        old_grade = request.user.profile.grade_level
+        old_section = request.user.profile.section or ''
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = UserProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+        
+        if u_form.is_valid() and p_form.is_valid():
+            new_grade = p_form.cleaned_data.get('grade_level')
+            new_section = request.POST.get('section', '').strip().upper()
+
+            grade_changed = bool(new_grade and new_grade != old_grade)
+            section_changed = bool(new_section and new_section != old_section.strip().upper())
+
+            if grade_changed or section_changed:
+                from django.utils import timezone
+                from datetime import timedelta
+                
+                # Check cooldown before saving anything
+                if request.user.profile.grade_change_cooldown:
+                    if timezone.now() < request.user.profile.grade_change_cooldown + timedelta(minutes=2):
+                        messages.error(request, 'You recently cancelled a change request. Please wait a few minutes before trying again.')
+                        return redirect('edit_profile')
+
+                # Prevent downgrade if grade changed
+                if grade_changed and old_grade and new_grade:
+                    import re
+                    old_m = re.search(r'\d+', str(old_grade))
+                    new_m = re.search(r'\d+', str(new_grade))
+                    old_num = int(old_m.group()) if old_m else 0
+                    new_num = int(new_m.group()) if new_m else 0
+                    if old_num > 0 and new_num > 0 and new_num < old_num:
+                        messages.error(request, f"Downgrading from {old_grade} to {new_grade} is not allowed. You can only request an upgrade to higher grades.")
+                        return redirect('edit_profile')
+
+            u_form.save()
+            profile = p_form.save(commit=False)
+            
+            if grade_changed:
+                profile.grade_level = old_grade
+                profile.pending_grade = new_grade
+            if section_changed:
+                profile.section = old_section
+                profile.pending_section = new_section
+
+            if grade_changed and section_changed:
+                messages.success(request, 'Your profile has been updated. Grade and section change requests submitted to Admin for approval.')
+                Notification.objects.create(
+                    title="Pending Grade & Section Change Request",
+                    message=f"Student '{request.user.username}' requested Grade to {new_grade} and Section to {new_section}.",
+                    icon="User",
+                    link_url="/dashboard/#pending-subtab-grades"
+                )
+            elif grade_changed:
+                messages.success(request, 'Your profile has been updated. Grade change request submitted to Admin.')
+                Notification.objects.create(
+                    title="Pending Grade Change Request",
+                    message=f"Student {request.user.username} requested a grade change from {old_grade} to {new_grade}.",
+                    icon="User",
+                    link_url="/dashboard/#pending-subtab-grades"
+                )
+            elif section_changed:
+                messages.success(request, f'Your profile has been updated. Section change request to {new_section} submitted to Admin for approval.')
+                Notification.objects.create(
+                    title="Pending Section Change Request",
+                    message=f"Student {request.user.username} requested a section change from {old_section or 'None'} to {new_section}.",
+                    icon="User",
+                    link_url="/dashboard/#pending-subtab-grades"
+                )
+            else:
+                messages.success(request, 'Your profile has been updated successfully!')
+                
+            profile.save()
+            return redirect('edit_profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = UserProfileUpdateForm(instance=request.user.profile)
+        
+    context = {
+        'u_form': u_form,
+        'p_form': p_form,
+    }
+    return render(request, 'main/edit_profile.html', context)
+
+@login_required(login_url='login')
 def cancel_grade_request(request):
     if request.method == 'POST':
         from django.utils import timezone
@@ -236,6 +331,9 @@ def cancel_grade_request(request):
             profile.grade_change_cooldown = timezone.now()
             profile.save()
             messages.success(request, 'Change request cancelled. You must wait 2 minutes before requesting again.')
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
     return redirect('profile')
 
 @login_required

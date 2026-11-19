@@ -7,6 +7,7 @@ urlpatterns = [
     path('about/', views.about, name='about'),
     path('support-us/', views.support_us, name='support_us'),
     path('profile/', views.profile_view, name='profile'),
+    path('profile/edit/', views.edit_profile_view, name='edit_profile'),
     path('profile/cancel-grade/', views.cancel_grade_request, name='cancel_grade_request'),
     path('profile/verify-password/', views.verify_password_ajax, name='verify_password_ajax'),
     path('profile/update-password/', views.update_password_ajax, name='update_password_ajax'),

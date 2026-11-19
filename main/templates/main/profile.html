@@ -570,11 +570,20 @@
                         </div>
                         {% endif %}
                     </div>
+                    {% if user.profile.role == 'CLIENT' %}
+                    <button type="button" onclick="window.location.href='{% url 'edit_profile' %}'"
+                        style="position: absolute; bottom: -5px; right: 0; background: var(--green); color: white; border: 3px solid var(--white); width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; transition: transform 0.2s; padding: 0;"
+                        onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"
+                        title="Edit Profile">
+                        +
+                    </button>
+                    {% else %}
                     <button type="button" onclick="document.querySelector('input[type=file]').click()"
                         style="position: absolute; bottom: -5px; right: 0; background: var(--green); color: white; border: 3px solid var(--white); width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; transition: transform 0.2s; padding: 0;"
                         onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
                         +
                     </button>
+                    {% endif %}
                 </div>
                 <h1 class="profile-name">{{ user.get_full_name|default:user.username }}</h1>
                 <p class="profile-email">{{ user.email|default:"No email provided" }}</p>
@@ -680,10 +689,20 @@
                     </div>
                     {% endif %}
                 </div>
+
+                {% if user.profile.role == 'CLIENT' %}
+                <div style="margin-top: 24px;">
+                    <a href="{% url 'edit_profile' %}" class="btn-edit-profile-action" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px 18px; background: #f0fdf4; color: var(--green-dark); border: 2px solid var(--green); border-radius: 25px; font-weight: 800; font-size: 0.95rem; text-decoration: none; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        Edit Profile &amp; Settings
+                    </a>
+                </div>
+                {% endif %}
                 {% endif %}
             </div>
         </div>
 
+        {% if user.profile.role != 'CLIENT' %}
         <div class="pref-card" style="margin-top: 30px;">
             <h2 class="pref-header">Preferences</h2>
             <div class="pref-item">
@@ -697,6 +716,7 @@
                 </label>
             </div>
         </div>
+        {% endif %}
 
     </div>
 
@@ -725,6 +745,7 @@
         </div>
         {% endif %}
 
+        {% if user.profile.role != 'CLIENT' %}
         <div class="pref-card">
             <h2 class="pref-header">Manage password</h2>
             <div class="pref-item pref-item-clickable" onclick="openInitialPwdConfirmModal()">
@@ -758,50 +779,6 @@
                     <label for="id_profile_picture">Profile Picture</label>
                     {{ p_form.profile_picture }}
                 </div>
-                {% if user.profile.role == 'CLIENT' %}
-                <div class="form-group">
-                    <label for="id_grade_level">Grade Level</label>
-                    {{ p_form.grade_level }}
-                    <small style="color: #64748b; font-size: 0.78rem; margin-top: 4px; display: block;">
-                        * You can advance to a higher grade level, but downgrading to a lower grade level is disabled.
-                    </small>
-                </div>
-
-                <div class="form-group">
-                    <label for="id_section">Section</label>
-                    <select name="section" id="id_section" class="custom-select-grade">
-                        <option value="" disabled>Select Section</option>
-                    </select>
-                    <small style="color: #64748b; font-size: 0.78rem; margin-top: 4px; display: block;">
-                        * Select your section. Changing your section requires approval from the admin.
-                    </small>
-                </div>
-
-                {% if user.profile.pending_grade or user.profile.pending_section %}
-                <div class="form-group">
-                    <small
-                        style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; color: #d97706; font-weight: bold; background: #fffbeb; padding: 10px 14px; border-radius: 8px; border: 1px solid #fef3c7;">
-                        <span style="display: flex; align-items: center; gap: 8px;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                            Pending Request:
-                            {% if user.profile.pending_grade %}Grade: {{ user.profile.pending_grade }}{% endif %}
-                            {% if user.profile.pending_grade and user.profile.pending_section %} • {% endif %}
-                            {% if user.profile.pending_section %}Section: {{ user.profile.pending_section }}{% endif %}
-                        </span>
-                        <button type="submit" formaction="{% url 'cancel_grade_request' %}" formnovalidate
-                            style="background: transparent; border: 1px solid #d97706; color: #d97706; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.2s;"
-                            onmouseover="this.style.background='#fef3c7'"
-                            onmouseout="this.style.background='transparent'">
-                            Cancel Request
-                        </button>
-                    </small>
-                </div>
-                {% endif %}
-                {% endif %}
                 <div class="form-group"
                     style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-top: 30px;">
                     <button type="button" class="btn-save" onclick="showSaveConfirmModal()">Save Changes</button>
@@ -811,10 +788,12 @@
                 </div>
             </form>
         </div>
+        {% endif %}
 
     </div>
 </div>
 
+{% if user.profile.role != 'CLIENT' %}
 <!-- Password Verification Modal -->
 <div class="modal-overlay" id="pwd-verify-modal"
     style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
@@ -931,6 +910,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <script>
     function showSaveConfirmModal() {
@@ -1032,21 +1012,23 @@
         const stylesheet = document.getElementById('dark-mode-stylesheet');
 
         // Set initial state of toggle
-        if (localStorage.getItem('theme') === 'dark') {
-            themeToggle.checked = true;
-        }
-
-        themeToggle.addEventListener('change', () => {
-            if (themeToggle.checked) {
-                root.classList.add('dark-mode');
-                stylesheet.removeAttribute('disabled');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                root.classList.remove('dark-mode');
-                stylesheet.setAttribute('disabled', 'true');
-                localStorage.setItem('theme', 'light');
+        if (themeToggle) {
+            if (localStorage.getItem('theme') === 'dark') {
+                themeToggle.checked = true;
             }
-        });
+
+            themeToggle.addEventListener('change', () => {
+                if (themeToggle.checked) {
+                    root.classList.add('dark-mode');
+                    stylesheet.removeAttribute('disabled');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    root.classList.remove('dark-mode');
+                    stylesheet.setAttribute('disabled', 'true');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        }
 
         // Live preview for profile picture
         const fileInput = document.querySelector('input[type="file"]');
