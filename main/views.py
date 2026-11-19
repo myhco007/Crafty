@@ -355,12 +355,12 @@ def notify_content_published(obj, content_type='video'):
     grade_label = "all grades" if grade == 'All Grades' else grade
 
     if content_type == 'video':
-        title = "New Video Tutorial 🎬"
+        title = "New Video Tutorial"
         message = f"{teacher_name} uploaded a new video tutorial \"{obj.title}\" for {grade_label}. Click to watch and start crafting!"
         icon = "Video"
         link_url = reverse('video_detail', args=[obj.pk])
     else:
-        title = "New Flipbook Lesson 📖"
+        title = "New Flipbook Lesson"
         message = f"{teacher_name} uploaded a new flipbook tutorial \"{obj.title}\" for {grade_label}. Click to read and learn!"
         icon = "Book"
         link_url = reverse('flipbook_detail', args=[obj.pk])
@@ -1997,7 +1997,7 @@ def announcement_create(request):
         announcement = form.save()
         log_audit_event(request, 'create', announcement, {'source': 'dashboard'})
         Notification.objects.create(
-            title="New Announcement 📢",
+            title="New Announcement",
             message=announcement.title,
             icon="Note",
             link_url=f"/announcements/#announcement-{announcement.id}",

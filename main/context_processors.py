@@ -66,7 +66,7 @@ def get_user_notifications(user):
         first_name = user.first_name or user.username
         Notification.objects.create(
             recipient=user,
-            title="Welcome to CraftyKids! 🎉",
+            title="Welcome to CraftyKids!",
             message=f"Congratulations, {first_name}! Your account has been officially approved by the Main Admin. Welcome to your creative space! Explore our fun DIY video tutorials, interactive flipbooks, and activities to get started.",
             icon="Star",
             link_url=None
