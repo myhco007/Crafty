@@ -82,6 +82,43 @@
             font-size: 1.15rem;
         }
     }
+
+    .three-dots-loader {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .three-dots-loader span {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: inline-block;
+        animation: dotsBounce 1.4s infinite ease-in-out both;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .three-dots-loader span:nth-child(1) {
+        background: #2ecc71;
+        animation-delay: -0.32s;
+    }
+    .three-dots-loader span:nth-child(2) {
+        background: #ffd93d;
+        animation-delay: -0.16s;
+    }
+    .three-dots-loader span:nth-child(3) {
+        background: #00cec9;
+    }
+    @keyframes dotsBounce {
+        0%, 80%, 100% {
+            transform: scale(0.5);
+            opacity: 0.35;
+        }
+        40% {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+    }
 </style>
 {% endblock %}
 {% block content %}
@@ -156,7 +193,11 @@
         <div id="pdf-flipbook-container" style="padding: 20px; position: relative;">
 
             <div id="loading-book" style="text-align: center; padding: 60px 20px; color: var(--gray);">
-                <div style="font-size: 3rem; margin-bottom: 15px;">⏳</div>
+                <div class="three-dots-loader">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
                 <h2 style="font-family: 'Fredoka One', cursive;">Generating your Flipbook...</h2>
                 <p>Please wait while we prepare the animated pages.</p>
             </div>
