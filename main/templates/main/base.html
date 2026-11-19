@@ -27,19 +27,110 @@
             position: fixed;
             bottom: 24px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateY(20px);
             background: #ffffff;
             border: 2px solid #dff3e4;
             border-radius: 50px;
             padding: 8px 12px 8px 24px;
-            display: flex;
+            display: none;
+            opacity: 0;
             align-items: center;
             gap: 14px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
             z-index: 1050;
             transition: opacity 0.25s ease, transform 0.25s ease;
             max-width: 95vw;
             box-sizing: border-box;
+        }
+
+        .explore-bottom-widget.show {
+            display: flex !important;
+            opacity: 1 !important;
+            transform: translateX(-50%) translateY(0) !important;
+        }
+
+        /* Floating "Press me!" Circle Icon at Bottom Right */
+        .explore-circle-trigger {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #ffd93d;
+            color: #1e293b;
+            border: 3.5px solid #ffffff;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16), 0 0 0 3px rgba(59, 130, 246, 0.35);
+            cursor: pointer;
+            z-index: 1060;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0;
+            font-family: 'Fredoka One', cursive, sans-serif;
+            animation: pressMeBounce 3s infinite ease-in-out;
+            transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, background 0.2s ease;
+            outline: none;
+            user-select: none;
+        }
+
+        .explore-circle-trigger:hover {
+            transform: scale(1.12);
+            background: #fbc531;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22), 0 0 0 4px rgba(59, 130, 246, 0.55);
+        }
+
+        .explore-circle-trigger:active {
+            transform: scale(0.94);
+        }
+
+        .explore-circle-trigger.active {
+            background: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45), 0 0 0 3px rgba(255, 217, 61, 0.6);
+        }
+
+        .explore-trigger-text {
+            font-size: 0.72rem;
+            line-height: 1.05;
+            font-weight: 900;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+
+        @keyframes pressMeBounce {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-6px) scale(1.05);
+            }
+        }
+
+        :root.dark-mode .explore-circle-trigger {
+            background: #ffd93d;
+            color: #1e293b;
+            border-color: #1e293b;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), 0 0 0 3px rgba(59, 130, 246, 0.45);
+        }
+
+        :root.dark-mode .explore-circle-trigger.active {
+            background: #3b82f6;
+            color: #ffffff;
+        }
+
+        @media (max-width: 768px) {
+            .explore-circle-trigger {
+                bottom: 18px;
+                right: 18px;
+                width: 52px;
+                height: 52px;
+            }
+            .explore-trigger-text {
+                font-size: 0.65rem;
+            }
         }
 
         .explore-widget-inner {
@@ -290,7 +381,12 @@
     </div>
 
     {% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'about' or request.resolver_match.url_name == 'announcement_list' or request.resolver_match.url_name == 'calendar' or request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'edit_profile' or request.resolver_match.url_name == 'explore_subjects' %}
-    <!-- Floating Bottom Explore Widget -->
+    <!-- Floating "Press me!" Circle Trigger at Bottom Right -->
+    <button type="button" id="explore-circle-trigger" class="explore-circle-trigger" onclick="toggleExploreWidget()" aria-label="Press me to explore videos and flipbook">
+        <span class="explore-trigger-text">Press<br>me!</span>
+    </button>
+
+    <!-- Floating Bottom Explore Widget (Only shows when user presses the interactive icon) -->
     <div id="explore-bottom-widget" class="explore-bottom-widget" role="complementary" aria-label="Explore Content">
         <div class="explore-widget-inner">
             <span class="explore-widget-prompt">Ready to explore videos and flipbook?</span>
@@ -303,7 +399,7 @@
                 </a>
             </div>
         </div>
-        <button type="button" class="explore-widget-close" onclick="dismissExploreWidget()" aria-label="Dismiss">&times;</button>
+        <button type="button" class="explore-widget-close" onclick="toggleExploreWidget()" aria-label="Close widget">&times;</button>
     </div>
     {% endif %}
 
@@ -499,26 +595,27 @@
             }
         });
 
-        // Explore Bottom Widget Dismiss Handlers
-        function dismissExploreWidget() {
-            const el = document.getElementById('explore-bottom-widget');
-            if (el) {
-                el.style.opacity = '0';
-                el.style.transform = 'translate(-50%, 15px)';
-                setTimeout(function() { el.style.display = 'none'; }, 250);
-                try {
-                    sessionStorage.setItem('dismissed_explore_bottom_widget', 'true');
-                } catch(e) {}
+        // Explore Bottom Widget Toggle Handler
+        function toggleExploreWidget() {
+            const widget = document.getElementById('explore-bottom-widget');
+            const trigger = document.getElementById('explore-circle-trigger');
+            if (!widget) return;
+
+            if (!widget.classList.contains('show')) {
+                widget.style.display = 'flex';
+                void widget.offsetWidth; // trigger reflow for smooth animation
+                widget.classList.add('show');
+                if (trigger) trigger.classList.add('active');
+            } else {
+                widget.classList.remove('show');
+                if (trigger) trigger.classList.remove('active');
+                setTimeout(function() {
+                    if (!widget.classList.contains('show')) {
+                        widget.style.display = 'none';
+                    }
+                }, 260);
             }
         }
-        document.addEventListener('DOMContentLoaded', function() {
-            try {
-                if (sessionStorage.getItem('dismissed_explore_bottom_widget') === 'true') {
-                    const el = document.getElementById('explore-bottom-widget');
-                    if (el) el.style.display = 'none';
-                }
-            } catch(e) {}
-        });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     {% block scripts %}{% endblock %}
