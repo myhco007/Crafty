@@ -2593,7 +2593,50 @@
 
             <div class="db-card">
 
-                <table class="db-table">
+                <!-- Videos Toolbar -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; flex-wrap: wrap; min-width: 280px;">
+                        <div style="position: relative; flex: 1; max-width: 440px; min-width: 200px;">
+                            <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: #1e293b;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="butt" stroke-linejoin="miter">
+                                    <circle cx="10.5" cy="10.5" r="7.5" />
+                                    <line x1="16" y1="16" x2="21.5" y2="21.5" stroke-width="2.6" stroke-linecap="square" />
+                                </svg>
+                            </span>
+                            <input type="text" id="videosSearchInput" placeholder="Search videos by title, author, category, or role..." 
+                                style="width: 100%; padding: 10px 38px 10px 42px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.88rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;"
+                                onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.15)';"
+                                onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';">
+                            <button type="button" id="videosClearSearchBtn" style="display: none; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; color: #64748b; font-size: 0.85rem; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="Clear search">✕</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Role:</span>
+                            <select id="videosRoleSelect" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="ALL">All Roles</option>
+                                <option value="TEACHER">Teachers</option>
+                                <option value="SUPER_ADMIN">Main Admin</option>
+                                <option value="CLIENT">Students / Clients</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Sort:</span>
+                            <select id="videosSortSelect" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="date-desc" selected>Date: Newest First</option>
+                                <option value="date-asc">Date: Oldest First</option>
+                                <option value="role-teacher">Role: Teachers First</option>
+                                <option value="role-admin">Role: Admins First</option>
+                                <option value="role-client">Role: Students First</option>
+                                <option value="title-asc">Title: A → Z</option>
+                                <option value="title-desc">Title: Z → A</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="videosCount" style="font-size: 0.85rem; color: #64748b; font-weight: 700;">
+                        Showing 0 of 0 videos
+                    </div>
+                </div>
+
+                <table class="db-table" id="videosTable">
 
                     <thead>
 
@@ -2621,13 +2664,13 @@
 
                     </thead>
 
-                    <tbody>
+                    <tbody id="videosTableBody">
 
                         {% if role == 'SUPER_ADMIN' %}
 
                         {% for video in all_videos %}
 
-                        <tr>
+                        <tr class="video-row" data-search="{{ video.title|lower }} {{ video.author.username|default:''|lower }} {{ video.author.get_full_name|default:''|lower }} {{ video.category.name|lower }} {{ video.author.profile.get_role_display|default:'Admin/System'|lower }}" data-role="{{ video.author.profile.role|default:'SUPER_ADMIN' }}" data-title="{{ video.title|lower }}" data-date="{{ video.created_at|date:'U' }}">
 
                             <td>{% if video.is_approved %}<a href="{% url 'video_detail' video.pk %}" style="color: var(--teal); font-weight: bold; text-decoration: underline;">{{ video.title }}</a>{% else %}{{ video.title }}{% endif %}</td>
 
@@ -2669,7 +2712,7 @@
 
                         {% for video in my_videos %}
 
-                        <tr>
+                        <tr class="video-row" data-search="{{ video.title|lower }} {{ video.category.name|lower }}" data-role="TEACHER" data-title="{{ video.title|lower }}" data-date="{{ video.created_at|date:'U' }}">
 
                             <td>{{ video.title }}</td>
 
@@ -2705,9 +2748,20 @@
 
                         {% endif %}
 
+                        <tr id="videosEmptyRow" style="display: none;">
+                            <td colspan="5" class="db-empty" style="text-align: center; padding: 25px;">No matching videos found.</td>
+                        </tr>
+
                     </tbody>
 
                 </table>
+
+                <div id="videosSeeMoreContainer" style="display: none; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 8px;">
+                    <button type="button" id="videosSeeMoreBtn" class="db-btn teal" style="padding: 8px 26px; font-size: 0.85rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: none; font-family: 'Nunito', sans-serif; font-weight: 800; box-shadow: 0 4px 14px rgba(46, 204, 113, 0.25);">
+                        <span>See More</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                </div>
 
             </div>
 
@@ -2737,7 +2791,50 @@
 
             <div class="db-card">
 
-                <table class="db-table">
+                <!-- Flipbooks Toolbar -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; flex-wrap: wrap; min-width: 280px;">
+                        <div style="position: relative; flex: 1; max-width: 440px; min-width: 200px;">
+                            <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: #1e293b;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="butt" stroke-linejoin="miter">
+                                    <circle cx="10.5" cy="10.5" r="7.5" />
+                                    <line x1="16" y1="16" x2="21.5" y2="21.5" stroke-width="2.6" stroke-linecap="square" />
+                                </svg>
+                            </span>
+                            <input type="text" id="flipbooksSearchInput" placeholder="Search flipbooks by title, author, category, or role..." 
+                                style="width: 100%; padding: 10px 38px 10px 42px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.88rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;"
+                                onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.15)';"
+                                onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';">
+                            <button type="button" id="flipbooksClearSearchBtn" style="display: none; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; color: #64748b; font-size: 0.85rem; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="Clear search">✕</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Role:</span>
+                            <select id="flipbooksRoleSelect" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="ALL">All Roles</option>
+                                <option value="TEACHER">Teachers</option>
+                                <option value="SUPER_ADMIN">Main Admin</option>
+                                <option value="CLIENT">Students / Clients</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Sort:</span>
+                            <select id="flipbooksSortSelect" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="date-desc" selected>Date: Newest First</option>
+                                <option value="date-asc">Date: Oldest First</option>
+                                <option value="role-teacher">Role: Teachers First</option>
+                                <option value="role-admin">Role: Admins First</option>
+                                <option value="role-client">Role: Students First</option>
+                                <option value="title-asc">Title: A → Z</option>
+                                <option value="title-desc">Title: Z → A</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="flipbooksCount" style="font-size: 0.85rem; color: #64748b; font-weight: 700;">
+                        Showing 0 of 0 flipbooks
+                    </div>
+                </div>
+
+                <table class="db-table" id="flipbooksTable">
 
                     <thead>
 
@@ -2761,13 +2858,13 @@
 
                     </thead>
 
-                    <tbody>
+                    <tbody id="flipbooksTableBody">
 
                         {% if role == 'SUPER_ADMIN' %}
 
                         {% for flipbook in all_flipbooks %}
 
-                        <tr>
+                        <tr class="flipbook-row" data-search="{{ flipbook.title|lower }} {{ flipbook.author.username|default:''|lower }} {{ flipbook.author.get_full_name|default:''|lower }} {{ flipbook.category.name|lower }} {{ flipbook.author.profile.get_role_display|default:'Admin/System'|lower }}" data-role="{{ flipbook.author.profile.role|default:'SUPER_ADMIN' }}" data-title="{{ flipbook.title|lower }}" data-date="{{ flipbook.created_at|date:'U' }}">
 
                             <td>{% if flipbook.is_approved %}<a href="{% url 'flipbook_detail' flipbook.pk %}" style="color: var(--teal); font-weight: bold; text-decoration: underline;">{{ flipbook.title }}</a>{% else %}{{ flipbook.title }}{% endif %}</td>
 
@@ -2819,7 +2916,7 @@
 
                         {% for flipbook in my_flipbooks %}
 
-                        <tr>
+                        <tr class="flipbook-row" data-search="{{ flipbook.title|lower }} {{ flipbook.category.name|lower }}" data-role="TEACHER" data-title="{{ flipbook.title|lower }}" data-date="{{ flipbook.created_at|date:'U' }}">
 
                             <td>{{ flipbook.title }}</td>
 
@@ -2861,9 +2958,20 @@
 
                         {% endif %}
 
+                        <tr id="flipbooksEmptyRow" style="display: none;">
+                            <td colspan="5" class="db-empty" style="text-align: center; padding: 25px;">No matching flipbooks found.</td>
+                        </tr>
+
                     </tbody>
 
                 </table>
+
+                <div id="flipbooksSeeMoreContainer" style="display: none; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 8px;">
+                    <button type="button" id="flipbooksSeeMoreBtn" class="db-btn teal" style="padding: 8px 26px; font-size: 0.85rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: none; font-family: 'Nunito', sans-serif; font-weight: 800; box-shadow: 0 4px 14px rgba(46, 204, 113, 0.25);">
+                        <span>See More</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                </div>
 
             </div>
 
@@ -2891,13 +2999,56 @@
 
             </div>
 
-            
+            <!-- Calendar Toolbar -->
+            <div class="db-card" style="margin-top: 20px; padding: 18px 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; flex-wrap: wrap; min-width: 280px;">
+                        <div style="position: relative; flex: 1; max-width: 440px; min-width: 200px;">
+                            <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: #1e293b;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="butt" stroke-linejoin="miter">
+                                    <circle cx="10.5" cy="10.5" r="7.5" />
+                                    <line x1="16" y1="16" x2="21.5" y2="21.5" stroke-width="2.6" stroke-linecap="square" />
+                                </svg>
+                            </span>
+                            <input type="text" id="calendarSearchInput" placeholder="Search events by title, description, type, or author..." 
+                                style="width: 100%; padding: 10px 38px 10px 42px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.88rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;"
+                                onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.15)';"
+                                onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';">
+                            <button type="button" id="calendarClearSearchBtn" style="display: none; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; color: #64748b; font-size: 0.85rem; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="Clear search">✕</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Role:</span>
+                            <select id="calendarRoleSelect" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="ALL">All Roles</option>
+                                <option value="TEACHER">Teachers</option>
+                                <option value="SUPER_ADMIN">Main Admin</option>
+                                <option value="CLIENT">Students / Clients</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Sort:</span>
+                            <select id="calendarSortSelect" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="date-asc" selected>Date: Earliest First</option>
+                                <option value="date-desc">Date: Latest First</option>
+                                <option value="role-teacher">Role: Teachers First</option>
+                                <option value="role-admin">Role: Admins First</option>
+                                <option value="role-client">Role: Students First</option>
+                                <option value="title-asc">Title: A → Z</option>
+                                <option value="title-desc">Title: Z → A</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="calendarCount" style="font-size: 0.85rem; color: #64748b; font-weight: 700;">
+                        Showing 0 of 0 events
+                    </div>
+                </div>
+            </div>
 
-            <div class="grid-cards" style="margin-top: 24px;">
+            <div class="grid-cards" id="calendarGridCards" style="margin-top: 24px;">
 
                 {% for evt in calendar_events %}
 
-                <div class="content-card" style="border-color: {% if evt.event_type == 'Holiday' %}#fde047{% else %}#a29bfe{% endif %};">
+                <div class="content-card calendar-card" data-search="{{ evt.title|lower }} {{ evt.description|lower }} {{ evt.event_type|lower }} {{ evt.author.username|default:''|lower }} {{ evt.author.get_full_name|default:''|lower }} {{ evt.author.profile.get_role_display|default:'Main Admin'|lower }}" data-role="{{ evt.author.profile.role|default:'SUPER_ADMIN' }}" data-title="{{ evt.title|lower }}" data-date="{{ evt.date|date:'U' }}" data-type="{{ evt.event_type }}" style="border-color: {% if evt.event_type == 'Holiday' %}#fde047{% else %}#a29bfe{% endif %};">
 
                     <div class="content-card-thumbnail">
 
@@ -2957,6 +3108,19 @@
 
                 {% endfor %}
 
+                <div id="calendarEmptyCard" class="empty-state-card" style="display: none; grid-column: 1 / -1;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <div class="empty-state-title">No matching events</div>
+                    <div class="empty-state-desc">Try clearing your search or changing the role filter.</div>
+                </div>
+
+            </div>
+
+            <div id="calendarSeeMoreContainer" style="display: none; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 16px;">
+                <button type="button" id="calendarSeeMoreBtn" class="db-btn teal" style="padding: 8px 26px; font-size: 0.85rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: none; font-family: 'Nunito', sans-serif; font-weight: 800; box-shadow: 0 4px 14px rgba(46, 204, 113, 0.25);">
+                    <span>See More</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
             </div>
 
         </div>
@@ -3469,21 +3633,43 @@
 
             <div class="db-card">
 
-                <!-- Search bar for Registered Accounts -->
+                <!-- Search & Filters bar for Registered Accounts -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
-                    <div style="position: relative; flex: 1; max-width: 520px;">
-                        <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: #1e293b;">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="butt" stroke-linejoin="miter">
-                                <circle cx="10.5" cy="10.5" r="7.5" />
-                                <line x1="16" y1="16" x2="21.5" y2="21.5" stroke-width="2.6" stroke-linecap="square" />
-                            </svg>
-                        </span>
-                        <input type="text" id="manageUsersSearchInput" placeholder="Search accounts by username, full name, email, role, or date..." 
-                            oninput="filterManageAccountsTable(this.value)" 
-                            style="width: 100%; padding: 10px 40px 10px 44px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;"
-                            onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.15)';"
-                            onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';">
-                        <button type="button" id="clearManageUsersSearchBtn" onclick="clearManageAccountsSearch()" style="display: none; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; color: #64748b; font-size: 0.85rem; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="Clear search">✕</button>
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; flex-wrap: wrap; min-width: 280px;">
+                        <div style="position: relative; flex: 1; max-width: 440px; min-width: 200px;">
+                            <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: #1e293b;">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="butt" stroke-linejoin="miter">
+                                    <circle cx="10.5" cy="10.5" r="7.5" />
+                                    <line x1="16" y1="16" x2="21.5" y2="21.5" stroke-width="2.6" stroke-linecap="square" />
+                                </svg>
+                            </span>
+                            <input type="text" id="manageUsersSearchInput" placeholder="Search accounts by username, full name, email, role, or date..." 
+                                style="width: 100%; padding: 10px 40px 10px 44px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;"
+                                onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.15)';"
+                                onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';">
+                            <button type="button" id="clearManageUsersSearchBtn" onclick="clearManageAccountsSearch()" style="display: none; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; color: #64748b; font-size: 0.85rem; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="Clear search">✕</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Role:</span>
+                            <select id="manageUsersRoleSelect" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="ALL">All Roles</option>
+                                <option value="TEACHER">Teachers</option>
+                                <option value="CLIENT">Students / Clients</option>
+                                <option value="SUPER_ADMIN">Main Admin</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Sort:</span>
+                            <select id="manageUsersSortSelect" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="date-desc" selected>Date: Newest First</option>
+                                <option value="date-asc">Date: Oldest First</option>
+                                <option value="role-teacher">Role: Teachers First</option>
+                                <option value="role-client">Role: Students First</option>
+                                <option value="role-admin">Role: Admins First</option>
+                                <option value="title-asc">Username: A → Z</option>
+                                <option value="title-desc">Username: Z → A</option>
+                            </select>
+                        </div>
                     </div>
                     <div id="manageUsersCount" style="font-size: 0.85rem; color: #64748b; font-weight: 700;">
                         Showing {{ users|length }} of {{ users|length }} registered accounts
@@ -3512,11 +3698,11 @@
 
                     </thead>
 
-                    <tbody>
+                    <tbody id="manageUsersTableBody">
 
                         {% for u in users %}
 
-                        <tr class="manage-user-row" data-search="{{ u.username|lower }} {{ u.get_full_name|lower }} {{ u.email|lower }} {{ u.profile.role|lower }} {{ u.profile.get_role_display|lower }} {{ u.profile.grade_level|default:''|lower }} {{ u.profile.section|default:''|lower }} {{ u.date_joined|date:'F d, Y'|lower }}">
+                        <tr class="manage-user-row" data-search="{{ u.username|lower }} {{ u.get_full_name|lower }} {{ u.email|lower }} {{ u.profile.role|lower }} {{ u.profile.get_role_display|lower }} {{ u.profile.grade_level|default:''|lower }} {{ u.profile.section|default:''|lower }} {{ u.date_joined|date:'F d, Y'|lower }}" data-role="{{ u.profile.role|default:'CLIENT' }}" data-title="{{ u.username|lower }}" data-date="{{ u.date_joined|date:'U' }}">
 
                             <td>
                                 <div><strong>{{ u.username }}</strong></div>
@@ -3595,9 +3781,20 @@
 
                         {% endfor %}
 
+                        <tr id="manageUsersEmptyRow" style="display: none;">
+                            <td colspan="6" class="db-empty" style="text-align: center; padding: 25px;">No matching accounts found.</td>
+                        </tr>
+
                     </tbody>
 
                 </table>
+
+                <div id="manageUsersSeeMoreContainer" style="display: none; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 8px;">
+                    <button type="button" id="manageUsersSeeMoreBtn" class="db-btn teal" style="padding: 8px 26px; font-size: 0.85rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: none; font-family: 'Nunito', sans-serif; font-weight: 800; box-shadow: 0 4px 14px rgba(46, 204, 113, 0.25);">
+                        <span>See More</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                </div>
 
             </div>
 
@@ -3627,7 +3824,52 @@
 
             <div class="db-card">
 
-                <table class="db-table">
+                <!-- Audit Log Toolbar -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; flex-wrap: wrap; min-width: 280px;">
+                        <div style="position: relative; flex: 1; max-width: 440px; min-width: 200px;">
+                            <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: #1e293b;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="butt" stroke-linejoin="miter">
+                                    <circle cx="10.5" cy="10.5" r="7.5" />
+                                    <line x1="16" y1="16" x2="21.5" y2="21.5" stroke-width="2.6" stroke-linecap="square" />
+                                </svg>
+                            </span>
+                            <input type="text" id="auditSearchInput" placeholder="Search audit logs by actor, action, target, or date..." 
+                                style="width: 100%; padding: 10px 38px 10px 42px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.88rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;"
+                                onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.15)';"
+                                onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';">
+                            <button type="button" id="auditClearSearchBtn" style="display: none; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; color: #64748b; font-size: 0.85rem; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="Clear search">✕</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Role:</span>
+                            <select id="auditRoleSelect" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="ALL">All Roles</option>
+                                <option value="TEACHER">Teachers</option>
+                                <option value="CLIENT">Students / Clients</option>
+                                <option value="SUPER_ADMIN">Main Admin</option>
+                                <option value="SYSTEM">System</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Sort:</span>
+                            <select id="auditSortSelect" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="date-desc" selected>When: Newest First</option>
+                                <option value="date-asc">When: Oldest First</option>
+                                <option value="role-teacher">Role: Teachers First</option>
+                                <option value="role-client">Role: Students First</option>
+                                <option value="role-admin">Role: Admins First</option>
+                                <option value="role-system">Role: System First</option>
+                                <option value="title-asc">Actor: A → Z</option>
+                                <option value="title-desc">Actor: Z → A</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="auditCount" style="font-size: 0.85rem; color: #64748b; font-weight: 700;">
+                        Showing 0 of 0 logs
+                    </div>
+                </div>
+
+                <table class="db-table" id="auditTable">
 
                     <thead>
 
@@ -3645,9 +3887,10 @@
 
                     </thead>
 
-                    <tbody>
+                    <tbody id="auditTableBody">
 
-                        {% for log in recent_audit_logs %}<tr>
+                        {% for log in recent_audit_logs %}
+                        <tr class="audit-row" data-search="{{ log.actor.username|default:'System'|lower }} {{ log.get_action_display|lower }} {{ log.target_label|lower }} {{ log.actor.profile.get_role_display|default:'System'|lower }}" data-role="{% if not log.actor %}SYSTEM{% else %}{{ log.actor.profile.role|default:'SUPER_ADMIN' }}{% endif %}" data-title="{{ log.actor.username|default:'System'|lower }}" data-date="{{ log.created_at|date:'U' }}">
 
                             <td>{{ log.created_at|date:"M d, Y h:i A" }}</td>
 
@@ -3665,9 +3908,20 @@
 
                         </tr>{% endfor %}
 
+                        <tr id="auditEmptyRow" style="display: none;">
+                            <td colspan="4" class="db-empty" style="text-align: center; padding: 25px;">No matching logs found.</td>
+                        </tr>
+
                     </tbody>
 
                 </table>
+
+                <div id="auditSeeMoreContainer" style="display: none; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 8px;">
+                    <button type="button" id="auditSeeMoreBtn" class="db-btn teal" style="padding: 8px 26px; font-size: 0.85rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: none; font-family: 'Nunito', sans-serif; font-weight: 800; box-shadow: 0 4px 14px rgba(46, 204, 113, 0.25);">
+                        <span>See More</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                </div>
 
             </div>
 
@@ -3699,7 +3953,7 @@
 
             <div class="db-card" style="margin-bottom: 20px;">
 
-                <div class="db-card-head" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="db-card-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
 
                     <h3>Archived Accounts</h3>
 
@@ -3711,6 +3965,48 @@
 
                     </div>
 
+                </div>
+
+                <!-- Archived Accounts Toolbar -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; flex-wrap: wrap; min-width: 280px;">
+                        <div style="position: relative; flex: 1; max-width: 440px; min-width: 200px;">
+                            <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: #1e293b;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="butt" stroke-linejoin="miter">
+                                    <circle cx="10.5" cy="10.5" r="7.5" />
+                                    <line x1="16" y1="16" x2="21.5" y2="21.5" stroke-width="2.6" stroke-linecap="square" />
+                                </svg>
+                            </span>
+                            <input type="text" id="archivedUsersSearchInput" placeholder="Search archived accounts by username or role..." 
+                                style="width: 100%; padding: 10px 38px 10px 42px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.88rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;"
+                                onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.15)';"
+                                onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';">
+                            <button type="button" id="archivedUsersClearSearchBtn" style="display: none; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; color: #64748b; font-size: 0.85rem; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="Clear search">✕</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Role:</span>
+                            <select id="archivedUsersRoleSelect" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="ALL">All Roles</option>
+                                <option value="TEACHER">Teachers</option>
+                                <option value="CLIENT">Students / Clients</option>
+                                <option value="SUPER_ADMIN">Main Admin</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Sort:</span>
+                            <select id="archivedUsersSortSelect" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="date-desc" selected>Archived: Newest First</option>
+                                <option value="date-asc">Archived: Oldest First</option>
+                                <option value="role-teacher">Role: Teachers First</option>
+                                <option value="role-client">Role: Students First</option>
+                                <option value="title-asc">Username: A → Z</option>
+                                <option value="title-desc">Username: Z → A</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="archivedUsersCount" style="font-size: 0.85rem; color: #64748b; font-weight: 700;">
+                        Showing 0 of 0 accounts
+                    </div>
                 </div>
 
                 <table class="db-table">
@@ -3735,7 +4031,8 @@
 
                     <tbody id="table-archived-user">
 
-                        {% for u in archived_users %}<tr>
+                        {% for u in archived_users %}
+                        <tr class="archived-user-row" data-search="{{ u.username|lower }} {{ u.profile.role|lower }} {{ u.profile.get_role_display|lower }} {{ u.date_joined|date:'M d, Y'|lower }}" data-role="{{ u.profile.role|default:'CLIENT' }}" data-title="{{ u.username|lower }}" data-date="{{ u.date_joined|date:'U' }}">
 
                             <td><input type="checkbox" class="select-item" value="{{ u.pk }}" onchange="updateBulkActionVisibility('table-archived-user', 'bulk-actions-user')"></td>
 
@@ -3765,9 +4062,20 @@
 
                         </tr>{% endfor %}
 
+                        <tr id="archivedUsersEmptyRow" style="display: none;">
+                            <td colspan="5" class="db-empty" style="text-align: center; padding: 25px;">No matching archived accounts found.</td>
+                        </tr>
+
                     </tbody>
 
                 </table>
+
+                <div id="archivedUsersSeeMoreContainer" style="display: none; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 8px;">
+                    <button type="button" id="archivedUsersSeeMoreBtn" class="db-btn teal" style="padding: 8px 26px; font-size: 0.85rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: none; font-family: 'Nunito', sans-serif; font-weight: 800; box-shadow: 0 4px 14px rgba(46, 204, 113, 0.25);">
+                        <span>See More</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                </div>
 
             </div>
 
@@ -3838,6 +4146,10 @@
                     </tbody>
 
                 </table>
+
+                <div id="archivedAnnouncementsSeeMoreContainer" style="display: none; justify-content: center; align-items: center; margin-top: 18px; margin-bottom: 8px;">
+                    <button type="button" id="archivedAnnouncementsSeeMoreBtn" class="db-btn teal" style="padding: 7px 22px; font-size: 0.82rem; border-radius: 50px; cursor: pointer; border: none; font-weight: 800;">See More</button>
+                </div>
 
             </div>
 
@@ -3913,9 +4225,13 @@
 
                 </table>
 
+                <div id="archivedVideosSeeMoreContainer" style="display: none; justify-content: center; align-items: center; margin-top: 18px; margin-bottom: 8px;">
+                    <button type="button" id="archivedVideosSeeMoreBtn" class="db-btn teal" style="padding: 7px 22px; font-size: 0.82rem; border-radius: 50px; cursor: pointer; border: none; font-weight: 800;">See More</button>
+                </div>
+
             </div>
 
-            <div class="db-card">
+            <div class="db-card" style="margin-bottom: 20px;">
 
                 <div class="db-card-head" style="display: flex; justify-content: space-between; align-items: center;">
 
@@ -3982,6 +4298,10 @@
                     </tbody>
 
                 </table>
+
+                <div id="archivedFlipbooksSeeMoreContainer" style="display: none; justify-content: center; align-items: center; margin-top: 18px; margin-bottom: 8px;">
+                    <button type="button" id="archivedFlipbooksSeeMoreBtn" class="db-btn teal" style="padding: 7px 22px; font-size: 0.82rem; border-radius: 50px; cursor: pointer; border: none; font-weight: 800;">See More</button>
+                </div>
 
             </div>
 
@@ -4059,6 +4379,10 @@
 
                 </table>
 
+                <div id="archivedEventsSeeMoreContainer" style="display: none; justify-content: center; align-items: center; margin-top: 18px; margin-bottom: 8px;">
+                    <button type="button" id="archivedEventsSeeMoreBtn" class="db-btn teal" style="padding: 7px 22px; font-size: 0.82rem; border-radius: 50px; cursor: pointer; border: none; font-weight: 800;">See More</button>
+                </div>
+
             </div>
 
 
@@ -4125,6 +4449,10 @@
 
                 </table>
 
+                <div id="archivedVCommentsSeeMoreContainer" style="display: none; justify-content: center; align-items: center; margin-top: 18px; margin-bottom: 8px;">
+                    <button type="button" id="archivedVCommentsSeeMoreBtn" class="db-btn teal" style="padding: 7px 22px; font-size: 0.82rem; border-radius: 50px; cursor: pointer; border: none; font-weight: 800;">See More</button>
+                </div>
+
             </div>
 
 
@@ -4190,6 +4518,10 @@
                     </tbody>
 
                 </table>
+
+                <div id="archivedFCommentsSeeMoreContainer" style="display: none; justify-content: center; align-items: center; margin-top: 18px; margin-bottom: 8px;">
+                    <button type="button" id="archivedFCommentsSeeMoreBtn" class="db-btn teal" style="padding: 7px 22px; font-size: 0.82rem; border-radius: 50px; cursor: pointer; border: none; font-weight: 800;">See More</button>
+                </div>
 
             </div>
 
@@ -6388,40 +6720,405 @@
 
     }
 
-    function filterManageAccountsTable(query) {
-        const input = document.getElementById('manageUsersSearchInput');
-        const clearBtn = document.getElementById('clearManageUsersSearchBtn');
-        const countDiv = document.getElementById('manageUsersCount');
-        const rows = document.querySelectorAll('.manage-user-row');
+    // Unified Tab Pagination, Role Filter & Sorting Controller
+    function setupTabPaginationAndSorting(config) {
+        const {
+            itemSelector,
+            containerSelector,
+            searchInputId,
+            clearSearchBtnId,
+            roleSelectId,
+            sortSelectId,
+            countIndicatorId,
+            seeMoreBtnId,
+            seeMoreContainerId,
+            emptyRowId,
+            pageSize = 10,
+            itemLabel = 'items',
+            defaultSort = 'date-desc'
+        } = config;
 
-        if (!query || query.trim() === '') {
-            if (clearBtn) clearBtn.style.display = 'none';
-            rows.forEach(r => r.style.display = '');
-            if (countDiv) countDiv.innerText = `Showing ${rows.length} of ${rows.length} registered accounts`;
+        const container = document.querySelector(containerSelector);
+        if (!container) return null;
+
+        const searchInput = document.getElementById(searchInputId);
+        const clearSearchBtn = document.getElementById(clearSearchBtnId);
+        const roleSelect = document.getElementById(roleSelectId);
+        const sortSelect = document.getElementById(sortSelectId);
+        const countIndicator = document.getElementById(countIndicatorId);
+        const seeMoreBtn = document.getElementById(seeMoreBtnId);
+        const seeMoreContainer = document.getElementById(seeMoreContainerId);
+        const emptyRow = document.getElementById(emptyRowId);
+
+        let allItems = Array.from(container.querySelectorAll(itemSelector));
+        if (allItems.length === 0) {
+            if (seeMoreContainer) seeMoreContainer.style.display = 'none';
+            if (countIndicator) countIndicator.innerText = `Showing 0 of 0 ${itemLabel}`;
+            return null;
+        }
+
+        let searchQuery = (searchInput ? searchInput.value : '').trim().toLowerCase();
+        let selectedRole = roleSelect ? roleSelect.value : 'ALL';
+        let sortOption = sortSelect ? sortSelect.value : defaultSort;
+        let visibleCount = pageSize;
+
+        function parseDate(el) {
+            const val = el.getAttribute('data-date');
+            if (!val) return 0;
+            const num = Number(val);
+            if (!isNaN(num)) return num;
+            const parsed = Date.parse(val);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        function parseTitle(el) {
+            return (el.getAttribute('data-title') || el.getAttribute('data-search') || '').toLowerCase().trim();
+        }
+
+        function parseRole(el) {
+            return (el.getAttribute('data-role') || '').toUpperCase().trim();
+        }
+
+        function update() {
+            const q = searchQuery.toLowerCase().trim();
+            const role = selectedRole.toUpperCase().trim();
+
+            const filtered = allItems.filter(item => {
+                const searchData = (item.getAttribute('data-search') || '').toLowerCase();
+                const itemRole = parseRole(item);
+
+                const matchesSearch = !q || searchData.includes(q);
+                const matchesRole = (role === 'ALL') || (itemRole === role);
+
+                return matchesSearch && matchesRole;
+            });
+
+            // Sorting logic
+            filtered.sort((a, b) => {
+                if (sortOption === 'role-teacher') {
+                    const aIs = parseRole(a) === 'TEACHER';
+                    const bIs = parseRole(b) === 'TEACHER';
+                    if (aIs && !bIs) return -1;
+                    if (!aIs && bIs) return 1;
+                    return parseDate(b) - parseDate(a);
+                }
+                if (sortOption === 'role-client') {
+                    const aIs = parseRole(a) === 'CLIENT';
+                    const bIs = parseRole(b) === 'CLIENT';
+                    if (aIs && !bIs) return -1;
+                    if (!aIs && bIs) return 1;
+                    return parseDate(b) - parseDate(a);
+                }
+                if (sortOption === 'role-admin') {
+                    const aIs = parseRole(a) === 'SUPER_ADMIN';
+                    const bIs = parseRole(b) === 'SUPER_ADMIN';
+                    if (aIs && !bIs) return -1;
+                    if (!aIs && bIs) return 1;
+                    return parseDate(b) - parseDate(a);
+                }
+                if (sortOption === 'role-system') {
+                    const aIs = parseRole(a) === 'SYSTEM';
+                    const bIs = parseRole(b) === 'SYSTEM';
+                    if (aIs && !bIs) return -1;
+                    if (!aIs && bIs) return 1;
+                    return parseDate(b) - parseDate(a);
+                }
+                if (sortOption === 'date-desc') {
+                    return parseDate(b) - parseDate(a);
+                }
+                if (sortOption === 'date-asc') {
+                    return parseDate(a) - parseDate(b);
+                }
+                if (sortOption === 'title-asc') {
+                    return parseTitle(a).localeCompare(parseTitle(b));
+                }
+                if (sortOption === 'title-desc') {
+                    return parseTitle(b).localeCompare(parseTitle(a));
+                }
+                return 0;
+            });
+
+            // Re-order in DOM
+            filtered.forEach(item => container.appendChild(item));
+
+            // Visibility
+            const totalMatching = filtered.length;
+            allItems.forEach(item => {
+                const idx = filtered.indexOf(item);
+                if (idx >= 0 && idx < visibleCount) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Counter
+            const currentlyShown = Math.min(visibleCount, totalMatching);
+            if (countIndicator) {
+                let text = `Showing ${currentlyShown} of ${totalMatching} ${itemLabel}`;
+                if (totalMatching !== allItems.length) {
+                    text += ` (filtered from ${allItems.length})`;
+                }
+                countIndicator.innerText = text;
+            }
+
+            // See More Button
+            if (seeMoreContainer && seeMoreBtn) {
+                if (visibleCount < totalMatching) {
+                    seeMoreContainer.style.display = 'flex';
+                    seeMoreBtn.style.display = 'inline-flex';
+                    const remaining = totalMatching - visibleCount;
+                    const textSpan = seeMoreBtn.querySelector('span');
+                    if (textSpan) {
+                        textSpan.innerText = `See More (${remaining} remaining)`;
+                    } else {
+                        seeMoreBtn.innerText = `See More (${remaining} remaining)`;
+                    }
+                } else {
+                    seeMoreContainer.style.display = 'none';
+                    seeMoreBtn.style.display = 'none';
+                }
+            }
+
+            // Empty state
+            if (emptyRow) {
+                if (totalMatching === 0) {
+                    emptyRow.style.display = '';
+                    container.appendChild(emptyRow);
+                } else {
+                    emptyRow.style.display = 'none';
+                }
+            }
+
+            // Clear search button visibility
+            if (clearSearchBtn) {
+                clearSearchBtn.style.display = q.length > 0 ? 'flex' : 'none';
+            }
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value;
+                visibleCount = pageSize;
+                update();
+            });
+        }
+
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', () => {
+                if (searchInput) searchInput.value = '';
+                searchQuery = '';
+                visibleCount = pageSize;
+                update();
+            });
+        }
+
+        if (roleSelect) {
+            roleSelect.addEventListener('change', (e) => {
+                selectedRole = e.target.value;
+                visibleCount = pageSize;
+                update();
+            });
+        }
+
+        if (sortSelect) {
+            sortSelect.addEventListener('change', (e) => {
+                sortOption = e.target.value;
+                visibleCount = pageSize;
+                update();
+            });
+        }
+
+        if (seeMoreBtn) {
+            seeMoreBtn.addEventListener('click', () => {
+                visibleCount += pageSize;
+                update();
+            });
+        }
+
+        update();
+
+        return {
+            update,
+            reset: () => {
+                visibleCount = pageSize;
+                update();
+            }
+        };
+    }
+
+    // Helper for simple table pagination (e.g. other archive tables)
+    function setupSimpleTablePagination(tbodyId, containerId, btnId, pageSize = 10) {
+        const tbody = document.getElementById(tbodyId);
+        const container = document.getElementById(containerId);
+        const btn = document.getElementById(btnId);
+        if (!tbody || !container || !btn) return;
+
+        const rows = Array.from(tbody.querySelectorAll('tr:not(.db-empty)'));
+        if (rows.length <= pageSize) {
+            container.style.display = 'none';
             return;
         }
 
-        if (clearBtn) clearBtn.style.display = 'flex';
-        const q = query.trim().toLowerCase();
-        let matchCount = 0;
-
-        rows.forEach(r => {
-            const searchData = r.getAttribute('data-search') || '';
-            if (searchData.includes(q)) {
-                r.style.display = '';
-                matchCount++;
+        let visible = pageSize;
+        function render() {
+            rows.forEach((r, idx) => {
+                r.style.display = idx < visible ? '' : 'none';
+            });
+            if (visible < rows.length) {
+                container.style.display = 'flex';
+                btn.style.display = 'inline-flex';
+                const remaining = rows.length - visible;
+                btn.innerText = `See More (${remaining} remaining)`;
             } else {
-                r.style.display = 'none';
+                container.style.display = 'none';
+                btn.style.display = 'none';
             }
+        }
+
+        btn.addEventListener('click', () => {
+            visible += pageSize;
+            render();
         });
 
-        if (countDiv) countDiv.innerText = `Showing ${matchCount} of ${rows.length} registered accounts`;
+        render();
+    }
+
+    let manageAccountsManager = null;
+    function filterManageAccountsTable(query) {
+        const input = document.getElementById('manageUsersSearchInput');
+        if (input && input.value !== query) {
+            input.value = query;
+        }
+        if (input) {
+            input.dispatchEvent(new Event('input'));
+        }
     }
 
     function clearManageAccountsSearch() {
         const input = document.getElementById('manageUsersSearchInput');
-        if (input) input.value = '';
-        filterManageAccountsTable('');
+        if (input) {
+            input.value = '';
+            input.dispatchEvent(new Event('input'));
+        }
+    }
+
+    function initAllTabPagination() {
+        // 1. Videos
+        setupTabPaginationAndSorting({
+            itemSelector: '.video-row',
+            containerSelector: '#videosTableBody',
+            searchInputId: 'videosSearchInput',
+            clearSearchBtnId: 'videosClearSearchBtn',
+            roleSelectId: 'videosRoleSelect',
+            sortSelectId: 'videosSortSelect',
+            countIndicatorId: 'videosCount',
+            seeMoreBtnId: 'videosSeeMoreBtn',
+            seeMoreContainerId: 'videosSeeMoreContainer',
+            emptyRowId: 'videosEmptyRow',
+            pageSize: 10,
+            itemLabel: 'videos',
+            defaultSort: 'date-desc'
+        });
+
+        // 2. Flipbooks
+        setupTabPaginationAndSorting({
+            itemSelector: '.flipbook-row',
+            containerSelector: '#flipbooksTableBody',
+            searchInputId: 'flipbooksSearchInput',
+            clearSearchBtnId: 'flipbooksClearSearchBtn',
+            roleSelectId: 'flipbooksRoleSelect',
+            sortSelectId: 'flipbooksSortSelect',
+            countIndicatorId: 'flipbooksCount',
+            seeMoreBtnId: 'flipbooksSeeMoreBtn',
+            seeMoreContainerId: 'flipbooksSeeMoreContainer',
+            emptyRowId: 'flipbooksEmptyRow',
+            pageSize: 10,
+            itemLabel: 'flipbooks',
+            defaultSort: 'date-desc'
+        });
+
+        // 3. Calendar
+        setupTabPaginationAndSorting({
+            itemSelector: '.calendar-card',
+            containerSelector: '#calendarGridCards',
+            searchInputId: 'calendarSearchInput',
+            clearSearchBtnId: 'calendarClearSearchBtn',
+            roleSelectId: 'calendarRoleSelect',
+            sortSelectId: 'calendarSortSelect',
+            countIndicatorId: 'calendarCount',
+            seeMoreBtnId: 'calendarSeeMoreBtn',
+            seeMoreContainerId: 'calendarSeeMoreContainer',
+            emptyRowId: 'calendarEmptyCard',
+            pageSize: 10,
+            itemLabel: 'events',
+            defaultSort: 'date-asc'
+        });
+
+        // 4. Accounts
+        manageAccountsManager = setupTabPaginationAndSorting({
+            itemSelector: '.manage-user-row',
+            containerSelector: '#manageUsersTableBody',
+            searchInputId: 'manageUsersSearchInput',
+            clearSearchBtnId: 'clearManageUsersSearchBtn',
+            roleSelectId: 'manageUsersRoleSelect',
+            sortSelectId: 'manageUsersSortSelect',
+            countIndicatorId: 'manageUsersCount',
+            seeMoreBtnId: 'manageUsersSeeMoreBtn',
+            seeMoreContainerId: 'manageUsersSeeMoreContainer',
+            emptyRowId: 'manageUsersEmptyRow',
+            pageSize: 10,
+            itemLabel: 'registered accounts',
+            defaultSort: 'date-desc'
+        });
+
+        // 5. Audit Log
+        setupTabPaginationAndSorting({
+            itemSelector: '.audit-row',
+            containerSelector: '#auditTableBody',
+            searchInputId: 'auditSearchInput',
+            clearSearchBtnId: 'auditClearSearchBtn',
+            roleSelectId: 'auditRoleSelect',
+            sortSelectId: 'auditSortSelect',
+            countIndicatorId: 'auditCount',
+            seeMoreBtnId: 'auditSeeMoreBtn',
+            seeMoreContainerId: 'auditSeeMoreContainer',
+            emptyRowId: 'auditEmptyRow',
+            pageSize: 10,
+            itemLabel: 'audit logs',
+            defaultSort: 'date-desc'
+        });
+
+        // 6. Archived Accounts
+        setupTabPaginationAndSorting({
+            itemSelector: '.archived-user-row',
+            containerSelector: '#table-archived-user',
+            searchInputId: 'archivedUsersSearchInput',
+            clearSearchBtnId: 'archivedUsersClearSearchBtn',
+            roleSelectId: 'archivedUsersRoleSelect',
+            sortSelectId: 'archivedUsersSortSelect',
+            countIndicatorId: 'archivedUsersCount',
+            seeMoreBtnId: 'archivedUsersSeeMoreBtn',
+            seeMoreContainerId: 'archivedUsersSeeMoreContainer',
+            emptyRowId: 'archivedUsersEmptyRow',
+            pageSize: 10,
+            itemLabel: 'archived accounts',
+            defaultSort: 'date-desc'
+        });
+
+        // Other archived tables (simple pagination)
+        setupSimpleTablePagination('table-archived-announcement', 'archivedAnnouncementsSeeMoreContainer', 'archivedAnnouncementsSeeMoreBtn', 10);
+        setupSimpleTablePagination('table-archived-video', 'archivedVideosSeeMoreContainer', 'archivedVideosSeeMoreBtn', 10);
+        setupSimpleTablePagination('table-archived-flipbook', 'archivedFlipbooksSeeMoreContainer', 'archivedFlipbooksSeeMoreBtn', 10);
+        setupSimpleTablePagination('table-archived-event', 'archivedEventsSeeMoreContainer', 'archivedEventsSeeMoreBtn', 10);
+        setupSimpleTablePagination('table-archived-video_comment', 'archivedVCommentsSeeMoreContainer', 'archivedVCommentsSeeMoreBtn', 10);
+        setupSimpleTablePagination('table-archived-flipbook_comment', 'archivedFCommentsSeeMoreContainer', 'archivedFCommentsSeeMoreBtn', 10);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAllTabPagination);
+    } else {
+        initAllTabPagination();
     }
 
     function filterAccountGrade(cat, btn) {

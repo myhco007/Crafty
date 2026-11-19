@@ -1181,20 +1181,20 @@ def dashboard(request):
             ).distinct(),
             'pending_videos':   AnimationVideo.objects.filter(is_approved=False, is_archived=False),
             'pending_flipbooks': Flipbook.objects.filter(is_approved=False, is_archived=False),
-            'recent_audit_logs': AuditLog.objects.select_related('actor')[:8],
+            'recent_audit_logs': AuditLog.objects.select_related('actor', 'actor__profile').order_by('-created_at'),
             'all_videos':       AnimationVideo.objects.filter(is_archived=False).select_related('author', 'author__profile', 'category').order_by('-created_at'),
             'all_flipbooks':    Flipbook.objects.filter(is_archived=False).select_related('author', 'author__profile', 'category').order_by('-created_at'),
             'archived_videos':  AnimationVideo.objects.filter(is_archived=True).select_related('author', 'author__profile', 'category').order_by('-created_at'),
             'archived_flipbooks': Flipbook.objects.filter(is_archived=True).select_related('author', 'author__profile', 'category').order_by('-created_at'),
             'archived_video_comments': VideoComment.objects.filter(is_archived=True).order_by('-created_at'),
             'archived_flipbook_comments': FlipbookComment.objects.filter(is_archived=True).order_by('-created_at'),
-            'users':            User.objects.filter(profile__is_archived=False).order_by('-date_joined'),
-            'archived_users':   User.objects.filter(profile__is_archived=True).order_by('-date_joined'),
+            'users':            User.objects.filter(profile__is_archived=False).select_related('profile').order_by('-date_joined'),
+            'archived_users':   User.objects.filter(profile__is_archived=True).select_related('profile').order_by('-date_joined'),
             'categories':       Category.objects.all(),
             'announcements':    Announcement.objects.filter(is_archived=False).order_by('-created_at'),
             'archived_announcements': Announcement.objects.filter(is_archived=True).order_by('-created_at'),
-            'calendar_events':  CalendarEvent.objects.filter(is_archived=False).order_by('date'),
-            'archived_events':  CalendarEvent.objects.filter(is_archived=True).order_by('date'),
+            'calendar_events':  CalendarEvent.objects.filter(is_archived=False).select_related('author', 'author__profile').order_by('date'),
+            'archived_events':  CalendarEvent.objects.filter(is_archived=True).select_related('author', 'author__profile').order_by('date'),
         }
 
         # Get set of already viewed pending IDs from session
@@ -1495,8 +1495,8 @@ def dashboard(request):
             'archived_video_comments': VideoComment.objects.filter(video__author=request.user, is_archived=True).order_by('-created_at'),
             'archived_flipbook_comments': FlipbookComment.objects.filter(flipbook__author=request.user, is_archived=True).order_by('-created_at'),
             'categories':   Category.objects.all(),
-            'calendar_events': CalendarEvent.objects.filter(is_archived=False).order_by('date'),
-            'archived_events': CalendarEvent.objects.filter(is_archived=True).order_by('date'),
+            'calendar_events': CalendarEvent.objects.filter(is_archived=False).select_related('author', 'author__profile').order_by('date'),
+            'archived_events': CalendarEvent.objects.filter(is_archived=True).select_related('author', 'author__profile').order_by('date'),
         }
 
         # Teacher Track Records
