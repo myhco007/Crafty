@@ -419,6 +419,157 @@
         document.getElementById('privacyModal').style.display = 'none';
     }
 
+    // Dynamic Section options based on Grade level
+    const GRADE_SECTIONS_DATA = {
+        'Grade 1': ['FAITHFUL', 'HELPFUL', 'SIMPLE', 'CHARMING', 'LOYAL', 'CAREFUL'],
+        'Grade 2': ['ADORABLE', 'FRIENDLY', 'JOYFUL', 'THOUGHTFUL', 'DELIGHTFUL'],
+        'Grade 3': ['SMART', 'PUNCTUAL', 'POLITE', 'HUMBLE', 'BLISSFUL'],
+        'Grade 4': ['RESILIENCE', 'HONEST', 'PERSEVERANCE', 'INNOVATIVE', 'OBEDIENT'],
+        'Grade 5': ['EAGER', 'AMIABLE', 'COURTEOUS', 'CHEERFUL'],
+        'Grade 6': ['RESPONSIBLE', 'EXCELLENT', 'COURAGEOUS', 'OPTIMISTIC']
+    };
+
+    function updateSectionDropdown(gradeVal, preselectVal) {
+        const sectionSelect = document.getElementById('sectionSelect');
+        if (!sectionSelect) return;
+        sectionSelect.innerHTML = '';
+
+        const list = GRADE_SECTIONS_DATA[gradeVal];
+        if (list && list.length > 0) {
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.disabled = true;
+            placeholder.textContent = 'Select Section';
+            if (!preselectVal) placeholder.selected = true;
+            sectionSelect.appendChild(placeholder);
+
+            list.forEach(secName => {
+                const opt = document.createElement('option');
+                opt.value = secName;
+                opt.textContent = secName;
+                if (preselectVal && preselectVal.toUpperCase() === secName.toUpperCase()) {
+                    opt.selected = true;
+                }
+                sectionSelect.appendChild(opt);
+            });
+            sectionSelect.disabled = false;
+        } else {
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            placeholder.textContent = 'Select Grade First';
+            sectionSelect.appendChild(placeholder);
+            sectionSelect.disabled = true;
+        }
+    }
+
+    function setRosterFieldsLocked(locked) {
+        const fnInput = document.getElementById('id_first_name');
+        const lnInput = document.getElementById('id_last_name');
+        const mnInput = document.getElementById('middle_name_input');
+        const noMnCheckbox = document.getElementById('no_middle_name');
+        const suffixSelect = document.getElementById('id_suffix');
+        const gradeSelect = document.getElementById('gradeLevelSelect');
+        const sectionSelect = document.getElementById('sectionSelect');
+
+        const lockedBg = '#f1f5f9';
+        const lockedColor = '#334155';
+        const lockedCursor = 'not-allowed';
+
+        if (locked) {
+            if (fnInput) {
+                fnInput.readOnly = true;
+                fnInput.style.backgroundColor = lockedBg;
+                fnInput.style.color = lockedColor;
+                fnInput.style.cursor = lockedCursor;
+            }
+            if (lnInput) {
+                lnInput.readOnly = true;
+                lnInput.style.backgroundColor = lockedBg;
+                lnInput.style.color = lockedColor;
+                lnInput.style.cursor = lockedCursor;
+            }
+            if (mnInput) {
+                mnInput.readOnly = true;
+                mnInput.style.backgroundColor = lockedBg;
+                mnInput.style.color = lockedColor;
+                mnInput.style.cursor = lockedCursor;
+            }
+            if (noMnCheckbox && noMnCheckbox.parentElement) {
+                noMnCheckbox.parentElement.style.pointerEvents = 'none';
+                noMnCheckbox.parentElement.style.opacity = '0.7';
+                noMnCheckbox.parentElement.style.cursor = lockedCursor;
+            }
+            if (suffixSelect) {
+                suffixSelect.style.pointerEvents = 'none';
+                suffixSelect.style.backgroundColor = lockedBg;
+                suffixSelect.style.color = lockedColor;
+                suffixSelect.style.cursor = lockedCursor;
+                suffixSelect.tabIndex = -1;
+            }
+            if (gradeSelect) {
+                gradeSelect.style.pointerEvents = 'none';
+                gradeSelect.style.backgroundColor = lockedBg;
+                gradeSelect.style.color = lockedColor;
+                gradeSelect.style.cursor = lockedCursor;
+                gradeSelect.tabIndex = -1;
+            }
+            if (sectionSelect) {
+                sectionSelect.style.pointerEvents = 'none';
+                sectionSelect.style.backgroundColor = lockedBg;
+                sectionSelect.style.color = lockedColor;
+                sectionSelect.style.cursor = lockedCursor;
+                sectionSelect.tabIndex = -1;
+            }
+        } else {
+            if (fnInput) {
+                fnInput.readOnly = false;
+                fnInput.style.backgroundColor = '';
+                fnInput.style.color = '';
+                fnInput.style.cursor = '';
+            }
+            if (lnInput) {
+                lnInput.readOnly = false;
+                lnInput.style.backgroundColor = '';
+                lnInput.style.color = '';
+                lnInput.style.cursor = '';
+            }
+            if (mnInput) {
+                mnInput.readOnly = false;
+                mnInput.style.backgroundColor = '';
+                mnInput.style.color = '';
+                mnInput.style.cursor = '';
+            }
+            if (noMnCheckbox && noMnCheckbox.parentElement) {
+                noMnCheckbox.parentElement.style.pointerEvents = '';
+                noMnCheckbox.parentElement.style.opacity = '';
+                noMnCheckbox.parentElement.style.cursor = '';
+            }
+            if (suffixSelect) {
+                suffixSelect.style.pointerEvents = '';
+                suffixSelect.style.backgroundColor = '';
+                suffixSelect.style.color = '';
+                suffixSelect.style.cursor = '';
+                suffixSelect.removeAttribute('tabindex');
+            }
+            if (gradeSelect) {
+                gradeSelect.style.pointerEvents = '';
+                gradeSelect.style.backgroundColor = '';
+                gradeSelect.style.color = '';
+                gradeSelect.style.cursor = '';
+                gradeSelect.removeAttribute('tabindex');
+            }
+            if (sectionSelect) {
+                sectionSelect.style.pointerEvents = '';
+                sectionSelect.style.backgroundColor = '';
+                sectionSelect.style.color = '';
+                sectionSelect.style.cursor = '';
+                sectionSelect.removeAttribute('tabindex');
+            }
+        }
+    }
+
     let lrnLookupTimeout = null;
     let lastLookedUpLrn = '';
 
@@ -436,6 +587,7 @@
             }
             if (spinner) spinner.style.display = 'none';
             lastLookedUpLrn = '';
+            setRosterFieldsLocked(false);
             return;
         }
 
@@ -492,17 +644,18 @@
                         }
                         if (gradeSelect && data.grade_level) {
                             gradeSelect.value = data.grade_level;
-                            if (typeof updateSectionDropdown === 'function') {
-                                updateSectionDropdown(data.grade_level, data.section);
-                            }
+                            updateSectionDropdown(data.grade_level, data.section);
                         }
+
+                        // Lock fields because student is verified in roster
+                        setRosterFieldsLocked(true);
 
                         if (badge) {
                             badge.style.display = 'inline-block';
                             badge.style.background = '#e8faf0';
                             badge.style.color = '#059669';
                             badge.style.border = '1px solid #a7f3d0';
-                            badge.textContent = `✓ Roster Verified: ${data.full_name}`;
+                            badge.textContent = `Roster Verified: ${data.full_name}`;
                         }
                         if (warning) {
                             warning.style.display = 'block';
@@ -511,18 +664,21 @@
                             warning.textContent = `Credentials verified from official student roster. Please type your username, Gmail, and password below.`;
                         }
                     } else {
+                        // Not found in roster -> unlock fields for manual student registration
+                        setRosterFieldsLocked(false);
+
                         if (badge) {
                             badge.style.display = 'inline-block';
                             badge.style.background = '#fffbeb';
                             badge.style.color = '#b45309';
                             badge.style.border = '1px solid #fde68a';
-                            badge.textContent = `⚠️ Not Found in Roster`;
+                            badge.textContent = `Not in Roster`;
                         }
                         if (warning) {
                             warning.style.display = 'block';
-                            warning.style.color = '#e53935';
+                            warning.style.color = '#b45309';
                             warning.style.fontWeight = '700';
-                            warning.textContent = data.message || 'LRN not found in official student roster. Please verify with school admin.';
+                            warning.textContent = data.message || 'LRN not found in official student roster. Please enter your credentials manually.';
                         }
                     }
                 })
@@ -631,53 +787,8 @@
             }
         });
 
-        // Dynamic Section options based on Grade level
-        const GRADE_SECTIONS_DATA = {
-            'Grade 1': ['FAITHFUL', 'HELPFUL', 'SIMPLE', 'CHARMING', 'LOYAL', 'CAREFUL'],
-            'Grade 2': ['ADORABLE', 'FRIENDLY', 'JOYFUL', 'THOUGHTFUL', 'DELIGHTFUL'],
-            'Grade 3': ['SMART', 'PUNCTUAL', 'POLITE', 'HUMBLE', 'BLISSFUL'],
-            'Grade 4': ['RESILIENCE', 'HONEST', 'PERSEVERANCE', 'INNOVATIVE', 'OBEDIENT'],
-            'Grade 5': ['EAGER', 'AMIABLE', 'COURTEOUS', 'CHEERFUL'],
-            'Grade 6': ['RESPONSIBLE', 'EXCELLENT', 'COURAGEOUS', 'OPTIMISTIC']
-        };
-
         const gradeSelect = document.getElementById('gradeLevelSelect');
-        const sectionSelect = document.getElementById('sectionSelect');
         const savedSection = "{{ form_data.section|default:'' }}";
-
-        function updateSectionDropdown(gradeVal, preselectVal) {
-            if (!sectionSelect) return;
-            sectionSelect.innerHTML = '';
-
-            const list = GRADE_SECTIONS_DATA[gradeVal];
-            if (list && list.length > 0) {
-                const placeholder = document.createElement('option');
-                placeholder.value = '';
-                placeholder.disabled = true;
-                placeholder.textContent = 'Select Section';
-                if (!preselectVal) placeholder.selected = true;
-                sectionSelect.appendChild(placeholder);
-
-                list.forEach(secName => {
-                    const opt = document.createElement('option');
-                    opt.value = secName;
-                    opt.textContent = secName;
-                    if (preselectVal && preselectVal.toUpperCase() === secName.toUpperCase()) {
-                        opt.selected = true;
-                    }
-                    sectionSelect.appendChild(opt);
-                });
-                sectionSelect.disabled = false;
-            } else {
-                const placeholder = document.createElement('option');
-                placeholder.value = '';
-                placeholder.disabled = true;
-                placeholder.selected = true;
-                placeholder.textContent = 'Select Grade First';
-                sectionSelect.appendChild(placeholder);
-                sectionSelect.disabled = true;
-            }
-        }
 
         if (gradeSelect) {
             gradeSelect.addEventListener('change', function() {

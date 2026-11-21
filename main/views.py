@@ -1049,6 +1049,17 @@ def register_view(request):
             User.objects.filter(profile__lrn_number=lrn_number, profile__is_archived=True).delete()
             User.objects.filter(profile__lrn_number=lrn_number, profile__is_approved=False).delete()
 
+        # If student exists in the official roster, enforce their registered credentials
+        valid_student = ValidStudent.objects.filter(lrn_number=lrn_number).first() if lrn_number else None
+        if valid_student:
+            first_name = valid_student.first_name
+            last_name = valid_student.last_name
+            middle_name = valid_student.middle_name or ''
+            no_middle_name = '1' if not valid_student.middle_name else None
+            suffix = valid_student.suffix or ''
+            grade_level = valid_student.grade_level
+            section = valid_student.section
+
         if not no_middle_name and not middle_name:
             messages.error(request, 'Please enter your Middle Name or check "No Middle Name".')
         elif password1 != password2:
@@ -1065,8 +1076,6 @@ def register_view(request):
             messages.error(request, 'Username already taken.')
         elif not lrn_number or not lrn_number.isdigit() or len(lrn_number) != 12:
             messages.error(request, 'LRN Number must be exactly 12 digits.')
-        elif ValidStudent.objects.exists() and not ValidStudent.objects.filter(lrn_number=lrn_number).exists():
-            messages.error(request, 'This LRN was not found in the official student roster. Please enter a valid LRN or contact the school administrator.')
         elif UserProfile.objects.filter(lrn_number=lrn_number, is_approved=True, is_archived=False).exists():
             messages.error(request, 'This LRN Number is already registered by another user. Please use a different one.')
         elif not section or (GRADE_SECTIONS.get(grade_level) and section.strip().upper() not in GRADE_SECTIONS.get(grade_level, []) and not re.match(r'^[1-3]$', section.strip())):
