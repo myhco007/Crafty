@@ -1060,6 +1060,11 @@ def register_view(request):
             grade_level = valid_student.grade_level
             section = valid_student.section
 
+            # Roster confirms student belongs to school and needs to register an account.
+            # Clean up any stale or test user profile with this LRN so registration proceeds without error.
+            if not valid_student.is_registered or not valid_student.registered_user:
+                User.objects.filter(profile__lrn_number=lrn_number).delete()
+
         if not no_middle_name and not middle_name:
             messages.error(request, 'Please enter your Middle Name or check "No Middle Name".')
         elif password1 != password2:
@@ -1112,10 +1117,10 @@ def register_view(request):
             user.profile.is_approved = False
             user.profile.save()
 
-            # Link with official ValidStudent roster record if present
+            # Link with official ValidStudent roster record if present (pending admin approval)
             valid_record = ValidStudent.objects.filter(lrn_number=lrn_number).first()
             if valid_record:
-                valid_record.is_registered = True
+                valid_record.is_registered = False
                 valid_record.registered_user = user
                 valid_record.save()
             
@@ -1814,6 +1819,14 @@ def approve_user(request, pk):
         if hasattr(user, 'profile'):
             user.profile.is_approved = True
             user.profile.save()
+
+            # Mark associated ValidStudent roster record as registered upon admin approval
+            if user.profile.lrn_number:
+                valid_student = ValidStudent.objects.filter(lrn_number=user.profile.lrn_number).first()
+                if valid_student:
+                    valid_student.is_registered = True
+                    valid_student.registered_user = user
+                    valid_student.save()
         
         # Update user staff status if teacher
         if hasattr(user, 'profile') and user.profile.role == 'TEACHER':
@@ -1924,6 +1937,14 @@ def reject_user(request, pk):
         if hasattr(user, 'profile'):
             user.profile.is_archived = True
             user.profile.save()
+
+            # Release associated ValidStudent roster record if rejected
+            if user.profile.lrn_number:
+                valid_student = ValidStudent.objects.filter(lrn_number=user.profile.lrn_number).first()
+                if valid_student:
+                    valid_student.is_registered = False
+                    valid_student.registered_user = None
+                    valid_student.save()
         user.is_active = False
         user.save()
         
@@ -1988,6 +2009,14 @@ def delete_user(request, pk):
         if hasattr(user, 'profile'):
             user.profile.is_archived = True
             user.profile.save()
+
+            # Release associated ValidStudent roster record if rejected
+            if user.profile.lrn_number:
+                valid_student = ValidStudent.objects.filter(lrn_number=user.profile.lrn_number).first()
+                if valid_student:
+                    valid_student.is_registered = False
+                    valid_student.registered_user = None
+                    valid_student.save()
         user.is_active = False
         user.save()
         

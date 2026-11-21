@@ -3919,6 +3919,7 @@
                             <select id="rosterStatusFilter" onchange="filterRosterTable()" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
                                 <option value="ALL">All Status</option>
                                 <option value="READY">Ready to Register</option>
+                                <option value="PENDING">Pending Approval</option>
                                 <option value="REGISTERED">Registered</option>
                             </select>
                         </div>
@@ -3945,7 +3946,7 @@
                             <tr class="roster-row" 
                                 data-search="{{ s.lrn_number }} {{ s.full_name|lower }} {{ s.first_name|lower }} {{ s.last_name|lower }} {{ s.middle_name|default:''|lower }} {{ s.grade_level|lower }} {{ s.section|lower }}"
                                 data-grade="{{ s.grade_level }}"
-                                data-status="{% if s.is_registered %}REGISTERED{% else %}READY{% endif %}">
+                                data-status="{% if s.is_registered %}REGISTERED{% elif s.registered_user and not s.registered_user.profile.is_approved %}PENDING{% else %}READY{% endif %}">
                                 <td>
                                     <span style="font-family: monospace; font-size: 0.95rem; font-weight: 800; color: #0f172a; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; border: 1px solid #e2e8f0;">
                                         {{ s.lrn_number }}
@@ -3975,6 +3976,12 @@
                                         {% if s.registered_user %}
                                         <span style="color: #64748b; font-weight: 600;">(@{{ s.registered_user.username }})</span>
                                         {% endif %}
+                                    </span>
+                                    {% elif s.registered_user and not s.registered_user.profile.is_approved %}
+                                    <span style="background: #fef3c7; color: #d97706; border: 1px solid #fde68a; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;">
+                                        <span style="width: 6px; height: 6px; border-radius: 50%; background: #d97706;"></span>
+                                        Pending Approval
+                                        <span style="color: #64748b; font-weight: 600;">(@{{ s.registered_user.username }})</span>
                                     </span>
                                     {% else %}
                                     <span style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;">
