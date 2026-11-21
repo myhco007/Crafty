@@ -1243,6 +1243,10 @@
 
             onclick="showSection('roster'); return false;">Student Roster</a>
 
+        <a href="#section-promotion" data-section="promotion" class="db-sidebar-item"
+
+            onclick="showSection('promotion'); return false;">Grade Promotion</a>
+
         <a href="#section-audit" data-section="audit" class="db-sidebar-item"
 
             onclick="showSection('audit'); return false;">Audit Log</a>
@@ -4244,6 +4248,395 @@
                     <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1.5px solid #f1f5f9; padding-top: 16px;">
                         <button type="button" onclick="closeEditStudentModal()" style="padding: 10px 20px; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #f8fafc; color: #64748b; font-weight: 700; cursor: pointer;">Cancel</button>
                         <button type="submit" class="db-btn teal" style="padding: 10px 24px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer;">Update Student</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- GRADE PROMOTION SECTION -->
+        <div id="section-promotion" class="db-section" style="display:none;">
+            <div class="db-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <div class="db-page-badge">Manage</div>
+                    <h1 class="db-title">Grade Promotion</h1>
+                    <p class="db-sub">Advance student grade levels and sections for the new academic year.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" id="promoteSelectedBtn" class="db-btn teal" onclick="openPromoteBatchModal()" disabled style="display: inline-flex; align-items: center; gap: 8px; font-weight: 800; border-radius: 50px; padding: 10px 22px; cursor: not-allowed; border: none; opacity: 0.5; transition: all 0.2s; box-shadow: 0 4px 14px rgba(46, 204, 113, 0.25);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 11 12 6 7 11"></polyline><polyline points="17 18 12 13 7 18"></polyline></svg>
+                        <span>Promote Selected</span>
+                        <span id="batchSelectedBadge" style="display: none; background: #ffffff; color: #10b981; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 800; margin-left: 4px;">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Overview Cards -->
+            <div class="db-stats" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 25px;">
+                <div class="db-stat" style="border-left: 4px solid #3b82f6;">
+                    <div class="db-stat-top">
+                        <span class="db-stat-lbl">Promotable Students</span>
+                        <div class="db-stat-ico" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; display: flex; align-items: center; justify-content: center;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </div>
+                    </div>
+                    <div class="db-stat-num" id="promoTotalStudentsCount">{{ total_promotable_students }}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Active & roster students across all grades</div>
+                </div>
+
+                <div class="db-stat" style="border-left: 4px solid #10b981;">
+                    <div class="db-stat-top">
+                        <span class="db-stat-lbl">Curriculum Sections</span>
+                        <div class="db-stat-ico" style="background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        </div>
+                    </div>
+                    <div class="db-stat-num">{{ promotion_sections|length }}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Grade 1 through Grade 6 sections</div>
+                </div>
+
+                <div class="db-stat" style="border-left: 4px solid #8b5cf6;">
+                    <div class="db-stat-top">
+                        <span class="db-stat-lbl">Grade 6 Graduating Class</span>
+                        <div class="db-stat-ico" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; display: flex; align-items: center; justify-content: center;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                        </div>
+                    </div>
+                    <div class="db-stat-num" id="promoGrade6Count">{{ grade_6_student_count }}</div>
+                    <div style="font-size: 0.75rem; color: #8b5cf6; margin-top: 4px; font-weight: 700;">Will be marked as Graduated & Archived</div>
+                </div>
+            </div>
+
+            <!-- Promotion Table Card -->
+            <div class="db-card">
+                <!-- Toolbar with Search & Grade Filter Pills -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; flex-wrap: wrap; min-width: 280px;">
+                        <!-- Search Box -->
+                        <div style="position: relative; flex: 1; max-width: 340px; min-width: 200px;">
+                            <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: #1e293b;">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="10.5" cy="10.5" r="7.5" /><line x1="16" y1="16" x2="21.5" y2="21.5" stroke-width="2.6" /></svg>
+                            </span>
+                            <input type="text" id="promoSearchInput" placeholder="Search by grade or section name..."
+                                style="width: 100%; padding: 10px 40px 10px 44px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.88rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;"
+                                onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.15)';"
+                                onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';"
+                                oninput="filterPromotionTable()">
+                            <button type="button" id="clearPromoSearchBtn" onclick="clearPromoSearch()" style="display: none; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; color: #64748b; font-size: 0.85rem; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Clear search">✕</button>
+                        </div>
+
+                        <!-- Grade Filter Pills -->
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <button type="button" class="grade-filter-pill promo-pill active" data-grade="ALL" onclick="selectPromotionGradeFilter('ALL', this)">
+                                All Grades <span class="filter-count">{{ total_promotable_students }}</span>
+                            </button>
+                            <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 1" onclick="selectPromotionGradeFilter('Grade 1', this)">
+                                Grade 1 <span class="filter-count">{{ grade_promo_counts.grade_1 }}</span>
+                            </button>
+                            <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 2" onclick="selectPromotionGradeFilter('Grade 2', this)">
+                                Grade 2 <span class="filter-count">{{ grade_promo_counts.grade_2 }}</span>
+                            </button>
+                            <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 3" onclick="selectPromotionGradeFilter('Grade 3', this)">
+                                Grade 3 <span class="filter-count">{{ grade_promo_counts.grade_3 }}</span>
+                            </button>
+                            <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 4" onclick="selectPromotionGradeFilter('Grade 4', this)">
+                                Grade 4 <span class="filter-count">{{ grade_promo_counts.grade_4 }}</span>
+                            </button>
+                            <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 5" onclick="selectPromotionGradeFilter('Grade 5', this)">
+                                Grade 5 <span class="filter-count">{{ grade_promo_counts.grade_5 }}</span>
+                            </button>
+                            <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 6" onclick="selectPromotionGradeFilter('Grade 6', this)">
+                                Grade 6 <span class="filter-count">{{ grade_promo_counts.grade_6 }}</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="promoCountDisplay" style="font-size: 0.85rem; color: #64748b; font-weight: 700;">
+                        Showing {{ promotion_sections|length }} sections
+                    </div>
+                </div>
+
+                <!-- Full-Width Vertical List / Table View (File details list style) -->
+                <div style="overflow-x: auto;">
+                    <table class="db-table" id="promotionSectionsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 44px; text-align: center;">
+                                    <input type="checkbox" id="selectAllPromoSections" onchange="toggleSelectAllPromoSections(this)" title="Select all visible sections" style="cursor: pointer; width: 16px; height: 16px; accent-color: #10b981;">
+                                </th>
+                                <th>Grade Level</th>
+                                <th>Section</th>
+                                <th>Enrolled Students</th>
+                                <th>Next Grade Level</th>
+                                <th style="text-align: right; min-width: 220px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="promotionTableBody">
+                            {% for sec in promotion_sections %}
+                            <tr class="promo-section-row" data-grade="{{ sec.grade_level }}" data-section="{{ sec.section }}" data-search="{{ sec.grade_level|lower }} {{ sec.section|lower }}">
+                                <td style="text-align: center;">
+                                    <input type="checkbox" class="promo-sec-check" value="{{ sec.section_key }}" data-grade="{{ sec.grade_level }}" data-section="{{ sec.section }}" data-count="{{ sec.enrolled_count }}" data-is-graduating="{% if sec.is_graduating %}1{% else %}0{% endif %}" onchange="onPromotionCheckboxChanged()" style="cursor: pointer; width: 16px; height: 16px; accent-color: #10b981;">
+                                </td>
+                                <td>
+                                    <span class="db-badge {% if sec.grade_level == 'Grade 1' %}blue{% elif sec.grade_level == 'Grade 2' %}teal{% elif sec.grade_level == 'Grade 3' %}green{% elif sec.grade_level == 'Grade 4' %}amber{% elif sec.grade_level == 'Grade 5' %}purple{% else %}red{% endif %}" style="font-weight: 800; font-size: 0.8rem; padding: 4px 10px;">
+                                        {{ sec.grade_level }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span style="font-weight: 800; color: #1e293b; font-size: 0.95rem;">
+                                        {{ sec.section }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 800; background: {% if sec.enrolled_count > 0 %}#f0fdf4; color: #15803d; border: 1px solid #bbf7d0;{% else %}#f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0;{% endif %}">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                                        {{ sec.enrolled_count }} student{{ sec.enrolled_count|pluralize }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if sec.is_graduating %}
+                                    <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 0.82rem; font-weight: 800; background: #faf5ff; color: #7e22ce; border: 1.5px solid #e9d5ff;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                                        {{ sec.grade_level }} &rarr; Graduated / Archived
+                                    </span>
+                                    {% else %}
+                                    <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 0.82rem; font-weight: 800; background: #eff6ff; color: #1d4ed8; border: 1.5px solid #bfdbfe;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                        {{ sec.grade_level }} &rarr; {{ sec.next_grade }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: right;">
+                                    <div style="display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end;">
+                                        <!-- Accordion View Students Button -->
+                                        <button type="button" class="promo-accordion-btn" onclick="toggleSectionAccordion('{{ sec.row_id }}', this)" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.15s ease;" title="Expand enrolled students">
+                                            <span>Students ({{ sec.enrolled_count }})</span>
+                                            <svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition: transform 0.2s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                        </button>
+
+                                        <!-- Direct Promote / Graduate Button -->
+                                        {% if sec.is_graduating %}
+                                        <button type="button" class="db-btn red" onclick="openPromoteSectionModal('{{ sec.grade_level }}', '{{ sec.section }}', {{ sec.enrolled_count }}, true)" {% if sec.enrolled_count == 0 %}disabled style="opacity: 0.45; cursor: not-allowed; padding: 7px 14px; font-size: 0.82rem;"{% else %}style="padding: 7px 14px; font-size: 0.82rem;"{% endif %}>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path></svg>
+                                            <span>Graduate</span>
+                                        </button>
+                                        {% else %}
+                                        <button type="button" class="db-btn teal" onclick="openPromoteSectionModal('{{ sec.grade_level }}', '{{ sec.section }}', {{ sec.enrolled_count }}, false)" {% if sec.enrolled_count == 0 %}disabled style="opacity: 0.45; cursor: not-allowed; padding: 7px 14px; font-size: 0.82rem;"{% else %}style="padding: 7px 14px; font-size: 0.82rem;"{% endif %}>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 11 12 6 7 11"></polyline></svg>
+                                            <span>Promote</span>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Expandable Students Accordion Sub-row -->
+                            <tr id="accordion-{{ sec.row_id }}" class="promo-accordion-row" style="display: none; background: #f8fafc;">
+                                <td colspan="6" style="padding: 16px 20px; border-bottom: 2px solid #e2e8f0;">
+                                    <div style="background: #ffffff; border-radius: 12px; border: 1.5px solid #e2e8f0; padding: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                                            <div style="font-size: 0.88rem; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                                                <span>{{ sec.grade_level }} &bull; Section {{ sec.section }} Students</span>
+                                                <span class="db-badge blue" style="font-size: 0.72rem;">{{ sec.enrolled_count }} Enrolled</span>
+                                            </div>
+                                            {% if sec.enrolled_count > 0 %}
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <button type="button" class="db-btn teal" onclick="promoteCheckedInAccordion('{{ sec.row_id }}', '{{ sec.grade_level }}', '{{ sec.section }}', {% if sec.is_graduating %}true{% else %}false{% endif %})" style="padding: 6px 14px; font-size: 0.78rem; font-weight: 800;">
+                                                    Promote Checked Students
+                                                </button>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+
+                                        {% if sec.enrolled_count == 0 %}
+                                        <div style="text-align: center; padding: 20px; color: #94a3b8; font-size: 0.88rem; font-style: italic;">
+                                            No students currently enrolled in {{ sec.grade_level }} &bull; Section {{ sec.section }}.
+                                        </div>
+                                        {% else %}
+                                        <div style="overflow-x: auto;">
+                                            <table style="width: 100%; border-collapse: collapse; font-size: 0.84rem;">
+                                                <thead>
+                                                    <tr style="border-bottom: 1.5px solid #f1f5f9; text-align: left; color: #64748b; font-weight: 800;">
+                                                        <th style="padding: 8px 10px; width: 36px; text-align: center;">
+                                                            <input type="checkbox" onchange="toggleSelectAllInAccordion('{{ sec.row_id }}', this)" title="Select all students in this section" style="cursor: pointer; width: 14px; height: 14px; accent-color: #10b981;">
+                                                        </th>
+                                                        <th style="padding: 8px 10px;">Student Name</th>
+                                                        <th style="padding: 8px 10px;">LRN Number</th>
+                                                        <th style="padding: 8px 10px;">Status</th>
+                                                        <th style="padding: 8px 10px; text-align: right;">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for st in sec.students %}
+                                                    <tr style="border-bottom: 1px solid #f8fafc;">
+                                                        <td style="padding: 8px 10px; text-align: center;">
+                                                            <input type="checkbox" class="student-check-{{ sec.row_id }}" 
+                                                                data-type="{{ st.type }}"
+                                                                data-user-id="{{ st.user_id|default:'' }}"
+                                                                data-roster-id="{{ st.roster_id|default:'' }}"
+                                                                data-name="{{ st.full_name }}"
+                                                                data-grade="{{ sec.grade_level }}"
+                                                                data-section="{{ sec.section }}"
+                                                                style="cursor: pointer; width: 14px; height: 14px; accent-color: #10b981;">
+                                                        </td>
+                                                        <td style="padding: 8px 10px; font-weight: 700; color: #1e293b;">
+                                                            {{ st.full_name }}
+                                                        </td>
+                                                        <td style="padding: 8px 10px; font-family: monospace; font-size: 0.85rem; color: #475569;">
+                                                            {{ st.lrn_number }}
+                                                        </td>
+                                                        <td style="padding: 8px 10px;">
+                                                            {% if st.type == 'user' or st.is_registered %}
+                                                            <span class="db-badge green" style="font-size: 0.72rem;">Registered Account</span>
+                                                            {% else %}
+                                                            <span class="db-badge amber" style="font-size: 0.72rem;">Official Roster</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td style="padding: 8px 10px; text-align: right;">
+                                                            <button type="button" class="db-btn {% if sec.is_graduating %}red{% else %}teal{% endif %}" onclick="openPromoteIndividualStudentModal('{{ st.type }}', '{{ st.user_id|default:'' }}', '{{ st.roster_id|default:'' }}', '{{ st.full_name|escapejs }}', '{{ sec.grade_level }}', '{{ sec.section }}', {% if sec.is_graduating %}true{% else %}false{% endif %})" style="padding: 4px 10px; font-size: 0.75rem;">
+                                                                {% if sec.is_graduating %}Graduate{% else %}Promote{% endif %}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROMOTE SINGLE SECTION MODAL -->
+        <div id="promoteSectionModal" class="privacy-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center;">
+            <div style="background: #ffffff; border-radius: 16px; width: 90%; max-width: 520px; padding: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: slideUpModal 0.3s ease-out; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px;">
+                    <div>
+                        <span id="sectionModalBadge" style="background: #dcfce7; color: #15803d; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800;">GRADE ADVANCEMENT</span>
+                        <h2 id="sectionModalTitle" style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-top: 4px;">Promote Section</h2>
+                    </div>
+                    <button type="button" onclick="closePromoteSectionModal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: #64748b; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">✕</button>
+                </div>
+
+                <form method="POST" action="{% url 'promote_students' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="mode" value="section">
+                    <input type="hidden" name="grade_level" id="promoSecGradeInput">
+                    <input type="hidden" name="section" id="promoSecSectionInput">
+
+                    <div id="sectionModalConfirmText" style="font-size: 0.95rem; color: #334155; line-height: 1.5; margin-bottom: 20px;">
+                        Are you sure you want to promote students?
+                    </div>
+
+                    <!-- Target Section Dropdown for Grade 1-5 -->
+                    <div id="sectionModalTargetSectionGroup" style="margin-bottom: 24px;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                            Assign Target Section in <span id="sectionModalNextGradeName" style="color: #0284c7;">Next Grade</span> <span style="color: #ef4444;">*</span>
+                        </label>
+                        <select name="target_section" id="promoSecTargetSelect" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; background: #fff; cursor: pointer; box-sizing: border-box;">
+                        </select>
+                        <span style="font-size: 0.75rem; color: #64748b; margin-top: 4px; display: block;">Students will be placed into this section under their new grade level.</span>
+                    </div>
+
+                    <!-- Graduation Alert for Grade 6 -->
+                    <div id="sectionModalGraduationNotice" style="display: none; background: #faf5ff; border: 1.5px solid #e9d5ff; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px;">
+                        <div style="display: flex; gap: 10px; align-items: flex-start;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7e22ce" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <div style="font-size: 0.85rem; color: #581c87; line-height: 1.4;">
+                                <strong>Automatic Archive:</strong> Grade 6 graduates do not advance to Grade 7. Their accounts will be marked as Graduated and automatically transferred to the Archive tab.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1.5px solid #f1f5f9; padding-top: 16px;">
+                        <button type="button" onclick="closePromoteSectionModal()" style="padding: 10px 20px; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #f8fafc; color: #64748b; font-weight: 700; cursor: pointer;">Cancel</button>
+                        <button type="submit" id="sectionModalSubmitBtn" class="db-btn teal" style="padding: 10px 24px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer;">Confirm Promotion</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- BATCH PROMOTION MODAL -->
+        <div id="promoteBatchModal" class="privacy-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center;">
+            <div style="background: #ffffff; border-radius: 16px; width: 90%; max-width: 550px; padding: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: slideUpModal 0.3s ease-out; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px;">
+                    <div>
+                        <span style="background: #e0e7ff; color: #4338ca; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800;">BATCH YEAR-END ADVANCEMENT</span>
+                        <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-top: 4px;">Promote Selected Sections</h2>
+                    </div>
+                    <button type="button" onclick="closePromoteBatchModal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: #64748b; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">✕</button>
+                </div>
+
+                <form method="POST" action="{% url 'promote_students' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="mode" value="batch_sections">
+                    <div id="batchSectionsInputsContainer"></div>
+
+                    <div style="margin-bottom: 16px; font-size: 0.95rem; color: #334155; line-height: 1.5;">
+                        Are you sure you want to promote the following selected section(s)?
+                    </div>
+
+                    <!-- Summary of selected sections -->
+                    <div id="batchModalSectionsList" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; max-height: 180px; overflow-y: auto; margin-bottom: 18px; font-size: 0.85rem; color: #1e293b;">
+                    </div>
+
+                    <!-- Batch Graduation Alert -->
+                    <div id="batchModalGradNotice" style="display: none; background: #faf5ff; border: 1.5px solid #e9d5ff; border-radius: 10px; padding: 12px 14px; margin-bottom: 18px;">
+                        <div style="display: flex; gap: 8px; align-items: center; font-size: 0.82rem; color: #6b21a8; font-weight: 700;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path></svg>
+                            <span>Includes Grade 6 sections: Students will graduate and be moved to Archive.</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1.5px solid #f1f5f9; padding-top: 16px;">
+                        <button type="button" onclick="closePromoteBatchModal()" style="padding: 10px 20px; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #f8fafc; color: #64748b; font-weight: 700; cursor: pointer;">Cancel</button>
+                        <button type="submit" class="db-btn teal" style="padding: 10px 24px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer;">Promote Selected Sections</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- INDIVIDUAL / CHECKED STUDENTS PROMOTION MODAL -->
+        <div id="promoteIndividualModal" class="privacy-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center;">
+            <div style="background: #ffffff; border-radius: 16px; width: 90%; max-width: 500px; padding: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: slideUpModal 0.3s ease-out; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px;">
+                    <div>
+                        <span id="indivModalBadge" style="background: #dbeafe; color: #1e40af; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800;">STUDENT PROMOTION</span>
+                        <h2 id="indivModalTitle" style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-top: 4px;">Promote Student</h2>
+                    </div>
+                    <button type="button" onclick="closePromoteIndividualModal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: #64748b; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">✕</button>
+                </div>
+
+                <form method="POST" action="{% url 'promote_students' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="mode" value="individual">
+                    <div id="indivIdsContainer"></div>
+
+                    <div id="indivModalBodyText" style="font-size: 0.95rem; color: #334155; line-height: 1.5; margin-bottom: 18px;">
+                        Promote selected student(s) to the next grade level?
+                    </div>
+
+                    <!-- Target Section Dropdown -->
+                    <div id="indivTargetSectionGroup" style="margin-bottom: 22px;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                            Assign Target Section in <span id="indivNextGradeText" style="color: #0284c7;">Next Grade</span> <span style="color: #ef4444;">*</span>
+                        </label>
+                        <select name="target_section" id="indivTargetSelect" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; background: #fff; cursor: pointer; box-sizing: border-box;">
+                        </select>
+                    </div>
+
+                    <!-- Grad Notice -->
+                    <div id="indivGradNotice" style="display: none; background: #faf5ff; border: 1.5px solid #e9d5ff; border-radius: 10px; padding: 12px 14px; margin-bottom: 18px;">
+                        <span style="font-size: 0.82rem; color: #6b21a8; font-weight: 700;">Student is in Grade 6 and will graduate, moving their record to Archive.</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1.5px solid #f1f5f9; padding-top: 16px;">
+                        <button type="button" onclick="closePromoteIndividualModal()" style="padding: 10px 20px; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #f8fafc; color: #64748b; font-weight: 700; cursor: pointer;">Cancel</button>
+                        <button type="submit" id="indivModalSubmitBtn" class="db-btn teal" style="padding: 10px 24px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer;">Confirm Promotion</button>
                     </div>
                 </form>
             </div>
@@ -8129,6 +8522,380 @@
             filterRosterTable();
             input.focus();
         }
+    }
+
+    /* ========================================================
+       GRADE PROMOTION JAVASCRIPT LOGIC
+       ======================================================== */
+    const NEXT_GRADE_PROMO_MAP = {{ next_grade_map_json|safe|default:'{}' }};
+    const GRADE_SECTIONS_PROMO_MAP = {{ grade_sections_map_json|safe|default:'{}' }};
+    let currentPromoGradeFilter = 'ALL';
+
+    function selectPromotionGradeFilter(grade, btn) {
+        currentPromoGradeFilter = grade;
+        document.querySelectorAll('.promo-pill').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        filterPromotionTable();
+    }
+
+    function filterPromotionTable() {
+        const query = (document.getElementById('promoSearchInput')?.value || '').trim().toLowerCase();
+        const clearBtn = document.getElementById('clearPromoSearchBtn');
+        if (clearBtn) clearBtn.style.display = query ? 'flex' : 'none';
+
+        const rows = document.querySelectorAll('#promotionTableBody tr.promo-section-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const grade = row.getAttribute('data-grade') || '';
+            const searchData = (row.getAttribute('data-search') || '').toLowerCase();
+            const sec = (row.getAttribute('data-section') || '').toLowerCase();
+
+            const matchesGrade = (currentPromoGradeFilter === 'ALL' || grade === currentPromoGradeFilter);
+            const matchesQuery = (!query || searchData.includes(query) || sec.includes(query) || grade.toLowerCase().includes(query));
+
+            if (matchesGrade && matchesQuery) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+                // Also close open accordion for hidden rows
+                const rowId = row.querySelector('.promo-accordion-btn')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+                if (rowId) {
+                    const accRow = document.getElementById('accordion-' + rowId);
+                    if (accRow) accRow.style.display = 'none';
+                    const chevron = row.querySelector('.accordion-chevron');
+                    if (chevron) chevron.style.transform = 'rotate(0deg)';
+                }
+            }
+        });
+
+        const countDisplay = document.getElementById('promoCountDisplay');
+        if (countDisplay) {
+            countDisplay.textContent = `Showing ${visibleCount} of ${rows.length} sections`;
+        }
+    }
+
+    function clearPromoSearch() {
+        const input = document.getElementById('promoSearchInput');
+        if (input) {
+            input.value = '';
+            filterPromotionTable();
+            input.focus();
+        }
+    }
+
+    function toggleSectionAccordion(rowId, btn) {
+        const accRow = document.getElementById('accordion-' + rowId);
+        if (!accRow) return;
+
+        const chevron = btn.querySelector('.accordion-chevron');
+        const isHidden = accRow.style.display === 'none' || accRow.style.display === '';
+
+        if (isHidden) {
+            accRow.style.display = 'table-row';
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
+        } else {
+            accRow.style.display = 'none';
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    function toggleSelectAllPromoSections(master) {
+        const isChecked = master.checked;
+        const visibleRows = document.querySelectorAll('#promotionTableBody tr.promo-section-row');
+        visibleRows.forEach(row => {
+            if (row.style.display !== 'none') {
+                const cb = row.querySelector('.promo-sec-check');
+                if (cb) cb.checked = isChecked;
+            }
+        });
+        onPromotionCheckboxChanged();
+    }
+
+    function onPromotionCheckboxChanged() {
+        const checkedBoxes = document.querySelectorAll('.promo-sec-check:checked');
+        const count = checkedBoxes.length;
+        const btn = document.getElementById('promoteSelectedBtn');
+        const badge = document.getElementById('batchSelectedBadge');
+
+        if (btn) {
+            if (count > 0) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                if (badge) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                }
+            } else {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                if (badge) {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+    }
+
+    function openPromoteSectionModal(grade, sec, count, isGraduating) {
+        const modal = document.getElementById('promoteSectionModal');
+        if (!modal) return;
+
+        document.getElementById('promoSecGradeInput').value = grade;
+        document.getElementById('promoSecSectionInput').value = sec;
+
+        const badge = document.getElementById('sectionModalBadge');
+        const title = document.getElementById('sectionModalTitle');
+        const confirmText = document.getElementById('sectionModalConfirmText');
+        const targetGroup = document.getElementById('sectionModalTargetSectionGroup');
+        const targetSelect = document.getElementById('promoSecTargetSelect');
+        const gradNotice = document.getElementById('sectionModalGraduationNotice');
+        const submitBtn = document.getElementById('sectionModalSubmitBtn');
+
+        if (isGraduating || grade === 'Grade 6') {
+            if (badge) {
+                badge.textContent = 'GRADUATION & ARCHIVE';
+                badge.style.background = '#faf5ff';
+                badge.style.color = '#7e22ce';
+            }
+            if (title) title.textContent = `Graduate ${grade} • Section ${sec}`;
+            if (confirmText) {
+                confirmText.innerHTML = `Are you sure you want to graduate <strong>${count}</strong> student(s) from <strong>${grade} • Section ${sec}</strong>?`;
+            }
+            if (targetGroup) targetGroup.style.display = 'none';
+            if (targetSelect) targetSelect.required = false;
+            if (gradNotice) gradNotice.style.display = 'block';
+            if (submitBtn) {
+                submitBtn.className = 'db-btn red';
+                submitBtn.textContent = 'Confirm Graduation & Archive';
+            }
+        } else {
+            const nextGrade = NEXT_GRADE_PROMO_MAP[grade] || '';
+            const nextSections = GRADE_SECTIONS_PROMO_MAP[nextGrade] || [];
+
+            if (badge) {
+                badge.textContent = 'GRADE ADVANCEMENT';
+                badge.style.background = '#dcfce7';
+                badge.style.color = '#15803d';
+            }
+            if (title) title.textContent = `Promote ${grade} • Section ${sec}`;
+            if (confirmText) {
+                confirmText.innerHTML = `Are you sure you want to advance <strong>${count}</strong> student(s) from <strong>${grade} • Section ${sec}</strong> to <strong>${nextGrade}</strong>?`;
+            }
+            if (targetGroup) targetGroup.style.display = 'block';
+            if (targetSelect) {
+                targetSelect.required = true;
+                targetSelect.innerHTML = '';
+                nextSections.forEach((s, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = `Section ${s}`;
+                    if (idx === 0) opt.selected = true;
+                    targetSelect.appendChild(opt);
+                });
+            }
+            const nextGradeLabel = document.getElementById('sectionModalNextGradeName');
+            if (nextGradeLabel) nextGradeLabel.textContent = nextGrade;
+
+            if (gradNotice) gradNotice.style.display = 'none';
+            if (submitBtn) {
+                submitBtn.className = 'db-btn teal';
+                submitBtn.textContent = 'Confirm Promotion';
+            }
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closePromoteSectionModal() {
+        const modal = document.getElementById('promoteSectionModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function openPromoteBatchModal() {
+        const checkedBoxes = Array.from(document.querySelectorAll('.promo-sec-check:checked'));
+        if (checkedBoxes.length === 0) {
+            alert('Please select at least one section to promote.');
+            return;
+        }
+
+        const modal = document.getElementById('promoteBatchModal');
+        const container = document.getElementById('batchSectionsInputsContainer');
+        const listDiv = document.getElementById('batchModalSectionsList');
+        const gradNotice = document.getElementById('batchModalGradNotice');
+
+        if (!modal || !container || !listDiv) return;
+
+        container.innerHTML = '';
+        listDiv.innerHTML = '';
+
+        let hasGrade6 = false;
+        let totalStudents = 0;
+
+        checkedBoxes.forEach(cb => {
+            const key = cb.value;
+            const grade = cb.getAttribute('data-grade') || '';
+            const sec = cb.getAttribute('data-section') || '';
+            const count = parseInt(cb.getAttribute('data-count') || '0', 10);
+            const isGrad = cb.getAttribute('data-is-graduating') === '1' || grade === 'Grade 6';
+
+            totalStudents += count;
+            if (isGrad) hasGrade6 = true;
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'section_keys';
+            input.value = key;
+            container.appendChild(input);
+
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.alignItems = 'center';
+            row.style.padding = '6px 0';
+            row.style.borderBottom = '1px solid #f1f5f9';
+
+            const nextGrade = NEXT_GRADE_PROMO_MAP[grade] || (isGrad ? 'Graduated' : '');
+            row.innerHTML = `
+                <div>
+                    <strong>${grade} • Section ${sec}</strong> 
+                    <span style="color: #64748b; font-size: 0.8rem;">(${count} students)</span>
+                </div>
+                <div style="font-weight: 700; color: ${isGrad ? '#7e22ce' : '#0284c7'}; font-size: 0.8rem;">
+                    &rarr; ${isGrad ? 'Graduated / Archived' : nextGrade}
+                </div>
+            `;
+            listDiv.appendChild(row);
+        });
+
+        if (gradNotice) {
+            gradNotice.style.display = hasGrade6 ? 'block' : 'none';
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closePromoteBatchModal() {
+        const modal = document.getElementById('promoteBatchModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function toggleSelectAllInAccordion(rowId, master) {
+        const isChecked = master.checked;
+        const cbs = document.querySelectorAll(`.student-check-${rowId}`);
+        cbs.forEach(cb => cb.checked = isChecked);
+    }
+
+    function promoteCheckedInAccordion(rowId, grade, sec, isGraduating) {
+        const checkedBoxes = Array.from(document.querySelectorAll(`.student-check-${rowId}:checked`));
+        if (checkedBoxes.length === 0) {
+            alert('Please select at least one student checkbox in this section.');
+            return;
+        }
+
+        openPromoteMultiStudentsModal(checkedBoxes, grade, sec, isGraduating);
+    }
+
+    function openPromoteIndividualStudentModal(type, userId, rosterId, name, grade, sec, isGraduating) {
+        const mockItem = {
+            getAttribute: (attr) => {
+                if (attr === 'data-type') return type;
+                if (attr === 'data-user-id') return userId;
+                if (attr === 'data-roster-id') return rosterId;
+                if (attr === 'data-name') return name;
+                return '';
+            }
+        };
+        openPromoteMultiStudentsModal([mockItem], grade, sec, isGraduating);
+    }
+
+    function openPromoteMultiStudentsModal(studentElements, grade, sec, isGraduating) {
+        const modal = document.getElementById('promoteIndividualModal');
+        const container = document.getElementById('indivIdsContainer');
+        const title = document.getElementById('indivModalTitle');
+        const bodyText = document.getElementById('indivModalBodyText');
+        const targetGroup = document.getElementById('indivTargetSectionGroup');
+        const targetSelect = document.getElementById('indivTargetSelect');
+        const nextGradeText = document.getElementById('indivNextGradeText');
+        const gradNotice = document.getElementById('indivGradNotice');
+        const submitBtn = document.getElementById('indivModalSubmitBtn');
+
+        if (!modal || !container) return;
+
+        container.innerHTML = '';
+        const names = [];
+
+        studentElements.forEach(el => {
+            const t = el.getAttribute('data-type');
+            const uid = el.getAttribute('data-user-id');
+            const rid = el.getAttribute('data-roster-id');
+            const n = el.getAttribute('data-name');
+            if (n) names.push(n);
+
+            if (uid) {
+                const inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = 'user_ids';
+                inp.value = uid;
+                container.appendChild(inp);
+            } else if (rid) {
+                const inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = 'roster_ids';
+                inp.value = rid;
+                container.appendChild(inp);
+            }
+        });
+
+        const isGrad = isGraduating || grade === 'Grade 6';
+        if (isGrad) {
+            if (title) title.textContent = studentElements.length === 1 ? `Graduate ${names[0] || 'Student'}` : `Graduate ${studentElements.length} Students`;
+            if (bodyText) {
+                bodyText.innerHTML = `Are you sure you want to graduate <strong>${names.length === 1 ? names[0] : names.length + ' students'}</strong> from <strong>${grade} • Section ${sec}</strong>? They will be marked as Graduated and automatically transferred to the Archive tab.`;
+            }
+            if (targetGroup) targetGroup.style.display = 'none';
+            if (targetSelect) targetSelect.required = false;
+            if (gradNotice) gradNotice.style.display = 'block';
+            if (submitBtn) {
+                submitBtn.className = 'db-btn red';
+                submitBtn.textContent = 'Confirm Graduation & Archive';
+            }
+        } else {
+            const nextGrade = NEXT_GRADE_PROMO_MAP[grade] || '';
+            const nextSections = GRADE_SECTIONS_PROMO_MAP[nextGrade] || [];
+
+            if (title) title.textContent = studentElements.length === 1 ? `Promote ${names[0] || 'Student'}` : `Promote ${studentElements.length} Students`;
+            if (bodyText) {
+                bodyText.innerHTML = `Advance <strong>${names.length === 1 ? names[0] : names.length + ' students'}</strong> from <strong>${grade} • Section ${sec}</strong> to <strong>${nextGrade}</strong>:`;
+            }
+            if (nextGradeText) nextGradeText.textContent = nextGrade;
+            if (targetGroup) targetGroup.style.display = 'block';
+            if (targetSelect) {
+                targetSelect.required = true;
+                targetSelect.innerHTML = '';
+                nextSections.forEach((s, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = `Section ${s}`;
+                    if (idx === 0) opt.selected = true;
+                    targetSelect.appendChild(opt);
+                });
+            }
+            if (gradNotice) gradNotice.style.display = 'none';
+            if (submitBtn) {
+                submitBtn.className = 'db-btn teal';
+                submitBtn.textContent = 'Confirm Promotion';
+            }
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closePromoteIndividualModal() {
+        const modal = document.getElementById('promoteIndividualModal');
+        if (modal) modal.style.display = 'none';
     }
 
 </script>

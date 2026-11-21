@@ -32,6 +32,15 @@ GRADE_SECTIONS = {
     'Grade 6': ['RESPONSIBLE', 'EXCELLENT', 'COURAGEOUS', 'OPTIMISTIC'],
 }
 
+NEXT_GRADE_MAP = {
+    'Grade 1': 'Grade 2',
+    'Grade 2': 'Grade 3',
+    'Grade 3': 'Grade 4',
+    'Grade 4': 'Grade 5',
+    'Grade 5': 'Grade 6',
+    'Grade 6': 'Graduated',
+}
+
 def verify_recaptcha(request):
     recaptcha_response = request.POST.get('g-recaptcha-response')
     if not recaptcha_response:
@@ -1774,6 +1783,98 @@ def dashboard(request):
                 'image_url': ''
             })
             
+    # Grade Promotion Structure & Aggregation
+    from collections import defaultdict
+    section_students_map = defaultdict(list)
+    user_seen_lrns = set()
+
+    # Query active approved students
+    active_student_users = User.objects.filter(
+        profile__role='CLIENT',
+        profile__is_archived=False,
+        profile__is_approved=True
+    ).select_related('profile').order_by('last_name', 'first_name')
+
+    for u in active_student_users:
+        g = u.profile.grade_level or ''
+        sec = (u.profile.section or '').strip().upper()
+        if g and sec:
+            if u.profile.lrn_number:
+                user_seen_lrns.add(u.profile.lrn_number)
+            section_students_map[(g, sec)].append({
+                'type': 'user',
+                'user_id': u.id,
+                'username': u.username,
+                'full_name': f"{u.first_name} {u.last_name}".strip() or u.username,
+                'first_name': u.first_name,
+                'last_name': u.last_name,
+                'email': u.email,
+                'lrn_number': u.profile.lrn_number or 'N/A',
+                'grade_level': g,
+                'section': sec,
+                'is_registered': True,
+                'status_label': 'Registered Account',
+            })
+
+    # Query ValidStudent roster records
+    all_roster_students = ValidStudent.objects.all().select_related('registered_user', 'registered_user__profile').order_by('last_name', 'first_name')
+    for s in all_roster_students:
+        g = s.grade_level or ''
+        sec = (s.section or '').strip().upper()
+        if s.lrn_number and s.lrn_number not in user_seen_lrns:
+            status_lbl = 'Registered Account' if s.is_registered else ('Pending Approval' if s.registered_user else 'Official Roster')
+            section_students_map[(g, sec)].append({
+                'type': 'roster',
+                'roster_id': s.id,
+                'user_id': s.registered_user_id if s.registered_user else None,
+                'username': s.registered_user.username if s.registered_user else 'Unregistered',
+                'full_name': s.full_name,
+                'first_name': s.first_name,
+                'last_name': s.last_name,
+                'email': s.registered_user.email if s.registered_user else '',
+                'lrn_number': s.lrn_number,
+                'grade_level': g,
+                'section': sec,
+                'is_registered': s.is_registered,
+                'status_label': status_lbl,
+            })
+
+    promotion_sections = []
+    total_promotable_students = 0
+    grade_student_counts = defaultdict(int)
+
+    for grade_name, sec_names in GRADE_SECTIONS.items():
+        for sec_name in sec_names:
+            sec_upper = sec_name.upper()
+            students = section_students_map.get((grade_name, sec_upper), [])
+            count = len(students)
+            total_promotable_students += count
+            grade_student_counts[grade_name] += count
+            next_g = NEXT_GRADE_MAP.get(grade_name, '')
+            next_secs = GRADE_SECTIONS.get(next_g, [])
+            default_dest_sec = next_secs[0] if next_secs else ''
+
+            promotion_sections.append({
+                'grade_level': grade_name,
+                'section': sec_name,
+                'section_key': f"{grade_name}::{sec_name}",
+                'row_id': f"{grade_name.lower().replace(' ', '-')}-{sec_name.lower()}",
+                'enrolled_count': count,
+                'next_grade': next_g,
+                'next_sections': next_secs,
+                'default_dest_sec': default_dest_sec,
+                'is_graduating': (grade_name == 'Grade 6'),
+                'students': students,
+            })
+
+    context['promotion_sections'] = promotion_sections
+    context['total_promotable_students'] = total_promotable_students
+    context['grade_student_counts'] = dict(grade_student_counts)
+    context['grade_promo_counts'] = {f'grade_{i}': grade_student_counts.get(f'Grade {i}', 0) for i in range(1, 7)}
+    context['grade_6_student_count'] = grade_student_counts.get('Grade 6', 0)
+    context['next_grade_map_json'] = json.dumps(NEXT_GRADE_MAP)
+    context['grade_sections_map_json'] = json.dumps(GRADE_SECTIONS)
+
     context['events_json'] = json.dumps(events_list)
         
     return render(request, 'main/dashboard.html', context)
@@ -3324,4 +3425,226 @@ def check_student_lrn_ajax(request):
         'full_name': student.full_name,
         'message': f"Student record found: {student.full_name} ({student.grade_level} - {student.section})"
     })
+
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def promote_students(request):
+    """
+    Handles automatic grade advancement and year-end promotion:
+    - Grade 1 -> Grade 2, Grade 2 -> Grade 3, ..., Grade 5 -> Grade 6
+    - Grade 6 -> Graduated / Archived (moves user to Archive tab)
+    - Syncs across UserProfile and ValidStudent roster records
+    - Records every promotion in AuditLog
+    """
+    if request.method != 'POST':
+        return redirect('/dashboard/#section-promotion')
+
+    mode = request.POST.get('mode', 'section')
+
+    promoted_users_count = 0
+    graduated_users_count = 0
+    promoted_roster_count = 0
+
+    if mode == 'section':
+        source_grade = (request.POST.get('source_grade') or request.POST.get('grade_level') or '').strip()
+        source_section = (request.POST.get('source_section') or request.POST.get('section') or '').strip()
+        target_section = request.POST.get('target_section', '').strip()
+
+        next_grade = NEXT_GRADE_MAP.get(source_grade)
+        if not next_grade:
+            messages.error(request, f"Invalid grade level: {source_grade}")
+            return redirect('/dashboard/#section-promotion')
+
+        if next_grade != 'Graduated':
+            valid_dest_secs = GRADE_SECTIONS.get(next_grade, [])
+            if not target_section or target_section.upper() not in [s.upper() for s in valid_dest_secs]:
+                target_section = valid_dest_secs[0] if valid_dest_secs else source_section
+
+        # Update UserProfiles
+        student_profiles = UserProfile.objects.filter(
+            role='CLIENT',
+            is_archived=False,
+            is_approved=True,
+            grade_level=source_grade,
+            section__iexact=source_section
+        ).select_related('user')
+
+        for prof in student_profiles:
+            u = prof.user
+            if next_grade == 'Graduated':
+                prof.is_archived = True
+                prof.save()
+                u.is_active = False
+                u.save()
+                graduated_users_count += 1
+                log_audit_event(
+                    request, 'graduate', u,
+                    metadata={'from_grade': source_grade, 'from_section': source_section, 'status': 'Graduated and Archived'},
+                    target_label=f"Graduated {u.username} from {source_grade} {source_section}"
+                )
+            else:
+                prof.grade_level = next_grade
+                prof.section = target_section
+                prof.save()
+                promoted_users_count += 1
+                log_audit_event(
+                    request, 'promote', u,
+                    metadata={'from_grade': source_grade, 'to_grade': next_grade, 'from_section': source_section, 'to_section': target_section},
+                    target_label=f"Promoted {u.username} from {source_grade} {source_section} to {next_grade} {target_section}"
+                )
+
+        # Sync matching ValidStudent roster records for this section
+        roster_qs = ValidStudent.objects.filter(
+            grade_level=source_grade,
+            section__iexact=source_section
+        )
+        for s in roster_qs:
+            if next_grade != 'Graduated':
+                s.grade_level = next_grade
+                s.section = target_section
+                s.save()
+                promoted_roster_count += 1
+
+        if next_grade == 'Graduated':
+            messages.success(request, f"Successfully graduated and archived {graduated_users_count} Grade 6 students from Section {source_section}.")
+        else:
+            messages.success(request, f"Successfully promoted {promoted_users_count + promoted_roster_count} student(s) from {source_grade} • Section {source_section} to {next_grade} • Section {target_section}.")
+
+    elif mode == 'batch_sections':
+        section_keys = request.POST.getlist('section_keys')
+        if not section_keys:
+            messages.error(request, "No sections were selected for promotion.")
+            return redirect('/dashboard/#section-promotion')
+
+        total_sections = 0
+        for sk in section_keys:
+            parts = sk.split('::')
+            if len(parts) != 2:
+                continue
+            s_grade, s_sec = parts[0].strip(), parts[1].strip()
+            next_grade = NEXT_GRADE_MAP.get(s_grade)
+            if not next_grade:
+                continue
+
+            valid_dest_secs = GRADE_SECTIONS.get(next_grade, [])
+            param_key = f"target_section_{s_grade.replace(' ', '_')}_{s_sec}"
+            custom_target_sec = request.POST.get(param_key, '').strip()
+            dest_sec = custom_target_sec if (custom_target_sec and custom_target_sec in valid_dest_secs) else (valid_dest_secs[0] if valid_dest_secs else s_sec)
+
+            profiles = UserProfile.objects.filter(
+                role='CLIENT',
+                is_archived=False,
+                is_approved=True,
+                grade_level=s_grade,
+                section__iexact=s_sec
+            ).select_related('user')
+
+            for prof in profiles:
+                u = prof.user
+                if next_grade == 'Graduated':
+                    prof.is_archived = True
+                    prof.save()
+                    u.is_active = False
+                    u.save()
+                    graduated_users_count += 1
+                    log_audit_event(
+                        request, 'graduate', u,
+                        metadata={'from_grade': s_grade, 'from_section': s_sec, 'status': 'Graduated and Archived'},
+                        target_label=f"Graduated {u.username} from {s_grade} {s_sec}"
+                    )
+                else:
+                    prof.grade_level = next_grade
+                    prof.section = dest_sec
+                    prof.save()
+                    promoted_users_count += 1
+                    log_audit_event(
+                        request, 'promote', u,
+                        metadata={'from_grade': s_grade, 'to_grade': next_grade, 'from_section': s_sec, 'to_section': dest_sec},
+                        target_label=f"Promoted {u.username} from {s_grade} {s_sec} to {next_grade} {dest_sec}"
+                    )
+
+            if next_grade != 'Graduated':
+                ValidStudent.objects.filter(
+                    grade_level=s_grade,
+                    section__iexact=s_sec
+                ).update(grade_level=next_grade, section=dest_sec)
+
+            total_sections += 1
+
+        msg = f"Batch promotion complete across {total_sections} section(s). {promoted_users_count} student(s) promoted"
+        if graduated_users_count > 0:
+            msg += f", and {graduated_users_count} Grade 6 student(s) graduated and moved to archive"
+        msg += "."
+        messages.success(request, msg)
+
+    elif mode == 'individual':
+        user_ids = [uid.strip() for uid in request.POST.getlist('user_ids') if uid.strip()]
+        roster_ids = [rid.strip() for rid in request.POST.getlist('roster_ids') if rid.strip()]
+        custom_dest_sec = request.POST.get('target_section', '').strip()
+
+        if not user_ids and not roster_ids:
+            messages.error(request, "No individual students were selected.")
+            return redirect('/dashboard/#section-promotion')
+
+        if user_ids:
+            users = User.objects.filter(id__in=user_ids).select_related('profile')
+            for u in users:
+                prof = u.profile
+                cur_g = prof.grade_level
+                next_g = NEXT_GRADE_MAP.get(cur_g)
+                if not next_g:
+                    continue
+                valid_dest_secs = GRADE_SECTIONS.get(next_g, [])
+                dest_sec = custom_dest_sec if (custom_dest_sec and custom_dest_sec in valid_dest_secs) else (valid_dest_secs[0] if valid_dest_secs else prof.section)
+
+                if next_g == 'Graduated':
+                    prof.is_archived = True
+                    prof.save()
+                    u.is_active = False
+                    u.save()
+                    graduated_users_count += 1
+                    log_audit_event(
+                        request, 'graduate', u,
+                        metadata={'from_grade': cur_g, 'from_section': prof.section, 'status': 'Graduated and Archived'},
+                        target_label=f"Graduated {u.username} from {cur_g} {prof.section}"
+                    )
+                else:
+                    prof.grade_level = next_g
+                    prof.section = dest_sec
+                    prof.save()
+                    promoted_users_count += 1
+                    log_audit_event(
+                        request, 'promote', u,
+                        metadata={'from_grade': cur_g, 'to_grade': next_g, 'from_section': prof.section, 'to_section': dest_sec},
+                        target_label=f"Promoted {u.username} from {cur_g} to {next_g} {dest_sec}"
+                    )
+
+                if prof.lrn_number and next_g != 'Graduated':
+                    ValidStudent.objects.filter(lrn_number=prof.lrn_number).update(
+                        grade_level=next_g,
+                        section=dest_sec
+                    )
+
+        if roster_ids:
+            roster_students = ValidStudent.objects.filter(id__in=roster_ids)
+            for s in roster_students:
+                cur_g = s.grade_level
+                next_g = NEXT_GRADE_MAP.get(cur_g)
+                if not next_g or next_g == 'Graduated':
+                    continue
+                valid_dest_secs = GRADE_SECTIONS.get(next_g, [])
+                dest_sec = custom_dest_sec if (custom_dest_sec and custom_dest_sec in valid_dest_secs) else (valid_dest_secs[0] if valid_dest_secs else s.section)
+                s.grade_level = next_g
+                s.section = dest_sec
+                s.save()
+                promoted_roster_count += 1
+
+        msg = f"Individual promotion complete: {promoted_users_count + promoted_roster_count} student(s) promoted"
+        if graduated_users_count > 0:
+            msg += f", and {graduated_users_count} Grade 6 student(s) graduated and moved to archive"
+        msg += "."
+        messages.success(request, msg)
+
+    return redirect('/dashboard/#section-promotion')
 

@@ -108,4 +108,7 @@ urlpatterns = [
     path('dashboard/roster/<int:pk>/edit/', views.student_roster_edit, name='student_roster_edit'),
     path('dashboard/roster/<int:pk>/delete/', views.student_roster_delete, name='student_roster_delete'),
     path('api/check-lrn/', views.check_student_lrn_ajax, name='check_student_lrn_ajax'),
+
+    # Grade Promotion API
+    path('dashboard/promotion/promote/', views.promote_students, name='promote_students'),
 ]
