@@ -1856,6 +1856,7 @@ def dashboard(request):
 
             promotion_sections.append({
                 'grade_level': grade_name,
+                'grade_num': int(grade_name.replace('Grade ', '') if 'Grade ' in grade_name else 0),
                 'section': sec_name,
                 'section_key': f"{grade_name}::{sec_name}",
                 'row_id': f"{grade_name.lower().replace(' ', '-')}-{sec_name.lower()}",

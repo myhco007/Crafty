@@ -4308,53 +4308,92 @@
 
             <!-- Promotion Table Card -->
             <div class="db-card">
-                <!-- Toolbar with Search & Grade Filter Pills -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
-                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; flex-wrap: wrap; min-width: 280px;">
+                <!-- Toolbar with Search, Grade Dropdown, Status Dropdown, and Sort Dropdown -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1; flex-wrap: wrap; min-width: 280px;">
                         <!-- Search Box -->
-                        <div style="position: relative; flex: 1; max-width: 340px; min-width: 200px;">
+                        <div style="position: relative; flex: 1; max-width: 300px; min-width: 180px;">
                             <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: #1e293b;">
                                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="10.5" cy="10.5" r="7.5" /><line x1="16" y1="16" x2="21.5" y2="21.5" stroke-width="2.6" /></svg>
                             </span>
-                            <input type="text" id="promoSearchInput" placeholder="Search by grade or section name..."
-                                style="width: 100%; padding: 10px 40px 10px 44px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.88rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;"
+                            <input type="text" id="promoSearchInput" placeholder="Search grade or section..."
+                                style="width: 100%; padding: 10px 38px 10px 42px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.88rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;"
                                 onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.15)';"
                                 onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';"
-                                oninput="filterPromotionTable()">
+                                oninput="applyPromotionFiltersAndSort()">
                             <button type="button" id="clearPromoSearchBtn" onclick="clearPromoSearch()" style="display: none; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; color: #64748b; font-size: 0.85rem; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Clear search">✕</button>
                         </div>
 
-                        <!-- Grade Filter Pills -->
-                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                            <button type="button" class="grade-filter-pill promo-pill active" data-grade="ALL" onclick="selectPromotionGradeFilter('ALL', this)">
-                                All Grades <span class="filter-count">{{ total_promotable_students }}</span>
-                            </button>
-                            <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 1" onclick="selectPromotionGradeFilter('Grade 1', this)">
-                                Grade 1 <span class="filter-count">{{ grade_promo_counts.grade_1 }}</span>
-                            </button>
-                            <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 2" onclick="selectPromotionGradeFilter('Grade 2', this)">
-                                Grade 2 <span class="filter-count">{{ grade_promo_counts.grade_2 }}</span>
-                            </button>
-                            <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 3" onclick="selectPromotionGradeFilter('Grade 3', this)">
-                                Grade 3 <span class="filter-count">{{ grade_promo_counts.grade_3 }}</span>
-                            </button>
-                            <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 4" onclick="selectPromotionGradeFilter('Grade 4', this)">
-                                Grade 4 <span class="filter-count">{{ grade_promo_counts.grade_4 }}</span>
-                            </button>
-                            <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 5" onclick="selectPromotionGradeFilter('Grade 5', this)">
-                                Grade 5 <span class="filter-count">{{ grade_promo_counts.grade_5 }}</span>
-                            </button>
-                            <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 6" onclick="selectPromotionGradeFilter('Grade 6', this)">
-                                Grade 6 <span class="filter-count">{{ grade_promo_counts.grade_6 }}</span>
-                            </button>
+                        <!-- Grade Dropdown -->
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Grade:</span>
+                            <select id="promoGradeSelect" onchange="onPromoGradeSelectChange()" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="ALL">All Grades ({{ total_promotable_students }})</option>
+                                <option value="Grade 1">Grade 1 ({{ grade_promo_counts.grade_1 }})</option>
+                                <option value="Grade 2">Grade 2 ({{ grade_promo_counts.grade_2 }})</option>
+                                <option value="Grade 3">Grade 3 ({{ grade_promo_counts.grade_3 }})</option>
+                                <option value="Grade 4">Grade 4 ({{ grade_promo_counts.grade_4 }})</option>
+                                <option value="Grade 5">Grade 5 ({{ grade_promo_counts.grade_5 }})</option>
+                                <option value="Grade 6">Grade 6 ({{ grade_promo_counts.grade_6 }})</option>
+                            </select>
+                        </div>
+
+                        <!-- Status / Enrollment Dropdown -->
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Status:</span>
+                            <select id="promoStatusSelect" onchange="applyPromotionFiltersAndSort()" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="ALL">All Sections</option>
+                                <option value="HAS_STUDENTS">With Enrolled Students</option>
+                                <option value="EMPTY">Empty Sections (0)</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort By Dropdown -->
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Sort:</span>
+                            <select id="promoSortSelect" onchange="applyPromotionFiltersAndSort()" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="grade-asc" selected>Grade: 1 &rarr; 6 (Ascending)</option>
+                                <option value="grade-desc">Grade: 6 &rarr; 1 (Descending)</option>
+                                <option value="section-asc">Section Name: A &rarr; Z</option>
+                                <option value="section-desc">Section Name: Z &rarr; A</option>
+                                <option value="students-desc">Students: Most Enrolled</option>
+                                <option value="students-asc">Students: Least Enrolled</option>
+                            </select>
                         </div>
                     </div>
+
                     <div id="promoCountDisplay" style="font-size: 0.85rem; color: #64748b; font-weight: 700;">
                         Showing {{ promotion_sections|length }} sections
                     </div>
                 </div>
 
-                <!-- Full-Width Vertical List / Table View (File details list style) -->
+                <!-- Secondary Filter Bar: Quick Grade Filter Pills -->
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; border-top: 1px solid #f1f5f9; padding-top: 14px;">
+                    <span style="font-size: 0.8rem; font-weight: 800; color: #64748b; margin-right: 4px;">Quick Filter:</span>
+                    <button type="button" class="grade-filter-pill promo-pill active" data-grade="ALL" onclick="selectPromotionGradeFilter('ALL', this)">
+                        All Grades <span class="filter-count">{{ total_promotable_students }}</span>
+                    </button>
+                    <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 1" onclick="selectPromotionGradeFilter('Grade 1', this)">
+                        Grade 1 <span class="filter-count">{{ grade_promo_counts.grade_1 }}</span>
+                    </button>
+                    <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 2" onclick="selectPromotionGradeFilter('Grade 2', this)">
+                        Grade 2 <span class="filter-count">{{ grade_promo_counts.grade_2 }}</span>
+                    </button>
+                    <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 3" onclick="selectPromotionGradeFilter('Grade 3', this)">
+                        Grade 3 <span class="filter-count">{{ grade_promo_counts.grade_3 }}</span>
+                    </button>
+                    <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 4" onclick="selectPromotionGradeFilter('Grade 4', this)">
+                        Grade 4 <span class="filter-count">{{ grade_promo_counts.grade_4 }}</span>
+                    </button>
+                    <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 5" onclick="selectPromotionGradeFilter('Grade 5', this)">
+                        Grade 5 <span class="filter-count">{{ grade_promo_counts.grade_5 }}</span>
+                    </button>
+                    <button type="button" class="grade-filter-pill promo-pill" data-grade="Grade 6" onclick="selectPromotionGradeFilter('Grade 6', this)">
+                        Grade 6 <span class="filter-count">{{ grade_promo_counts.grade_6 }}</span>
+                    </button>
+                </div>
+
+                <!-- Full-Width Vertical List / Table View -->
                 <div style="overflow-x: auto;">
                     <table class="db-table" id="promotionSectionsTable">
                         <thead>
@@ -4362,21 +4401,49 @@
                                 <th style="width: 44px; text-align: center;">
                                     <input type="checkbox" id="selectAllPromoSections" onchange="toggleSelectAllPromoSections(this)" title="Select all visible sections" style="cursor: pointer; width: 16px; height: 16px; accent-color: #10b981;">
                                 </th>
-                                <th>Grade Level</th>
-                                <th>Section</th>
-                                <th>Enrolled Students</th>
-                                <th>Next Grade Level</th>
-                                <th style="text-align: right; min-width: 220px;">Actions</th>
+                                <th onclick="handleColumnHeaderSort('grade')" style="cursor: pointer; user-select: none;" title="Click to sort by Grade Level">
+                                    <div style="display: inline-flex; align-items: center; gap: 6px;">
+                                        <span>GRADE LEVEL</span>
+                                        <span id="col-sort-grade" style="font-size: 0.72rem; color: #10b981;">▲</span>
+                                    </div>
+                                </th>
+                                <th onclick="handleColumnHeaderSort('section')" style="cursor: pointer; user-select: none;" title="Click to sort by Section Name">
+                                    <div style="display: inline-flex; align-items: center; gap: 6px;">
+                                        <span>SECTION</span>
+                                        <span id="col-sort-section" style="font-size: 0.72rem; color: #94a3b8;">▲▼</span>
+                                    </div>
+                                </th>
+                                <th onclick="handleColumnHeaderSort('students')" style="cursor: pointer; user-select: none;" title="Click to sort by Enrolled Students">
+                                    <div style="display: inline-flex; align-items: center; gap: 6px;">
+                                        <span>ENROLLED STUDENTS</span>
+                                        <span id="col-sort-students" style="font-size: 0.72rem; color: #94a3b8;">▲▼</span>
+                                    </div>
+                                </th>
+                                <th>NEXT GRADE LEVEL</th>
+                                <th style="text-align: right; min-width: 220px;">ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody id="promotionTableBody">
                             {% for sec in promotion_sections %}
-                            <tr class="promo-section-row" data-grade="{{ sec.grade_level }}" data-section="{{ sec.section }}" data-search="{{ sec.grade_level|lower }} {{ sec.section|lower }}">
+                            <tr class="promo-section-row" 
+                                data-row-id="{{ sec.row_id }}"
+                                data-grade="{{ sec.grade_level }}" 
+                                data-grade-num="{{ sec.grade_num }}"
+                                data-section="{{ sec.section }}" 
+                                data-count="{{ sec.enrolled_count }}"
+                                data-is-graduating="{% if sec.is_graduating %}1{% else %}0{% endif %}"
+                                data-search="{{ sec.grade_level|lower }} {{ sec.section|lower }}">
                                 <td style="text-align: center;">
                                     <input type="checkbox" class="promo-sec-check" value="{{ sec.section_key }}" data-grade="{{ sec.grade_level }}" data-section="{{ sec.section }}" data-count="{{ sec.enrolled_count }}" data-is-graduating="{% if sec.is_graduating %}1{% else %}0{% endif %}" onchange="onPromotionCheckboxChanged()" style="cursor: pointer; width: 16px; height: 16px; accent-color: #10b981;">
                                 </td>
                                 <td>
-                                    <span class="db-badge {% if sec.grade_level == 'Grade 1' %}blue{% elif sec.grade_level == 'Grade 2' %}teal{% elif sec.grade_level == 'Grade 3' %}green{% elif sec.grade_level == 'Grade 4' %}amber{% elif sec.grade_level == 'Grade 5' %}purple{% else %}red{% endif %}" style="font-weight: 800; font-size: 0.8rem; padding: 4px 10px;">
+                                    <span style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;
+                                        {% if sec.grade_level == 'Grade 1' %}background: #dbeafe; color: #1d4ed8; border: 1.5px solid #bfdbfe;
+                                        {% elif sec.grade_level == 'Grade 2' %}background: #ccfbf1; color: #0f766e; border: 1.5px solid #99f6e4;
+                                        {% elif sec.grade_level == 'Grade 3' %}background: #dcfce7; color: #15803d; border: 1.5px solid #bbf7d0;
+                                        {% elif sec.grade_level == 'Grade 4' %}background: #fef3c7; color: #b45309; border: 1.5px solid #fde68a;
+                                        {% elif sec.grade_level == 'Grade 5' %}background: #ede9fe; color: #6d28d9; border: 1.5px solid #ddd6fe;
+                                        {% else %}background: #fee2e2; color: #b91c1c; border: 1.5px solid #fecaca;{% endif %}">
                                         {{ sec.grade_level }}
                                     </span>
                                 </td>
@@ -4386,7 +4453,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 800; background: {% if sec.enrolled_count > 0 %}#f0fdf4; color: #15803d; border: 1px solid #bbf7d0;{% else %}#f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0;{% endif %}">
+                                    <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 800; background: {% if sec.enrolled_count > 0 %}#f0fdf4; color: #15803d; border: 1.5px solid #bbf7d0;{% else %}#f8fafc; color: #94a3b8; border: 1.5px solid #e2e8f0;{% endif %}">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
                                         {{ sec.enrolled_count }} student{{ sec.enrolled_count|pluralize }}
                                     </span>
@@ -4407,19 +4474,20 @@
                                 <td style="text-align: right;">
                                     <div style="display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end;">
                                         <!-- Accordion View Students Button -->
-                                        <button type="button" class="promo-accordion-btn" onclick="toggleSectionAccordion('{{ sec.row_id }}', this)" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.15s ease;" title="Expand enrolled students">
+                                        <button type="button" class="promo-accordion-btn" onclick="toggleSectionAccordion('{{ sec.row_id }}', this)" 
+                                            style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; border: 1.5px solid {% if sec.enrolled_count > 0 %}#cbd5e1{% else %}#e2e8f0{% endif %}; background: {% if sec.enrolled_count > 0 %}#ffffff{% else %}#f8fafc{% endif %}; color: {% if sec.enrolled_count > 0 %}#1e293b{% else %}#94a3b8{% endif %}; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.15s ease;" title="Expand enrolled students">
                                             <span>Students ({{ sec.enrolled_count }})</span>
                                             <svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition: transform 0.2s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                                         </button>
 
                                         <!-- Direct Promote / Graduate Button -->
                                         {% if sec.is_graduating %}
-                                        <button type="button" class="db-btn red" onclick="openPromoteSectionModal('{{ sec.grade_level }}', '{{ sec.section }}', {{ sec.enrolled_count }}, true)" {% if sec.enrolled_count == 0 %}disabled style="opacity: 0.45; cursor: not-allowed; padding: 7px 14px; font-size: 0.82rem;"{% else %}style="padding: 7px 14px; font-size: 0.82rem;"{% endif %}>
+                                        <button type="button" class="db-btn red" onclick="openPromoteSectionModal('{{ sec.grade_level }}', '{{ sec.section }}', {{ sec.enrolled_count }}, true)" {% if sec.enrolled_count == 0 %}disabled style="padding: 7px 14px; font-size: 0.82rem; font-weight: 700; border-radius: 8px; border: 1.5px solid #e2e8f0; background: #f8fafc; color: #94a3b8; cursor: not-allowed; opacity: 0.75;" title="No students enrolled to graduate"{% else %}style="padding: 7px 14px; font-size: 0.82rem;"{% endif %}>
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path></svg>
                                             <span>Graduate</span>
                                         </button>
                                         {% else %}
-                                        <button type="button" class="db-btn teal" onclick="openPromoteSectionModal('{{ sec.grade_level }}', '{{ sec.section }}', {{ sec.enrolled_count }}, false)" {% if sec.enrolled_count == 0 %}disabled style="opacity: 0.45; cursor: not-allowed; padding: 7px 14px; font-size: 0.82rem;"{% else %}style="padding: 7px 14px; font-size: 0.82rem;"{% endif %}>
+                                        <button type="button" class="db-btn teal" onclick="openPromoteSectionModal('{{ sec.grade_level }}', '{{ sec.section }}', {{ sec.enrolled_count }}, false)" {% if sec.enrolled_count == 0 %}disabled style="padding: 7px 14px; font-size: 0.82rem; font-weight: 700; border-radius: 8px; border: 1.5px solid #e2e8f0; background: #f8fafc; color: #94a3b8; cursor: not-allowed; opacity: 0.75;" title="No students enrolled to promote"{% else %}style="padding: 7px 14px; font-size: 0.82rem;"{% endif %}>
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 11 12 6 7 11"></polyline></svg>
                                             <span>Promote</span>
                                         </button>
@@ -8529,50 +8597,171 @@
        ======================================================== */
     const NEXT_GRADE_PROMO_MAP = {{ next_grade_map_json|safe|default:'{}' }};
     const GRADE_SECTIONS_PROMO_MAP = {{ grade_sections_map_json|safe|default:'{}' }};
-    let currentPromoGradeFilter = 'ALL';
 
     function selectPromotionGradeFilter(grade, btn) {
-        currentPromoGradeFilter = grade;
-        document.querySelectorAll('.promo-pill').forEach(b => b.classList.remove('active'));
-        if (btn) btn.classList.add('active');
-        filterPromotionTable();
+        const gradeSelect = document.getElementById('promoGradeSelect');
+        if (gradeSelect) gradeSelect.value = grade;
+        applyPromotionFiltersAndSort();
     }
 
-    function filterPromotionTable() {
+    function onPromoGradeSelectChange() {
+        applyPromotionFiltersAndSort();
+    }
+
+    function handleColumnHeaderSort(col) {
+        const sortSelect = document.getElementById('promoSortSelect');
+        if (!sortSelect) return;
+        const current = sortSelect.value;
+        let nextSort = '';
+
+        if (col === 'grade') {
+            nextSort = (current === 'grade-asc') ? 'grade-desc' : 'grade-asc';
+        } else if (col === 'section') {
+            nextSort = (current === 'section-asc') ? 'section-desc' : 'section-asc';
+        } else if (col === 'students') {
+            nextSort = (current === 'students-desc') ? 'students-asc' : 'students-desc';
+        }
+
+        if (nextSort) {
+            sortSelect.value = nextSort;
+            applyPromotionFiltersAndSort();
+        }
+    }
+
+    function updateHeaderSortIndicators(sortVal) {
+        const indGrade = document.getElementById('col-sort-grade');
+        const indSec = document.getElementById('col-sort-section');
+        const indStud = document.getElementById('col-sort-students');
+
+        if (indGrade) {
+            if (sortVal === 'grade-asc') {
+                indGrade.textContent = '▲';
+                indGrade.style.color = '#10b981';
+            } else if (sortVal === 'grade-desc') {
+                indGrade.textContent = '▼';
+                indGrade.style.color = '#10b981';
+            } else {
+                indGrade.textContent = '▲▼';
+                indGrade.style.color = '#94a3b8';
+            }
+        }
+
+        if (indSec) {
+            if (sortVal === 'section-asc') {
+                indSec.textContent = '▲';
+                indSec.style.color = '#10b981';
+            } else if (sortVal === 'section-desc') {
+                indSec.textContent = '▼';
+                indSec.style.color = '#10b981';
+            } else {
+                indSec.textContent = '▲▼';
+                indSec.style.color = '#94a3b8';
+            }
+        }
+
+        if (indStud) {
+            if (sortVal === 'students-asc') {
+                indStud.textContent = '▲';
+                indStud.style.color = '#10b981';
+            } else if (sortVal === 'students-desc') {
+                indStud.textContent = '▼';
+                indStud.style.color = '#10b981';
+            } else {
+                indStud.textContent = '▲▼';
+                indStud.style.color = '#94a3b8';
+            }
+        }
+    }
+
+    function applyPromotionFiltersAndSort() {
         const query = (document.getElementById('promoSearchInput')?.value || '').trim().toLowerCase();
+        const gradeFilter = document.getElementById('promoGradeSelect')?.value || 'ALL';
+        const statusFilter = document.getElementById('promoStatusSelect')?.value || 'ALL';
+        const sortVal = document.getElementById('promoSortSelect')?.value || 'grade-asc';
         const clearBtn = document.getElementById('clearPromoSearchBtn');
         if (clearBtn) clearBtn.style.display = query ? 'flex' : 'none';
 
-        const rows = document.querySelectorAll('#promotionTableBody tr.promo-section-row');
+        // Update pill active class to match dropdown
+        document.querySelectorAll('.promo-pill').forEach(b => {
+            if (b.getAttribute('data-grade') === gradeFilter) {
+                b.classList.add('active');
+            } else {
+                b.classList.remove('active');
+            }
+        });
+
+        // Update header sort indicators
+        updateHeaderSortIndicators(sortVal);
+
+        const tbody = document.getElementById('promotionTableBody');
+        if (!tbody) return;
+
+        // Collect all section rows and their paired accordion rows
+        const sectionRows = Array.from(tbody.querySelectorAll('tr.promo-section-row'));
+        const pairs = [];
+
+        sectionRows.forEach(secRow => {
+            const rowId = secRow.getAttribute('data-row-id');
+            const accRow = rowId ? document.getElementById('accordion-' + rowId) : secRow.nextElementSibling;
+            pairs.push({
+                secRow: secRow,
+                accRow: (accRow && accRow.classList.contains('promo-accordion-row')) ? accRow : null,
+                gradeNum: parseInt(secRow.getAttribute('data-grade-num') || '0', 10),
+                grade: secRow.getAttribute('data-grade') || '',
+                section: secRow.getAttribute('data-section') || '',
+                count: parseInt(secRow.getAttribute('data-count') || '0', 10),
+                search: (secRow.getAttribute('data-search') || '').toLowerCase(),
+            });
+        });
+
+        // Sort pairs
+        pairs.sort((a, b) => {
+            if (sortVal === 'grade-asc') {
+                return (a.gradeNum - b.gradeNum) || a.section.localeCompare(b.section);
+            } else if (sortVal === 'grade-desc') {
+                return (b.gradeNum - a.gradeNum) || a.section.localeCompare(b.section);
+            } else if (sortVal === 'section-asc') {
+                return a.section.localeCompare(b.section) || (a.gradeNum - b.gradeNum);
+            } else if (sortVal === 'section-desc') {
+                return b.section.localeCompare(a.section) || (a.gradeNum - b.gradeNum);
+            } else if (sortVal === 'students-desc') {
+                return (b.count - a.count) || (a.gradeNum - b.gradeNum) || a.section.localeCompare(b.section);
+            } else if (sortVal === 'students-asc') {
+                return (a.count - b.count) || (a.gradeNum - b.gradeNum) || a.section.localeCompare(b.section);
+            }
+            return 0;
+        });
+
+        // Re-append to tbody and apply filtering
         let visibleCount = 0;
+        pairs.forEach(p => {
+            const matchesGrade = (gradeFilter === 'ALL' || p.grade === gradeFilter);
+            const matchesStatus = (statusFilter === 'ALL') ||
+                (statusFilter === 'HAS_STUDENTS' && p.count > 0) ||
+                (statusFilter === 'EMPTY' && p.count === 0);
+            const matchesQuery = (!query || p.search.includes(query) || p.section.toLowerCase().includes(query) || p.grade.toLowerCase().includes(query));
 
-        rows.forEach(row => {
-            const grade = row.getAttribute('data-grade') || '';
-            const searchData = (row.getAttribute('data-search') || '').toLowerCase();
-            const sec = (row.getAttribute('data-section') || '').toLowerCase();
-
-            const matchesGrade = (currentPromoGradeFilter === 'ALL' || grade === currentPromoGradeFilter);
-            const matchesQuery = (!query || searchData.includes(query) || sec.includes(query) || grade.toLowerCase().includes(query));
-
-            if (matchesGrade && matchesQuery) {
-                row.style.display = '';
+            if (matchesGrade && matchesStatus && matchesQuery) {
+                p.secRow.style.display = '';
                 visibleCount++;
             } else {
-                row.style.display = 'none';
-                // Also close open accordion for hidden rows
-                const rowId = row.querySelector('.promo-accordion-btn')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
-                if (rowId) {
-                    const accRow = document.getElementById('accordion-' + rowId);
-                    if (accRow) accRow.style.display = 'none';
-                    const chevron = row.querySelector('.accordion-chevron');
+                p.secRow.style.display = 'none';
+                if (p.accRow) {
+                    p.accRow.style.display = 'none';
+                    const chevron = p.secRow.querySelector('.accordion-chevron');
                     if (chevron) chevron.style.transform = 'rotate(0deg)';
                 }
+            }
+
+            tbody.appendChild(p.secRow);
+            if (p.accRow) {
+                tbody.appendChild(p.accRow);
             }
         });
 
         const countDisplay = document.getElementById('promoCountDisplay');
         if (countDisplay) {
-            countDisplay.textContent = `Showing ${visibleCount} of ${rows.length} sections`;
+            countDisplay.textContent = `Showing ${visibleCount} of ${pairs.length} sections`;
         }
     }
 
@@ -8580,7 +8769,7 @@
         const input = document.getElementById('promoSearchInput');
         if (input) {
             input.value = '';
-            filterPromotionTable();
+            applyPromotionFiltersAndSort();
             input.focus();
         }
     }
