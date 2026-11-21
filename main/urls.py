@@ -102,4 +102,10 @@ urlpatterns = [
     path('dashboard/approve/bulk-action/', views.bulk_approval_action, name='bulk_approval_action'),
     path('dashboard/announcements/bulk-archive/', views.bulk_archive_announcements, name='bulk_archive_announcements'),
     path('dashboard/mark-pending-viewed/', views.mark_pending_viewed, name='mark_pending_viewed'),
+
+    # Student Roster CRUD & Validation API
+    path('dashboard/roster/create/', views.student_roster_create, name='student_roster_create'),
+    path('dashboard/roster/<int:pk>/edit/', views.student_roster_edit, name='student_roster_edit'),
+    path('dashboard/roster/<int:pk>/delete/', views.student_roster_delete, name='student_roster_delete'),
+    path('api/check-lrn/', views.check_student_lrn_ajax, name='check_student_lrn_ajax'),
 ]

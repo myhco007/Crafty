@@ -599,3 +599,62 @@ class StudentQuizAttempt(models.Model):
 
     def __str__(self):
         return f"{self.user.username} scored {self.score}/{self.total_questions} on {self.quiz.flipbook.title}"
+
+
+class ValidStudent(models.Model):
+    SUFFIX_CHOICES = [
+        ('', 'None'),
+        ('Jr.', 'Jr.'),
+        ('Sr.', 'Sr.'),
+        ('I', 'I'),
+        ('II', 'II'),
+        ('III', 'III'),
+        ('IV', 'IV'),
+        ('V', 'V'),
+    ]
+    GRADE_CHOICES = [
+        ('Grade 1', 'Grade 1'),
+        ('Grade 2', 'Grade 2'),
+        ('Grade 3', 'Grade 3'),
+        ('Grade 4', 'Grade 4'),
+        ('Grade 5', 'Grade 5'),
+        ('Grade 6', 'Grade 6'),
+    ]
+
+    lrn_number = models.CharField(max_length=12, unique=True, db_index=True)
+    first_name = models.CharField(max_length=100)
+    middle_name = models.CharField(max_length=100, blank=True, null=True)
+    last_name = models.CharField(max_length=100)
+    suffix = models.CharField(max_length=10, blank=True, null=True, choices=SUFFIX_CHOICES)
+    grade_level = models.CharField(max_length=20, choices=GRADE_CHOICES)
+    section = models.CharField(max_length=50)
+    is_registered = models.BooleanField(default=False)
+    registered_user = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='valid_student_record'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Valid Student'
+        verbose_name_plural = 'Valid Students'
+        ordering = ['grade_level', 'section', 'last_name', 'first_name']
+
+    @property
+    def full_name(self):
+        parts = [self.first_name]
+        if self.middle_name:
+            parts.append(self.middle_name)
+        parts.append(self.last_name)
+        name = " ".join(parts)
+        if self.suffix:
+            name += f" {self.suffix}"
+        return name
+
+    def __str__(self):
+        return f"{self.lrn_number} - {self.full_name}"
+

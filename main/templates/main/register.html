@@ -64,21 +64,50 @@
                 <form method="POST" action="{% url 'register' %}" onsubmit="return validateForm(event)">
                     {% csrf_token %}
 
-                    <!-- Row 1: First Name & Last Name -->
+                    <!-- Row 1: LRN Number Verification & Auto-fill -->
+                    <div class="form-group" style="margin-bottom: 7px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+                            <label style="margin-bottom: 0;">LRN Number (12-digit)</label>
+                            <span id="lrn-lookup-badge" style="display: none; font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 12px;"></span>
+                        </div>
+                        <div style="position: relative;">
+                            <input type="text" 
+                                   id="lrn_number_input"
+                                   name="lrn_number" 
+                                   value="{{ form_data.lrn_number|default:'' }}" 
+                                   placeholder="12-digit LRN (auto-fills student credentials)" 
+                                   pattern="[0-9]{12}" 
+                                   inputmode="numeric" 
+                                   title="LRN must be exactly 12 numeric digits" 
+                                   maxlength="12" 
+                                   minlength="12" 
+                                   autocomplete="off" 
+                                   required 
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12); checkLrnAutoFill(this.value);" 
+                                   onkeypress="return (event.charCode >= 48 && event.charCode <= 57)" 
+                                   onpaste="setTimeout(() => { this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12); checkLrnAutoFill(this.value); }, 0)">
+                            <div id="lrn-spinner" style="display: none; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;">
+                                <div style="width: 14px; height: 14px; border: 2px solid #cbd5e1; border-top-color: #10b981; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                            </div>
+                        </div>
+                        <small id="lrn-warning" class="field-warning" style="display: none;"></small>
+                    </div>
+
+                    <!-- Row 2: First Name & Last Name (Auto-filled) -->
                     <div class="form-row">
                         <div class="form-group">
                             <label>First Name</label>
-                            <input type="text" name="first_name" value="{{ form_data.first_name|default:'' }}" placeholder="First name" autocomplete="off" required oninput="validateName(this, 'fn-warning')">
+                            <input type="text" id="id_first_name" name="first_name" value="{{ form_data.first_name|default:'' }}" placeholder="First name" autocomplete="off" required oninput="validateName(this, 'fn-warning')">
                             <small id="fn-warning" class="field-warning">Please enter valid letters only.</small>
                         </div>
                         <div class="form-group">
                             <label>Last Name</label>
-                            <input type="text" name="last_name" value="{{ form_data.last_name|default:'' }}" placeholder="Last name" autocomplete="off" required oninput="validateName(this, 'ln-warning')">
+                            <input type="text" id="id_last_name" name="last_name" value="{{ form_data.last_name|default:'' }}" placeholder="Last name" autocomplete="off" required oninput="validateName(this, 'ln-warning')">
                             <small id="ln-warning" class="field-warning">Please enter valid letters only.</small>
                         </div>
                     </div>
 
-                    <!-- Row 2: Middle Name & Suffix -->
+                    <!-- Row 3: Middle Name & Suffix (Auto-filled) -->
                     <div class="form-row">
                         <div class="form-group" style="flex: 1.35;">
                             <div class="label-with-toggle">
@@ -93,7 +122,7 @@
                         </div>
                         <div class="form-group suffix-group" style="flex: 0.65;">
                             <label>Suffix</label>
-                            <select name="suffix" class="custom-suffix-select">
+                            <select name="suffix" id="id_suffix" class="custom-suffix-select">
                                 <option value="" {% if not form_data.suffix %}selected{% endif %}>None</option>
                                 <option value="Jr." {% if form_data.suffix == 'Jr.' %}selected{% endif %}>Jr.</option>
                                 <option value="Sr." {% if form_data.suffix == 'Sr.' %}selected{% endif %}>Sr.</option>
@@ -106,7 +135,7 @@
                         </div>
                     </div>
 
-                    <!-- Row 3: Grade Level & Section -->
+                    <!-- Row 4: Grade Level & Section (Auto-filled) -->
                     <div class="form-row">
                         <div class="form-group" style="flex: 1;">
                             <label>Grade level</label>
@@ -128,37 +157,17 @@
                         </div>
                     </div>
 
-                    <!-- Row 4: LRN Number & Username -->
+                    <!-- Row 5: Username & Gmail Address (Manually typed) -->
                     <div class="form-row">
-                        <div class="form-group" style="flex: 1.15;">
-                            <label>LRN Number (12-digit)</label>
-                            <input type="text" 
-                                   id="lrn_number_input"
-                                   name="lrn_number" 
-                                   value="{{ form_data.lrn_number|default:'' }}" 
-                                   placeholder="12-digit LRN (numbers only)" 
-                                   pattern="[0-9]{12}" 
-                                   inputmode="numeric" 
-                                   title="LRN must be exactly 12 numeric digits" 
-                                   maxlength="12" 
-                                   minlength="12" 
-                                   autocomplete="off" 
-                                   required 
-                                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12);" 
-                                   onkeypress="return (event.charCode >= 48 && event.charCode <= 57)" 
-                                   onpaste="setTimeout(() => { this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12); }, 0)">
-                        </div>
-                        <div class="form-group" style="flex: 0.85;">
+                        <div class="form-group" style="flex: 0.95;">
                             <label>Username</label>
-                            <input type="text" name="username" value="{{ form_data.username|default:'' }}" placeholder="Username" autocomplete="off" required>
+                            <input type="text" name="username" id="id_username" value="{{ form_data.username|default:'' }}" placeholder="Choose username" autocomplete="off" required>
                         </div>
-                    </div>
-
-                    <!-- Row 5: Email Address -->
-                    <div class="form-group">
-                        <label>Email Address</label>
-                        <input type="email" name="email" value="{{ form_data.email|default:'' }}" placeholder="example@gmail.com" autocomplete="off" required onblur="validateEmail(this, 'email-warning')" oninput="validateEmail(this, 'email-warning')">
-                        <small id="email-warning" class="field-warning">Please provide a valid @gmail.com address.</small>
+                        <div class="form-group" style="flex: 1.05;">
+                            <label>Gmail Address</label>
+                            <input type="email" name="email" id="id_email" value="{{ form_data.email|default:'' }}" placeholder="example@gmail.com" autocomplete="off" required onblur="validateEmail(this, 'email-warning')" oninput="validateEmail(this, 'email-warning')">
+                            <small id="email-warning" class="field-warning">Please provide a valid @gmail.com address.</small>
+                        </div>
                     </div>
 
                     <!-- Row 6: Password & Confirm -->
@@ -410,6 +419,145 @@
         document.getElementById('privacyModal').style.display = 'none';
     }
 
+    let lrnLookupTimeout = null;
+    let lastLookedUpLrn = '';
+
+    function checkLrnAutoFill(val) {
+        const cleanLrn = (val || '').replace(/\D/g, '').slice(0, 12);
+        const badge = document.getElementById('lrn-lookup-badge');
+        const warning = document.getElementById('lrn-warning');
+        const spinner = document.getElementById('lrn-spinner');
+
+        if (cleanLrn.length < 12) {
+            if (badge) badge.style.display = 'none';
+            if (warning) {
+                warning.style.display = 'none';
+                warning.textContent = '';
+            }
+            if (spinner) spinner.style.display = 'none';
+            lastLookedUpLrn = '';
+            return;
+        }
+
+        if (cleanLrn === lastLookedUpLrn) return;
+        lastLookedUpLrn = cleanLrn;
+
+        if (lrnLookupTimeout) clearTimeout(lrnLookupTimeout);
+
+        if (spinner) spinner.style.display = 'block';
+        if (badge) badge.style.display = 'none';
+        if (warning) warning.style.display = 'none';
+
+        lrnLookupTimeout = setTimeout(() => {
+            fetch(`/api/check-lrn/?lrn=${encodeURIComponent(cleanLrn)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (spinner) spinner.style.display = 'none';
+                    if (data.found && !data.is_registered) {
+                        const fnInput = document.getElementById('id_first_name');
+                        const lnInput = document.getElementById('id_last_name');
+                        const mnInput = document.getElementById('middle_name_input');
+                        const noMnCheckbox = document.getElementById('no_middle_name');
+                        const suffixSelect = document.getElementById('id_suffix');
+                        const gradeSelect = document.getElementById('gradeLevelSelect');
+
+                        if (fnInput) {
+                            fnInput.value = data.first_name || '';
+                            fnInput.classList.remove('input-error');
+                            pulseHighlight(fnInput);
+                        }
+                        if (lnInput) {
+                            lnInput.value = data.last_name || '';
+                            lnInput.classList.remove('input-error');
+                            pulseHighlight(lnInput);
+                        }
+                        if (data.no_middle_name) {
+                            if (noMnCheckbox) {
+                                noMnCheckbox.checked = true;
+                                toggleMiddleName(noMnCheckbox);
+                            }
+                        } else {
+                            if (noMnCheckbox) {
+                                noMnCheckbox.checked = false;
+                                toggleMiddleName(noMnCheckbox);
+                            }
+                            if (mnInput) {
+                                mnInput.value = data.middle_name || '';
+                                mnInput.classList.remove('input-error');
+                                pulseHighlight(mnInput);
+                            }
+                        }
+                        if (suffixSelect && data.suffix !== undefined) {
+                            suffixSelect.value = data.suffix || '';
+                        }
+                        if (gradeSelect && data.grade_level) {
+                            gradeSelect.value = data.grade_level;
+                            if (typeof updateSectionDropdown === 'function') {
+                                updateSectionDropdown(data.grade_level, data.section);
+                            }
+                        }
+
+                        if (badge) {
+                            badge.style.display = 'inline-block';
+                            badge.style.background = '#e8faf0';
+                            badge.style.color = '#059669';
+                            badge.style.border = '1px solid #a7f3d0';
+                            badge.textContent = `✓ Roster Verified: ${data.full_name}`;
+                        }
+                        if (warning) {
+                            warning.style.display = 'block';
+                            warning.style.color = '#059669';
+                            warning.style.fontWeight = '700';
+                            warning.textContent = `Credentials verified from official student roster. Please type your username, Gmail, and password below.`;
+                        }
+                    } else if (data.found && data.is_registered) {
+                        if (badge) {
+                            badge.style.display = 'inline-block';
+                            badge.style.background = '#fee2e2';
+                            badge.style.color = '#b91c1c';
+                            badge.style.border = '1px solid #fca5a5';
+                            badge.textContent = `⚠️ Already Registered`;
+                        }
+                        if (warning) {
+                            warning.style.display = 'block';
+                            warning.style.color = '#e53935';
+                            warning.style.fontWeight = '700';
+                            warning.textContent = data.message || 'This LRN has already been registered with an account.';
+                        }
+                    } else {
+                        if (badge) {
+                            badge.style.display = 'inline-block';
+                            badge.style.background = '#fffbeb';
+                            badge.style.color = '#b45309';
+                            badge.style.border = '1px solid #fde68a';
+                            badge.textContent = `⚠️ Not Found in Roster`;
+                        }
+                        if (warning) {
+                            warning.style.display = 'block';
+                            warning.style.color = '#e53935';
+                            warning.style.fontWeight = '700';
+                            warning.textContent = data.message || 'LRN not found in official student roster. Please verify with school admin.';
+                        }
+                    }
+                })
+                .catch(err => {
+                    if (spinner) spinner.style.display = 'none';
+                    console.error('LRN lookup error:', err);
+                });
+        }, 250);
+    }
+
+    function pulseHighlight(el) {
+        if (!el) return;
+        el.style.transition = 'all 0.3s ease';
+        el.style.borderColor = '#10b981';
+        el.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.25)';
+        setTimeout(() => {
+            el.style.borderColor = '';
+            el.style.boxShadow = '';
+        }, 1500);
+    }
+
     function agreeAndSubmit() {
         isPrivacyAgreed = true;
         document.getElementById('privacyModal').style.display = 'none';
@@ -433,6 +581,7 @@
             // Strip any non-numeric characters immediately on input/drag-and-drop
             lrnInputField.addEventListener('input', function() {
                 this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12);
+                checkLrnAutoFill(this.value);
             });
 
             // Sanitize pasted content
@@ -443,7 +592,13 @@
                 const start = this.selectionStart || 0;
                 const end = this.selectionEnd || 0;
                 this.value = (this.value.slice(0, start) + cleanDigits + this.value.slice(end)).slice(0, 12);
+                checkLrnAutoFill(this.value);
             });
+
+            // If LRN is already pre-filled (e.g. on reload / error)
+            if (lrnInputField.value && lrnInputField.value.length === 12) {
+                checkLrnAutoFill(lrnInputField.value);
+            }
         }
 
         const emailInput = document.querySelector('input[name="email"]');

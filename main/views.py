@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.core.mail import send_mail
 from main.email_utils import send_mail_async
 from .audit import log_audit_event
-from .models import AnimationVideo, AuditLog, Flipbook, Category, Announcement, Notification, VideoComment, FlipbookComment, UserProfile, StudentActivity, CalendarEvent, TeacherTask, PasswordResetCode, FlipbookQuiz, FlipbookQuestion, StudentQuizAttempt, FlipbookPageAudio, ContentTrackRecord
+from .models import AnimationVideo, AuditLog, Flipbook, Category, Announcement, Notification, VideoComment, FlipbookComment, UserProfile, StudentActivity, CalendarEvent, TeacherTask, PasswordResetCode, FlipbookQuiz, FlipbookQuestion, StudentQuizAttempt, FlipbookPageAudio, ContentTrackRecord, ValidStudent
 from .forms import AnimationVideoForm, FlipbookForm, AnnouncementForm, UserUpdateForm, UserProfileUpdateForm, CalendarEventForm, FlipbookQuizForm, FlipbookQuestionForm
 
 import urllib.request
@@ -1065,6 +1065,10 @@ def register_view(request):
             messages.error(request, 'Username already taken.')
         elif not lrn_number or not lrn_number.isdigit() or len(lrn_number) != 12:
             messages.error(request, 'LRN Number must be exactly 12 digits.')
+        elif ValidStudent.objects.exists() and not ValidStudent.objects.filter(lrn_number=lrn_number).exists():
+            messages.error(request, 'This LRN was not found in the official student roster. Please enter a valid LRN or contact the school administrator.')
+        elif ValidStudent.objects.filter(lrn_number=lrn_number, is_registered=True, registered_user__profile__is_approved=True, registered_user__profile__is_archived=False).exists():
+            messages.error(request, 'This LRN is already registered. Please log in or contact the administrator.')
         elif UserProfile.objects.filter(lrn_number=lrn_number, is_approved=True, is_archived=False).exists():
             messages.error(request, 'This LRN Number is already registered by another user. Please use a different one.')
         elif not section or (GRADE_SECTIONS.get(grade_level) and section.strip().upper() not in GRADE_SECTIONS.get(grade_level, []) and not re.match(r'^[1-3]$', section.strip())):
@@ -1100,6 +1104,13 @@ def register_view(request):
             # Set is_approved to False explicitly (although default is False)
             user.profile.is_approved = False
             user.profile.save()
+
+            # Link with official ValidStudent roster record if present
+            valid_record = ValidStudent.objects.filter(lrn_number=lrn_number).first()
+            if valid_record:
+                valid_record.is_registered = True
+                valid_record.registered_user = user
+                valid_record.save()
             
             log_audit_event(request, 'register', user, {'source': 'auth'}, target_label=user.username)
             
@@ -1293,6 +1304,11 @@ def dashboard(request):
             'archived_announcements': Announcement.objects.filter(is_archived=True).order_by('-created_at'),
             'calendar_events':  CalendarEvent.objects.filter(is_archived=False).select_related('author', 'author__profile').order_by('date'),
             'archived_events':  CalendarEvent.objects.filter(is_archived=True).select_related('author', 'author__profile').order_by('date'),
+            'roster_students':  ValidStudent.objects.all().select_related('registered_user', 'registered_user__profile').order_by('grade_level', 'section', 'last_name', 'first_name'),
+            'total_roster':     ValidStudent.objects.count(),
+            'roster_registered': ValidStudent.objects.filter(is_registered=True).count(),
+            'roster_unregistered': ValidStudent.objects.filter(is_registered=False).count(),
+            'grade_sections_json': json.dumps(GRADE_SECTIONS),
         }
 
         # Get set of already viewed pending IDs from session
@@ -3106,3 +3122,183 @@ def media_proxy(request, filepath):
             continue
 
     return HttpResponse("File not found", status=404)
+
+
+# ====================================================
+# STUDENT ROSTER (ADMIN & REGISTRATION)
+# ====================================================
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def student_roster_create(request):
+    if request.method == 'POST':
+        raw_lrn = request.POST.get('lrn_number', '')
+        lrn_number = re.sub(r'\D', '', raw_lrn) if raw_lrn else ''
+        first_name = request.POST.get('first_name', '').strip()
+        middle_name = request.POST.get('middle_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        suffix = request.POST.get('suffix', '').strip()
+        grade_level = request.POST.get('grade_level', '').strip()
+        section = request.POST.get('section', '').strip()
+
+        if not lrn_number or len(lrn_number) != 12:
+            messages.error(request, "LRN must be exactly 12 numeric digits.")
+            return redirect('/dashboard/#section-roster')
+
+        if ValidStudent.objects.filter(lrn_number=lrn_number).exists():
+            messages.error(request, f"A student with LRN {lrn_number} already exists in the roster.")
+            return redirect('/dashboard/#section-roster')
+
+        if not first_name or not last_name:
+            messages.error(request, "First Name and Last Name are required.")
+            return redirect('/dashboard/#section-roster')
+
+        if not grade_level or not section:
+            messages.error(request, "Grade Level and Section are required.")
+            return redirect('/dashboard/#section-roster')
+
+        student = ValidStudent.objects.create(
+            lrn_number=lrn_number,
+            first_name=first_name,
+            middle_name=middle_name or None,
+            last_name=last_name,
+            suffix=suffix or None,
+            grade_level=grade_level,
+            section=section,
+            is_registered=False
+        )
+
+        log_audit_event(
+            request,
+            'create',
+            student,
+            {'lrn': lrn_number, 'name': student.full_name, 'grade': grade_level, 'section': section},
+            target_label=f"Student Roster: {lrn_number}"
+        )
+
+        messages.success(request, f"Student {student.full_name} (LRN: {student.lrn_number}) was added to the Student Roster.")
+        return redirect('/dashboard/#section-roster')
+
+    return redirect('/dashboard/#section-roster')
+
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def student_roster_edit(request, pk):
+    student = get_object_or_404(ValidStudent, pk=pk)
+
+    if request.method == 'POST':
+        raw_lrn = request.POST.get('lrn_number', '')
+        lrn_number = re.sub(r'\D', '', raw_lrn) if raw_lrn else ''
+        first_name = request.POST.get('first_name', '').strip()
+        middle_name = request.POST.get('middle_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        suffix = request.POST.get('suffix', '').strip()
+        grade_level = request.POST.get('grade_level', '').strip()
+        section = request.POST.get('section', '').strip()
+
+        if not lrn_number or len(lrn_number) != 12:
+            messages.error(request, "LRN must be exactly 12 numeric digits.")
+            return redirect('/dashboard/#section-roster')
+
+        if ValidStudent.objects.filter(lrn_number=lrn_number).exclude(pk=pk).exists():
+            messages.error(request, f"Another student with LRN {lrn_number} already exists.")
+            return redirect('/dashboard/#section-roster')
+
+        if not first_name or not last_name:
+            messages.error(request, "First Name and Last Name are required.")
+            return redirect('/dashboard/#section-roster')
+
+        if not grade_level or not section:
+            messages.error(request, "Grade Level and Section are required.")
+            return redirect('/dashboard/#section-roster')
+
+        student.lrn_number = lrn_number
+        student.first_name = first_name
+        student.middle_name = middle_name or None
+        student.last_name = last_name
+        student.suffix = suffix or None
+        student.grade_level = grade_level
+        student.section = section
+        student.save()
+
+        log_audit_event(
+            request,
+            'update',
+            student,
+            {'lrn': lrn_number, 'name': student.full_name},
+            target_label=f"Student Roster: {lrn_number}"
+        )
+
+        messages.success(request, f"Student {student.full_name} was updated successfully.")
+        return redirect('/dashboard/#section-roster')
+
+    return redirect('/dashboard/#section-roster')
+
+
+@login_required(login_url='login')
+@user_passes_test(is_super_admin, login_url='home')
+def student_roster_delete(request, pk):
+    student = get_object_or_404(ValidStudent, pk=pk)
+
+    if request.method == 'POST':
+        full_name = student.full_name
+        lrn = student.lrn_number
+        log_audit_event(
+            request,
+            'delete',
+            student,
+            {'lrn': lrn, 'name': full_name},
+            target_label=f"Student Roster: {lrn}"
+        )
+        student.delete()
+        messages.success(request, f"Student {full_name} (LRN: {lrn}) removed from roster.")
+        return redirect('/dashboard/#section-roster')
+
+    return redirect('/dashboard/#section-roster')
+
+
+def check_student_lrn_ajax(request):
+    raw_lrn = request.GET.get('lrn') or request.POST.get('lrn') or ''
+    lrn = re.sub(r'\D', '', raw_lrn)
+
+    if not lrn:
+        return JsonResponse({'found': False, 'message': 'No LRN provided.'})
+
+    if len(lrn) != 12:
+        return JsonResponse({'found': False, 'message': 'LRN must be exactly 12 numeric digits.'})
+
+    student = ValidStudent.objects.filter(lrn_number=lrn).first()
+    if not student:
+        return JsonResponse({
+            'found': False,
+            'message': 'LRN not found in official student roster. Please verify your LRN or contact the admin.'
+        })
+
+    # Check if student is already registered with an active/approved account
+    existing_user_profile = UserProfile.objects.filter(
+        lrn_number=lrn,
+        is_archived=False
+    ).select_related('user').first()
+
+    if student.is_registered or (existing_user_profile and existing_user_profile.user and existing_user_profile.user.is_active):
+        return JsonResponse({
+            'found': True,
+            'is_registered': True,
+            'message': 'This LRN has already been registered to an account. If this is you, please log in.'
+        })
+
+    return JsonResponse({
+        'found': True,
+        'is_registered': False,
+        'first_name': student.first_name,
+        'last_name': student.last_name,
+        'middle_name': student.middle_name or '',
+        'no_middle_name': not bool(student.middle_name),
+        'suffix': student.suffix or '',
+        'grade_level': student.grade_level,
+        'section': student.section,
+        'full_name': student.full_name,
+        'message': f"Student record found: {student.full_name} ({student.grade_level} - {student.section})"
+    })
+

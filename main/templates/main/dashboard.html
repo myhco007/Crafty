@@ -1239,7 +1239,9 @@
 
             onclick="showSection('users'); return false;">Accounts</a>
 
+        <a href="#section-roster" data-section="roster" class="db-sidebar-item"
 
+            onclick="showSection('roster'); return false;">Student Roster</a>
 
         <a href="#section-audit" data-section="audit" class="db-sidebar-item"
 
@@ -3830,6 +3832,404 @@
 
             </div>
 
+        </div>
+
+        <!-- STUDENT ROSTER SECTION -->
+        <div id="section-roster" class="db-section" style="display:none;">
+            <div class="db-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <div class="db-page-badge">Manage</div>
+                    <h1 class="db-title">Student Roster</h1>
+                    <p class="db-sub">Pre-registered student credentials and official school roster.</p>
+                </div>
+                <div>
+                    <button type="button" class="db-btn teal" onclick="openAddStudentModal()" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 800; border-radius: 50px; padding: 10px 22px; cursor: pointer; border: none; box-shadow: 0 4px 14px rgba(46, 204, 113, 0.3);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span>Add Student</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Overview Cards -->
+            <div class="db-stats" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 25px;">
+                <div class="db-stat" style="border-left: 4px solid #3b82f6;">
+                    <div class="db-stat-top">
+                        <span class="db-stat-lbl">Total in Roster</span>
+                        <div class="db-stat-ico" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">📋</div>
+                    </div>
+                    <div class="db-stat-num" id="rosterTotalCount">{{ total_roster|default:roster_students|length }}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Official student records</div>
+                </div>
+                <div class="db-stat" style="border-left: 4px solid #10b981;">
+                    <div class="db-stat-top">
+                        <span class="db-stat-lbl">Registered Accounts</span>
+                        <div class="db-stat-ico" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">✅</div>
+                    </div>
+                    <div class="db-stat-num" id="rosterRegisteredCount">{{ roster_registered }}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Account claimed by student</div>
+                </div>
+                <div class="db-stat" style="border-left: 4px solid #f59e0b;">
+                    <div class="db-stat-top">
+                        <span class="db-stat-lbl">Awaiting Registration</span>
+                        <div class="db-stat-ico" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">⏳</div>
+                    </div>
+                    <div class="db-stat-num" id="rosterUnregisteredCount">{{ roster_unregistered }}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Ready to be used at register</div>
+                </div>
+            </div>
+
+            <div class="db-card">
+                <!-- Search & Filters Toolbar -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; flex-wrap: wrap; min-width: 280px;">
+                        <div style="position: relative; flex: 1; max-width: 440px; min-width: 200px;">
+                            <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: #1e293b;">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="butt" stroke-linejoin="miter">
+                                    <circle cx="10.5" cy="10.5" r="7.5" />
+                                    <line x1="16" y1="16" x2="21.5" y2="21.5" stroke-width="2.6" stroke-linecap="square" />
+                                </svg>
+                            </span>
+                            <input type="text" id="rosterSearchInput" placeholder="Search roster by LRN, name, grade, or section..." 
+                                style="width: 100%; padding: 10px 40px 10px 44px; border-radius: 50px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;"
+                                onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.15)';"
+                                onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';"
+                                oninput="filterRosterTable()">
+                            <button type="button" id="clearRosterSearchBtn" onclick="clearRosterSearch()" style="display: none; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; color: #64748b; font-size: 0.85rem; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;" title="Clear search">✕</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Grade:</span>
+                            <select id="rosterGradeFilter" onchange="filterRosterTable()" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="ALL">All Grades</option>
+                                <option value="Grade 1">Grade 1</option>
+                                <option value="Grade 2">Grade 2</option>
+                                <option value="Grade 3">Grade 3</option>
+                                <option value="Grade 4">Grade 4</option>
+                                <option value="Grade 5">Grade 5</option>
+                                <option value="Grade 6">Grade 6</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #475569;">Status:</span>
+                            <select id="rosterStatusFilter" onchange="filterRosterTable()" style="padding: 8px 14px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: #ffffff; font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif; color: #1e293b; outline: none; cursor: pointer;">
+                                <option value="ALL">All Status</option>
+                                <option value="READY">Ready to Register</option>
+                                <option value="REGISTERED">Registered</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="rosterCountDisplay" style="font-size: 0.85rem; color: #64748b; font-weight: 700;">
+                        Showing {{ roster_students|length }} of {{ roster_students|length }} students
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="db-table" id="studentRosterTable">
+                        <thead>
+                            <tr>
+                                <th>LRN Number</th>
+                                <th>Student Name</th>
+                                <th>Grade & Section</th>
+                                <th>Registration Status</th>
+                                <th>Date Added</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentRosterTableBody">
+                            {% for s in roster_students %}
+                            <tr class="roster-row" 
+                                data-search="{{ s.lrn_number }} {{ s.full_name|lower }} {{ s.first_name|lower }} {{ s.last_name|lower }} {{ s.middle_name|default:''|lower }} {{ s.grade_level|lower }} {{ s.section|lower }}"
+                                data-grade="{{ s.grade_level }}"
+                                data-status="{% if s.is_registered %}REGISTERED{% else %}READY{% endif %}">
+                                <td>
+                                    <span style="font-family: monospace; font-size: 0.95rem; font-weight: 800; color: #0f172a; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; border: 1px solid #e2e8f0;">
+                                        {{ s.lrn_number }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="font-weight: 700; color: #1e293b; font-size: 0.92rem;">
+                                        {{ s.last_name }}, {{ s.first_name }}{% if s.middle_name %} {{ s.middle_name }}{% endif %}{% if s.suffix %} {{ s.suffix }}{% endif %}
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: #64748b;">
+                                        FN: {{ s.first_name }} | LN: {{ s.last_name }} | MI: {{ s.middle_name|default:"None" }}{% if s.suffix %} | Suffix: {{ s.suffix }}{% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-weight: 700; color: #2563eb; font-size: 0.88rem;">
+                                        {{ s.grade_level }}
+                                    </div>
+                                    <div style="font-size: 0.78rem; color: #059669; font-weight: 700;">
+                                        Section: {{ s.section }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if s.is_registered %}
+                                    <span style="background: #e8faf0; color: #059669; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;">
+                                        <span style="width: 6px; height: 6px; border-radius: 50%; background: #059669;"></span>
+                                        Registered
+                                        {% if s.registered_user %}
+                                        <span style="color: #64748b; font-weight: 600;">(@{{ s.registered_user.username }})</span>
+                                        {% endif %}
+                                    </span>
+                                    {% else %}
+                                    <span style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;">
+                                        <span style="width: 6px; height: 6px; border-radius: 50%; background: #f59e0b;"></span>
+                                        Ready to Register
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div style="font-size: 0.82rem; color: #475569; font-weight: 700;">
+                                        {{ s.created_at|date:'M d, Y' }}
+                                    </div>
+                                    <div style="font-size: 0.74rem; color: #94a3b8;">
+                                        {{ s.created_at|date:'h:i A' }}
+                                    </div>
+                                </td>
+                                <td style="text-align: right;">
+                                    <div style="display: inline-flex; gap: 6px; align-items: center;">
+                                        <button type="button" 
+                                            class="db-btn" 
+                                            style="background: #f1f5f9; color: #334155; padding: 5px 12px; font-size: 0.78rem; font-weight: 800; border-radius: 6px; border: 1px solid #cbd5e1; cursor: pointer;"
+                                            onclick='openEditStudentModal("{{ s.id }}", "{{ s.lrn_number }}", "{{ s.first_name|escapejs }}", "{{ s.middle_name|default:''|escapejs }}", "{{ s.last_name|escapejs }}", "{{ s.suffix|default:''|escapejs }}", "{{ s.grade_level|escapejs }}", "{{ s.section|escapejs }}")'>
+                                            Edit
+                                        </button>
+                                        <form method="POST" action="{% url 'student_roster_delete' s.id %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove {{ s.full_name|escapejs }} (LRN: {{ s.lrn_number }}) from the student roster?');">
+                                            {% csrf_token %}
+                                            <button type="submit" 
+                                                class="db-btn" 
+                                                style="background: #fee2e2; color: #b91c1c; padding: 5px 12px; font-size: 0.78rem; font-weight: 800; border-radius: 6px; border: 1px solid #fca5a5; cursor: pointer;">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr id="noRosterRow">
+                                <td colspan="6" style="text-align: center; padding: 40px 20px; color: #64748b;">
+                                    <div style="font-size: 2rem; margin-bottom: 8px;">🎓</div>
+                                    <div style="font-weight: 800; font-size: 1rem; color: #334155;">No students in roster yet</div>
+                                    <div style="font-size: 0.85rem; margin-top: 4px;">Click "Add Student" above to add official student credentials.</div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <tr id="noRosterFilterResults" style="display: none;">
+                                <td colspan="6" style="text-align: center; padding: 40px 20px; color: #64748b;">
+                                    <div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>
+                                    <div style="font-weight: 800; font-size: 1rem; color: #334155;">No matching students found</div>
+                                    <div style="font-size: 0.85rem; margin-top: 4px;">Try adjusting your search terms or filters.</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADD STUDENT TO ROSTER MODAL -->
+        <div id="addStudentRosterModal" class="privacy-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center;">
+            <div style="background: #ffffff; border-radius: 16px; width: 90%; max-width: 550px; padding: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: slideUpModal 0.3s ease-out; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px;">
+                    <div>
+                        <span style="background: #e0f2fe; color: #0284c7; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800;">OFFICIAL ROSTER</span>
+                        <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-top: 4px;">Add Student Credential</h2>
+                    </div>
+                    <button type="button" onclick="closeAddStudentModal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: #64748b; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">✕</button>
+                </div>
+
+                <form method="POST" action="{% url 'student_roster_create' %}" onsubmit="return validateRosterForm(this);">
+                    {% csrf_token %}
+                    
+                    <!-- LRN Field -->
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                            LRN Number (12 Digits) <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="text" name="lrn_number" id="addRosterLrn" required maxlength="12" minlength="12" placeholder="e.g. 123456789012"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12);"
+                            style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.95rem; font-family: monospace; font-weight: 700; outline: none; box-sizing: border-box;">
+                        <small style="font-size: 0.75rem; color: #64748b;">Must be exactly 12 numeric digits.</small>
+                    </div>
+
+                    <!-- First Name & Last Name -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                                First Name <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" name="first_name" required placeholder="First name"
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                                Last Name <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" name="last_name" required placeholder="Last name"
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <!-- Middle Name & Suffix -->
+                    <div style="display: grid; grid-template-columns: 1.4fr 0.8fr; gap: 14px; margin-bottom: 16px;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                                Middle Name / Initial <span style="font-weight: normal; color: #94a3b8;">(Optional)</span>
+                            </label>
+                            <input type="text" name="middle_name" placeholder="Middle name or initial"
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                                Suffix
+                            </label>
+                            <select name="suffix" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; background: #fff; cursor: pointer; box-sizing: border-box;">
+                                <option value="">None</option>
+                                <option value="Jr.">Jr.</option>
+                                <option value="Sr.">Sr.</option>
+                                <option value="I">I</option>
+                                <option value="II">II</option>
+                                <option value="III">III</option>
+                                <option value="IV">IV</option>
+                                <option value="V">V</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Grade Level & Section -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                                Grade Level <span style="color: #ef4444;">*</span>
+                            </label>
+                            <select name="grade_level" id="addRosterGrade" required onchange="updateRosterSectionDropdown('add')" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; background: #fff; cursor: pointer; box-sizing: border-box;">
+                                <option value="" disabled selected>Select Grade</option>
+                                <option value="Grade 1">Grade 1</option>
+                                <option value="Grade 2">Grade 2</option>
+                                <option value="Grade 3">Grade 3</option>
+                                <option value="Grade 4">Grade 4</option>
+                                <option value="Grade 5">Grade 5</option>
+                                <option value="Grade 6">Grade 6</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                                Section <span style="color: #ef4444;">*</span>
+                            </label>
+                            <select name="section" id="addRosterSection" required style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; background: #fff; cursor: pointer; box-sizing: border-box;">
+                                <option value="" disabled selected>Select Grade First</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1.5px solid #f1f5f9; padding-top: 16px;">
+                        <button type="button" onclick="closeAddStudentModal()" style="padding: 10px 20px; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #f8fafc; color: #64748b; font-weight: 700; cursor: pointer;">Cancel</button>
+                        <button type="submit" class="db-btn teal" style="padding: 10px 24px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer;">Save Student</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- EDIT STUDENT MODAL -->
+        <div id="editStudentRosterModal" class="privacy-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center;">
+            <div style="background: #ffffff; border-radius: 16px; width: 90%; max-width: 550px; padding: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: slideUpModal 0.3s ease-out; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px;">
+                    <div>
+                        <span style="background: #e0f2fe; color: #0284c7; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800;">ROSTER UPDATE</span>
+                        <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-top: 4px;">Edit Student Credential</h2>
+                    </div>
+                    <button type="button" onclick="closeEditStudentModal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: #64748b; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">✕</button>
+                </div>
+
+                <form id="editStudentRosterForm" method="POST" action="" onsubmit="return validateRosterForm(this);">
+                    {% csrf_token %}
+                    
+                    <!-- LRN Field -->
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                            LRN Number (12 Digits) <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="text" name="lrn_number" id="editRosterLrn" required maxlength="12" minlength="12"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12);"
+                            style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.95rem; font-family: monospace; font-weight: 700; outline: none; box-sizing: border-box;">
+                    </div>
+
+                    <!-- First Name & Last Name -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                                First Name <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" name="first_name" id="editRosterFn" required
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                                Last Name <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" name="last_name" id="editRosterLn" required
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <!-- Middle Name & Suffix -->
+                    <div style="display: grid; grid-template-columns: 1.4fr 0.8fr; gap: 14px; margin-bottom: 16px;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                                Middle Name / Initial <span style="font-weight: normal; color: #94a3b8;">(Optional)</span>
+                            </label>
+                            <input type="text" name="middle_name" id="editRosterMn"
+                                style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                                Suffix
+                            </label>
+                            <select name="suffix" id="editRosterSuffix" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; background: #fff; cursor: pointer; box-sizing: border-box;">
+                                <option value="">None</option>
+                                <option value="Jr.">Jr.</option>
+                                <option value="Sr.">Sr.</option>
+                                <option value="I">I</option>
+                                <option value="II">II</option>
+                                <option value="III">III</option>
+                                <option value="IV">IV</option>
+                                <option value="V">V</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Grade Level & Section -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                                Grade Level <span style="color: #ef4444;">*</span>
+                            </label>
+                            <select name="grade_level" id="editRosterGrade" required onchange="updateRosterSectionDropdown('edit')" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; background: #fff; cursor: pointer; box-sizing: border-box;">
+                                <option value="" disabled>Select Grade</option>
+                                <option value="Grade 1">Grade 1</option>
+                                <option value="Grade 2">Grade 2</option>
+                                <option value="Grade 3">Grade 3</option>
+                                <option value="Grade 4">Grade 4</option>
+                                <option value="Grade 5">Grade 5</option>
+                                <option value="Grade 6">Grade 6</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                                Section <span style="color: #ef4444;">*</span>
+                            </label>
+                            <select name="section" id="editRosterSection" required style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; background: #fff; cursor: pointer; box-sizing: border-box;">
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1.5px solid #f1f5f9; padding-top: 16px;">
+                        <button type="button" onclick="closeEditStudentModal()" style="padding: 10px 20px; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #f8fafc; color: #64748b; font-weight: 700; cursor: pointer;">Cancel</button>
+                        <button type="submit" class="db-btn teal" style="padding: 10px 24px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer;">Update Student</button>
+                    </div>
+                </form>
+            </div>
         </div>
 
 
@@ -7581,6 +7981,143 @@
 
         const countSpan = document.getElementById('track-visible-table-count');
         if (countSpan) countSpan.innerText = visibleCount;
+    }
+
+    // -------------------------------------------------------------------------
+    // Student Roster Functions
+    // -------------------------------------------------------------------------
+    const GRADE_SECTIONS_MAP = {{ grade_sections_json|safe|default:'{}' }};
+
+    function updateRosterSectionDropdown(mode, preselectedSec = '') {
+        const gradeSelect = document.getElementById(mode === 'add' ? 'addRosterGrade' : 'editRosterGrade');
+        const sectionSelect = document.getElementById(mode === 'add' ? 'addRosterSection' : 'editRosterSection');
+        if (!gradeSelect || !sectionSelect) return;
+
+        const grade = gradeSelect.value;
+        const sections = GRADE_SECTIONS_MAP[grade] || [];
+        
+        sectionSelect.innerHTML = '';
+        if (sections.length > 0) {
+            const defOpt = document.createElement('option');
+            defOpt.value = '';
+            defOpt.disabled = true;
+            defOpt.textContent = 'Select Section';
+            if (!preselectedSec) defOpt.selected = true;
+            sectionSelect.appendChild(defOpt);
+
+            sections.forEach(sec => {
+                const opt = document.createElement('option');
+                opt.value = sec;
+                opt.textContent = sec;
+                if (preselectedSec && preselectedSec.toUpperCase() === sec.toUpperCase()) {
+                    opt.selected = true;
+                }
+                sectionSelect.appendChild(opt);
+            });
+            sectionSelect.disabled = false;
+        } else {
+            const defOpt = document.createElement('option');
+            defOpt.value = '';
+            defOpt.disabled = true;
+            defOpt.selected = true;
+            defOpt.textContent = 'Select Grade First';
+            sectionSelect.appendChild(defOpt);
+            sectionSelect.disabled = true;
+        }
+    }
+
+    function openAddStudentModal() {
+        const modal = document.getElementById('addStudentRosterModal');
+        if (modal) {
+            document.getElementById('addRosterLrn').value = '';
+            document.getElementById('addRosterGrade').value = '';
+            updateRosterSectionDropdown('add');
+            modal.style.display = 'flex';
+        }
+    }
+
+    function closeAddStudentModal() {
+        const modal = document.getElementById('addStudentRosterModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function openEditStudentModal(id, lrn, fn, mn, ln, suffix, grade, section) {
+        const modal = document.getElementById('editStudentRosterModal');
+        const form = document.getElementById('editStudentRosterForm');
+        if (!modal || !form) return;
+
+        form.action = `/dashboard/roster/${id}/edit/`;
+        document.getElementById('editRosterLrn').value = lrn || '';
+        document.getElementById('editRosterFn').value = fn || '';
+        document.getElementById('editRosterMn').value = mn || '';
+        document.getElementById('editRosterLn').value = ln || '';
+        document.getElementById('editRosterSuffix').value = suffix || '';
+        document.getElementById('editRosterGrade').value = grade || '';
+        updateRosterSectionDropdown('edit', section);
+
+        modal.style.display = 'flex';
+    }
+
+    function closeEditStudentModal() {
+        const modal = document.getElementById('editStudentRosterModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function validateRosterForm(form) {
+        const lrn = form.querySelector('input[name="lrn_number"]');
+        if (lrn && (!/^\d{12}$/.test(lrn.value.trim()))) {
+            alert('LRN must be exactly 12 numeric digits.');
+            lrn.focus();
+            return false;
+        }
+        return true;
+    }
+
+    function filterRosterTable() {
+        const query = (document.getElementById('rosterSearchInput')?.value || '').trim().toLowerCase();
+        const gradeFilter = document.getElementById('rosterGradeFilter')?.value || 'ALL';
+        const statusFilter = document.getElementById('rosterStatusFilter')?.value || 'ALL';
+        const clearBtn = document.getElementById('clearRosterSearchBtn');
+        if (clearBtn) clearBtn.style.display = query ? 'flex' : 'none';
+
+        const rows = document.querySelectorAll('#studentRosterTableBody tr.roster-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const searchData = (row.getAttribute('data-search') || '').toLowerCase();
+            const gradeData = row.getAttribute('data-grade') || '';
+            const statusData = row.getAttribute('data-status') || '';
+
+            const matchesQuery = !query || searchData.includes(query);
+            const matchesGrade = gradeFilter === 'ALL' || gradeData === gradeFilter;
+            const matchesStatus = statusFilter === 'ALL' || statusData === statusFilter;
+
+            if (matchesQuery && matchesGrade && matchesStatus) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const noResultsRow = document.getElementById('noRosterFilterResults');
+        if (noResultsRow) {
+            noResultsRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+        }
+
+        const countDisplay = document.getElementById('rosterCountDisplay');
+        if (countDisplay) {
+            countDisplay.textContent = `Showing ${visibleCount} of ${rows.length} students`;
+        }
+    }
+
+    function clearRosterSearch() {
+        const input = document.getElementById('rosterSearchInput');
+        if (input) {
+            input.value = '';
+            filterRosterTable();
+            input.focus();
+        }
     }
 
 </script>
