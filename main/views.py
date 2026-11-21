@@ -1067,8 +1067,6 @@ def register_view(request):
             messages.error(request, 'LRN Number must be exactly 12 digits.')
         elif ValidStudent.objects.exists() and not ValidStudent.objects.filter(lrn_number=lrn_number).exists():
             messages.error(request, 'This LRN was not found in the official student roster. Please enter a valid LRN or contact the school administrator.')
-        elif ValidStudent.objects.filter(lrn_number=lrn_number, is_registered=True, registered_user__profile__is_approved=True, registered_user__profile__is_archived=False).exists():
-            messages.error(request, 'This LRN is already registered. Please log in or contact the administrator.')
         elif UserProfile.objects.filter(lrn_number=lrn_number, is_approved=True, is_archived=False).exists():
             messages.error(request, 'This LRN Number is already registered by another user. Please use a different one.')
         elif not section or (GRADE_SECTIONS.get(grade_level) and section.strip().upper() not in GRADE_SECTIONS.get(grade_level, []) and not re.match(r'^[1-3]$', section.strip())):
@@ -3275,22 +3273,9 @@ def check_student_lrn_ajax(request):
             'message': 'LRN not found in official student roster. Please verify your LRN or contact the admin.'
         })
 
-    # Check if student is already registered with an active/approved account
-    existing_user_profile = UserProfile.objects.filter(
-        lrn_number=lrn,
-        is_archived=False
-    ).select_related('user').first()
-
-    if student.is_registered or (existing_user_profile and existing_user_profile.user and existing_user_profile.user.is_active):
-        return JsonResponse({
-            'found': True,
-            'is_registered': True,
-            'message': 'This LRN has already been registered to an account. If this is you, please log in.'
-        })
-
+    # Always return student credentials from the roster so they are automatically filled up in the registration form
     return JsonResponse({
         'found': True,
-        'is_registered': False,
         'first_name': student.first_name,
         'last_name': student.last_name,
         'middle_name': student.middle_name or '',

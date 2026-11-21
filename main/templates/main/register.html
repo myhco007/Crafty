@@ -453,7 +453,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (spinner) spinner.style.display = 'none';
-                    if (data.found && !data.is_registered) {
+                    if (data.found) {
                         const fnInput = document.getElementById('id_first_name');
                         const lnInput = document.getElementById('id_last_name');
                         const mnInput = document.getElementById('middle_name_input');
@@ -509,20 +509,6 @@
                             warning.style.color = '#059669';
                             warning.style.fontWeight = '700';
                             warning.textContent = `Credentials verified from official student roster. Please type your username, Gmail, and password below.`;
-                        }
-                    } else if (data.found && data.is_registered) {
-                        if (badge) {
-                            badge.style.display = 'inline-block';
-                            badge.style.background = '#fee2e2';
-                            badge.style.color = '#b91c1c';
-                            badge.style.border = '1px solid #fca5a5';
-                            badge.textContent = `⚠️ Already Registered`;
-                        }
-                        if (warning) {
-                            warning.style.display = 'block';
-                            warning.style.color = '#e53935';
-                            warning.style.fontWeight = '700';
-                            warning.textContent = data.message || 'This LRN has already been registered with an account.';
                         }
                     } else {
                         if (badge) {
