@@ -380,6 +380,7 @@
         {% block footer %}{% endblock %}
     </div>
 
+    {% if user.is_authenticated %}
     {% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'about' or request.resolver_match.url_name == 'announcement_list' or request.resolver_match.url_name == 'calendar' or request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'edit_profile' or request.resolver_match.url_name == 'explore_subjects' %}
     <!-- Floating "Press me!" Circle Trigger at Bottom Right -->
     <button type="button" id="explore-circle-trigger" class="explore-circle-trigger" onclick="toggleExploreWidget()" aria-label="Press me to explore videos and flipbook">
@@ -401,6 +402,7 @@
         </div>
         <button type="button" class="explore-widget-close" onclick="toggleExploreWidget()" aria-label="Close widget">&times;</button>
     </div>
+    {% endif %}
     {% endif %}
 
 
